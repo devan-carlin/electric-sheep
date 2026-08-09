@@ -143,8 +143,6 @@ fi
 # ============================================
 print_header "INT4 AutoRound Conversion — Pre-flight"
 
-errors=0
-
 # Check venv
 if [ ! -d "$VENV_DIR" ]; then
     fail "vLLM virtual environment not found at $VENV_DIR"
@@ -224,6 +222,24 @@ else
     print_ok "datasets installed"
 fi
 
+# Check auto-round (core quantization library)
+if python3 -c "import auto_round" 2>/dev/null; then
+    print_ok "auto-round installed"
+else
+    echo "  Installing auto-round..."
+    pip install auto-round --quiet
+    print_ok "auto-round installed"
+fi
+
+# Check optimum (needed for some models)
+if python3 -c "import optimum" 2>/dev/null; then
+    print_ok "optimum installed"
+else
+    echo "  Installing optimum..."
+    pip install optimum --quiet
+    print_ok "optimum installed"
+fi
+
 # ============================================
 # Download Source Model
 # ============================================
@@ -268,28 +284,6 @@ if [ "$DOWNLOAD_ONLY" = true ]; then
     echo "  To run quantization:"
     echo "  $0 $SOURCE_REPO --output-dir $OUTPUT_DIR"
     exit 0
-fi
-
-# ============================================
-# Install auto-round
-# ============================================
-print_header "Checking Quantization Dependencies"
-
-if python3 -c "import auto_round" 2>/dev/null; then
-    print_ok "auto-round already installed"
-else
-    echo "  Installing auto-round..."
-    pip install auto-round --quiet
-    print_ok "auto-round installed"
-fi
-
-# Check for optimum (needed for some models)
-if python3 -c "import optimum" 2>/dev/null; then
-    print_ok "optimum installed"
-else
-    echo "  Installing optimum..."
-    pip install optimum --quiet
-    print_ok "optimum installed"
 fi
 
 # ============================================
