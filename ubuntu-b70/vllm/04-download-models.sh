@@ -81,14 +81,23 @@ usable_gb = total_gb * $GPU_MEMORY_UTIL
 print(f'{usable_gb:.1f}')
 " 2>/dev/null || echo "0")
 
-total_vram=$(python3 -c "
+vram_summary=$(python3 -c "
 import torch
+gpu_count = torch.xpu.device_count()
 props = torch.xpu.get_device_properties(0)
-total_gb = props.total_memory / 1e9
-print(f'{total_gb:.1f}')
-" 2>/dev/null || echo "0")
+total_per_gpu = props.total_memory / 1e9
+usable_per_gpu = total_per_gpu * $GPU_MEMORY_UTIL
+total_all = total_per_gpu * gpu_count
+usable_all = usable_per_gpu * gpu_count
+print(f'{total_per_gpu:.1f}|{usable_per_gpu:.1f}|{total_all:.1f}|{usable_all:.1f}')
+" 2>/dev/null || echo "0|0|0|0")
 
-echo "✓ VRAM per GPU: ${total_vram}GB total, ${vram_per_gpu}GB usable (${GPU_MEMORY_UTIL} utilization)"
+vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f2)
+total_vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f1)
+total_vram_all=$(echo "$vram_summary" | cut -d'|' -f3)
+usable_vram_all=$(echo "$vram_summary" | cut -d'|' -f4)
+
+echo "✓ VRAM: ${total_vram_per_gpu}GB/GPU (${vram_per_gpu}GB usable), ${total_vram_all}GB total (${usable_vram_all}GB usable)"
 echo ""
 
 # -------------------------------------------
@@ -133,9 +142,24 @@ download_model() {
     local local_name="${repo//\//-}"  # "Intel/Qwen3.6-27B..." → "Intel-Qwen3.6-27B..."
     local local_path="$MODEL_DIR/$local_name"
 
+    # Get model size from HuggingFace before downloading
+    local model_size
+    model_size=$(python3 -c "
+from huggingface_hub import get_dataset_size, hf_hub_download
+import os
+try:
+    from huggingface_hub import model_info
+    info = model_info('$repo', timeout=10)
+    size_gb = info.siblings[0].size / 1e9 if info.siblings else 0
+    print(f'{size_gb:.1f}')
+except:
+    print('N/A')
+" 2>/dev/null || echo "N/A")
+
     echo ""
     echo "--- Downloading: $alias ---"
-    echo "  Repo: $repo"
+    echo "  Repo:       $repo"
+    echo "  Model size: ${model_size}GB"
     echo "  Est. VRAM/GPU (TP=4): ${est_vram}GB"
     echo "  Available VRAM/GPU: ${vram_per_gpu}GB"
 
@@ -490,7 +514,7 @@ if [ "${1:-}" = "--list" ]; then
     done
 
     echo ""
-    echo "  VRAM available per GPU: ${vram_per_gpu}GB (${GPU_MEMORY_UTIL} utilization)"
+    echo "  VRAM: ${vram_per_gpu}GB/GPU usable, ${usable_vram_all}GB total usable (${GPU_MEMORY_UTIL} utilization)"
     echo "  GPUs: $gpu_count"
     exit 0
 fi
