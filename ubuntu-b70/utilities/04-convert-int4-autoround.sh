@@ -36,6 +36,9 @@ BITS=4
 GROUP_SIZE=128
 SYMMETRIC=false
 SEQLEN=2048
+ITERS=1000             # 1000=highest accuracy, 200=standard, 50=faster, 0=RTN (fastest)
+LOW_GPU_MEM=true       # Saves ~20GB VRAM, 30-100% slower (enabled for large models)
+RECIPE="auto-round-best"  # auto-round-best (highest accuracy), auto-round (default), auto-round-light (faster)
 
 # ============================================
 # Helpers
@@ -86,6 +89,9 @@ show_help() {
     echo "  --sym                Use symmetric quantization (default: asymmetric)"
     echo "  --samples <n>        Calibration samples (default: 128)"
     echo "  --seqlen <n>         Sequence length for calibration (default: 2048)"
+    echo "  --iters <n>          Tuning iterations (default: 200, 0=RTN fastest)"
+    echo "  --low-gpu-mem        Save ~20GB VRAM (30-100% slower)"
+    echo "  --recipe <name>      Recipe: auto-round, auto-round-best, auto-round-light"
     echo "  --output-dir <path>  Output directory (default: ~/electric-sheep/models/<name>-int4-AutoRound)"
     echo "  --download-only      Download source model only, skip quantization"
     echo "  --help               Show this help"
@@ -119,6 +125,12 @@ while [[ $# -gt 0 ]]; do
             CALIBRATION_SAMPLES="$2"; shift 2 ;;
         --seqlen)
             SEQLEN="$2"; shift 2 ;;
+        --iters)
+            ITERS="$2"; shift 2 ;;
+        --low-gpu-mem)
+            LOW_GPU_MEM=true; shift ;;
+        --recipe)
+            RECIPE="$2"; shift 2 ;;
         --output-dir)
             OUTPUT_DIR="$2"; shift 2 ;;
         --download-only)
@@ -311,7 +323,7 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 # Export variables for the Python script
-export SOURCE_DIR OUTPUT_DIR BITS GROUP_SIZE SYMMETRIC CALIBRATION_SAMPLES CALIBRATION_DATASET SEQLEN
+export SOURCE_DIR OUTPUT_DIR BITS GROUP_SIZE SYMMETRIC CALIBRATION_SAMPLES CALIBRATION_DATASET SEQLEN ITERS LOW_GPU_MEM RECIPE
 
 # Run quantization via Python
 python3 << 'PYEOF'
@@ -330,9 +342,15 @@ symmetric = os.environ["SYMMETRIC"].lower() == "true"
 calibration_samples = int(os.environ["CALIBRATION_SAMPLES"])
 calibration_dataset = os.environ["CALIBRATION_DATASET"]
 seqlen = int(os.environ["SEQLEN"])
+iters = int(os.environ["ITERS"])
+low_gpu_mem = os.environ["LOW_GPU_MEM"].lower() == "true"
+recipe = os.environ["RECIPE"]
 
 print(f"\nLoading model from: {source_dir}")
 print(f"Quantization: {bits}-bit, group_size={group_size}, sym={symmetric}")
+print(f"Recipe: {recipe}")
+print(f"Iterations: {iters} (1000=highest accuracy)")
+print(f"Low GPU memory mode: {low_gpu_mem} (saves ~20GB VRAM)")
 print(f"Calibration: {calibration_samples} samples from {calibration_dataset}")
 print(f"Sequence length: {seqlen}\n")
 
@@ -388,7 +406,7 @@ model = AutoModelForCausalLM.from_pretrained(
 load_time = time.time() - start_time
 print(f"  Model loaded in {load_time:.0f}s, starting quantization...")
 
-# Quantize
+# Quantize with maximum quality settings
 start_time = time.time()
 
 model_q, _ = AutoRound.quantize_model(
@@ -398,10 +416,13 @@ model_q, _ = AutoRound.quantize_model(
     bits=bits,
     group_size=group_size,
     sym=symmetric,
+    iters=iters,
     enable_quanted_input=True,
     seqlen=seqlen,
     n_samples=len(calib_data),
     amp=True,
+    low_gpu_mem_usage=low_gpu_mem,
+    enable_torch_compile=True,
 )
 
 quant_time = time.time() - start_time
