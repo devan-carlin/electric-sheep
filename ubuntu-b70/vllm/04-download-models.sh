@@ -70,16 +70,7 @@ echo "✓ huggingface_hub available"
 # Check GPU memory
 gpu_count=$(python3 -c "import torch; print(torch.xpu.device_count())" 2>/dev/null || echo "0")
 [ "$gpu_count" -eq 0 ] && fail "No XPU devices detected"
-echo "✓ $gpu_count XPU GPU(s) available"
-
-# Calculate available VRAM per GPU (in GB)
-vram_per_gpu=$(python3 -c "
-import torch
-props = torch.xpu.get_device_properties(0)
-total_gb = props.total_memory / 1e9
-usable_gb = total_gb * $GPU_MEMORY_UTIL
-print(f'{usable_gb:.1f}')
-" 2>/dev/null || echo "0")
+echo "✓ gpu_count=$gpu_count"
 
 vram_summary=$(python3 -c "
 import torch
@@ -92,12 +83,15 @@ usable_all = usable_per_gpu * gpu_count
 print(f'{total_per_gpu:.1f}|{usable_per_gpu:.1f}|{total_all:.1f}|{usable_all:.1f}')
 " 2>/dev/null || echo "0|0|0|0")
 
-vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f2)
 total_vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f1)
+vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f2)
 total_vram_all=$(echo "$vram_summary" | cut -d'|' -f3)
 usable_vram_all=$(echo "$vram_summary" | cut -d'|' -f4)
 
-echo "✓ VRAM: ${total_vram_per_gpu}GB/GPU (${vram_per_gpu}GB usable), ${total_vram_all}GB total (${usable_vram_all}GB usable)"
+echo "✓ total_vram_per_gpu=${total_vram_per_gpu}GB"
+echo "✓ vram_per_gpu=${vram_per_gpu}GB (usable at ${GPU_MEMORY_UTIL})"
+echo "✓ total_vram_all=${total_vram_all}GB"
+echo "✓ usable_vram_all=${usable_vram_all}GB"
 echo ""
 
 # -------------------------------------------
