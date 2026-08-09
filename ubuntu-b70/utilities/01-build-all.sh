@@ -197,9 +197,6 @@ build_vllm() {
     # Build vLLM XPU
     run_script "$VLLM_SCRIPTS/03-build-vllm-xpu.sh" "vLLM XPU Build"
 
-    # Patch MoE qzeros
-    run_script "$VLLM_SCRIPTS/05-patch-vllm-moe-qzeros.sh" "MoE Qzeros Patch"
-
     echo ""
     ok "vLLM build pipeline complete!"
     echo ""
