@@ -289,7 +289,7 @@ fi
 
 echo "  ✓ $sycl_device_count SYCL GPU device(s) detected"
 echo "$sycl_output" | grep "level_zero:gpu" | while read -r line; do
-    device_name=$(echo "$line" | grep -oP 'Intel\(R\)[^]]+' || echo "$line")
+    device_name=$(echo "$line" | grep -oP 'Intel\(R\)[^]]+\]' || echo "$line")
     echo "    $device_name"
 done
 
