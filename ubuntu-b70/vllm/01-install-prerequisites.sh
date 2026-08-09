@@ -29,9 +29,8 @@ echo "=========================================="
 echo "  Prerequisites — Pre-flight"
 echo "=========================================="
 
-# Check for sudo access
-sudo -n true 2>/dev/null || fail "This script requires sudo access. Run: sudo bash install-prerequisites.sh"
-echo "✓ Sudo access confirmed"
+# Note: sudo is used inline for apt commands (will prompt for password when needed)
+echo "✓ Sudo will be prompted when needed"
 
 # Check OS
 [ -f /etc/os-release ] || fail "/etc/os-release not found"
