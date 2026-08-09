@@ -18,9 +18,10 @@
 set -e
 
 # ============================================
-# Paths
+# Paths (resolve relative to this script's location)
 # ============================================
-SCRIPTS="$HOME/ubuntu-b70"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS="$(dirname "$SCRIPT_DIR")"
 VLLM_SCRIPTS="$SCRIPTS/vllm"
 LLAMA_SCRIPTS="$SCRIPTS/llama"
 VLLM_DIR="$HOME/electric-sheep/vllm"
