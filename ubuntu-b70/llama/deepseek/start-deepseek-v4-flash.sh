@@ -285,15 +285,11 @@ build_command() {
         CMD+=(-md "$DRAFTER_FILE")
         CMD+=(--spec-type draft-dspark)
         CMD+=(--spec-draft-n-max 3)
-        CMD+=(-ngld 99)
     fi
 
-    # Print the full command
+    # Print the full command (single line)
     echo "Command:"
-    echo "  ${CMD[0]} \\"
-    for ((i=1; i<${#CMD[@]}; i++)); do
-        echo "    ${CMD[$i]} \\"
-    done
+    echo "  ${CMD[*]}"
     echo ""
 
     # Execute
