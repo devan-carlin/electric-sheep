@@ -5,7 +5,7 @@ set -e
 # Prerequisites Installation Script
 # ============================================
 # Installs system packages, Python 3.12 via
-# deadsnakes PPA, huggingface-cli, and pip.
+# deadsnakes PPA, hf CLI, and pip.
 # Requires sudo for system package installs.
 # ============================================
 
@@ -38,6 +38,14 @@ echo "✓ Sudo access confirmed"
 source /etc/os-release
 echo "✓ OS: $PRETTY_NAME"
 
+# Check python3 (needed for hf CLI version check)
+command -v python3 >/dev/null 2>&1 || fail "python3 not found (needed for hf CLI)"
+echo "✓ python3 available"
+
+# Check pip (needed for hf_xet install)
+command -v pip >/dev/null 2>&1 || fail "pip not found (needed for hf_xet install)"
+echo "✓ pip available"
+
 # -------------------------------------------
 # System packages
 # -------------------------------------------
@@ -60,6 +68,7 @@ sudo apt-get install -y \
     libze-intel-gpu1 \
     libze1 \
     libze-dev \
+    python3 \
     python3-pip
 echo "✓ System packages installed"
 
@@ -67,9 +76,9 @@ echo "✓ System packages installed"
 # oneAPI Toolkit
 # -------------------------------------------
 echo ""
-echo "[3/5] Checking oneAPI Toolkit..."
+echo "[3/6] Checking oneAPI Toolkit..."
 
-if command -v source >/dev/null 2>&1 && [ -f /opt/intel/oneapi/setvars.sh ]; then
+if [ -f /opt/intel/oneapi/setvars.sh ]; then
     echo "✓ oneAPI Toolkit found at /opt/intel/oneapi/"
 else
     echo "⚠ oneAPI Toolkit not found at /opt/intel/oneapi/"
@@ -81,7 +90,7 @@ fi
 # Python 3.12 (deadsnakes PPA)
 # -------------------------------------------
 echo ""
-echo "[4/5] Installing Python 3.12..."
+echo "[4/6] Installing Python 3.12..."
 
 if command -v python3.12 >/dev/null 2>&1; then
     echo "✓ Python 3.12 already installed ($(python3.12 --version))"
@@ -93,32 +102,65 @@ else
 fi
 
 # -------------------------------------------
-# HuggingFace CLI & pip
+# HuggingFace CLI (global install via pipx)
 # -------------------------------------------
 echo ""
-echo "[5/5] Installing HuggingFace CLI & pip..."
+echo "[5/6] Installing HuggingFace CLI..."
+
+# Ensure pipx is available (PEP 668 on Ubuntu 24.04+ blocks system pip)
+if ! command -v pipx >/dev/null 2>&1; then
+    echo "  Installing pipx..."
+    sudo apt-get install -y pipx
+fi
+
+# Ensure pipx binaries are on PATH for this session and future logins
+pipx ensurepath >/dev/null 2>&1 || true
+export PATH="/root/.local/bin:$HOME/.local/bin:$PATH"
 
 if command -v hf >/dev/null 2>&1; then
-    echo "✓ HuggingFace CLI already installed"
+    # Check version — 1.26+ recommended for hf_xet transport
+    current_ver=$(python3 -c "import huggingface_hub; print(huggingface_hub.__version__)" 2>/dev/null || echo "0")
+    major=$(echo "$current_ver" | cut -d. -f1)
+    minor=$(echo "$current_ver" | cut -d. -f2)
+    if [ "$major" -ge 1 ] 2>/dev/null && [ "$minor" -ge 26 ] 2>/dev/null; then
+        echo "✓ HuggingFace CLI installed (v$current_ver)"
+    else
+        echo "⚠ huggingface_hub v$current_ver is outdated (1.26+ recommended for hf_xet)"
+        echo "  Updating via pipx..."
+        pipx install --force huggingface-hub[hf_xet]
+        echo "✓ HuggingFace CLI updated"
+    fi
 else
-    python3.12 -m pip install --upgrade pip huggingface_hub[hf_xet]
+    pipx install huggingface-hub[hf_xet]
     echo "✓ HuggingFace CLI installed"
 fi
 
 # Check swap space
 swap_total=$(free -m | awk '/Swap:/{print $2}')
-if [ "$swap_total" -lt 64000 ] 2>/dev/null; then
+echo ""
+echo "[6/6] Swap space check..."
+if [ "$swap_total" -ge 64000 ] 2>/dev/null; then
+    echo "✓ Swap space: ${swap_total}MB (adequate, no action needed)"
+else
     echo "⚠ Low swap space: ${swap_total}MB (recommended: 64GB+ for large model loading)"
     echo ""
     echo "Would you like to create a 64GB swap file now? [y/N]"
     read -r answer
     if [[ "$answer" =~ ^[Yy] ]]; then
         echo "Creating 64GB swap file..."
-        sudo fallocate -l 64G /swap_b70.img
+        # Use dd as fallocate may fail on Btrfs
+        if sudo fallocate -l 64G /swap_b70.img 2>/dev/null; then
+            echo "  ✓ fallocate succeeded"
+        else
+            echo "  ⚠ fallocate failed (Btrfs?), falling back to dd..."
+            sudo dd if=/dev/zero of=/swap_b70.img bs=1M count=65536 status=progress
+        fi
         sudo chmod 600 /swap_b70.img
         sudo mkswap /swap_b70.img
         sudo swapon /swap_b70.img
-        echo "✓ Swap file created and activated"
+        # Persist across reboots
+        echo '/swap_b70.img none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+        echo "✓ Swap file created, activated, and added to /etc/fstab"
         echo "  New swap: $(free -m | awk '/Swap:/{print $2}')MB"
     else
         echo "⚠ Skipping swap creation. Large model loading may fail with low swap."
@@ -136,6 +178,15 @@ echo "=========================================="
 # Python 3.12
 python3.12 --version 2>&1 | awk '{print "✓", $0, "installed"}'
 
+# Python 3.12 venv (required for setup-project-directory.sh)
+python3.12 -m venv --help >/dev/null 2>&1 && echo "✓ python3.12-venv available" || echo "✗ python3.12-venv missing"
+
+# python3 (needed for hf CLI version check)
+python3 --version 2>&1 | awk '{print "✓", $0, "available"}'
+
+# pip (needed for hf_xet install)
+pip --version 2>&1 | awk '{print "✓", $0}'
+
 # HuggingFace CLI
 if command -v hf >/dev/null 2>&1; then
     echo "✓ HuggingFace CLI installed"
@@ -144,7 +195,7 @@ else
 fi
 
 # System packages
-for pkg in build-essential cmake git git-lfs clinfo libdrm-dev software-properties-common python3-pip; do
+for pkg in build-essential cmake git git-lfs clinfo libdrm-dev software-properties-common python3-pip python3.12-venv python3.12-dev; do
     if dpkg -l "$pkg" 2>/dev/null | grep -q "^ii"; then
         echo "✓ $pkg installed"
     else
@@ -163,7 +214,8 @@ done
 
 # oneAPI Toolkit
 if [ -f /opt/intel/oneapi/setvars.sh ]; then
-    oneapi_version=$(grep -oP 'VERSION_ID="\K[^"]+' /opt/intel/oneapi/compiler/latest/etc/version.txt 2>/dev/null || echo "latest")
+    oneapi_version=$(grep 'VERSION_ID' /opt/intel/oneapi/compiler/latest/etc/version.txt 2>/dev/null | sed -n 's/.*VERSION_ID="\([^"]*\)".*/\1/p' || echo "latest")
+    [ -z "$oneapi_version" ] && oneapi_version="latest"
     echo "✓ oneAPI Toolkit found ($oneapi_version)"
 else
     echo "✗ oneAPI Toolkit not found"
@@ -195,8 +247,8 @@ echo ""
 echo "The prerequisites are installed. Next steps:"
 echo ""
 echo "  1. Setup project directory (creates ~/electric-sheep/vllm/):"
-echo "     bash setup-project-directory.sh"
+echo "     bash 02-setup-project-directory.sh"
 echo ""
 echo "  2. Build vLLM from source:"
-echo "     bash build-vllm-xpu.sh"
+echo "     bash 03-build-vllm-xpu.sh"
 echo ""

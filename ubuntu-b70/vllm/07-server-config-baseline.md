@@ -116,7 +116,7 @@
 
 | Path | Purpose |
 |---|---|
-| `~/electric-sheep/vllm/models/` | Model storage location |
+| `~/electric-sheep/models/` | Model storage location (shared with llama.cpp) |
 
 ---
 
@@ -207,7 +207,7 @@ VLLM_XPU_ENABLE_XPU_GRAPH=1
 VLLM_TARGET_DEVICE=xpu
 
 # Model Path
-MODEL_PATH=~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound
+MODEL_PATH=~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound
 ```
 
 ---
@@ -222,7 +222,7 @@ source ~/electric-sheep/vllm/set-env.sh
 export VLLM_TARGET_DEVICE="xpu"
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \

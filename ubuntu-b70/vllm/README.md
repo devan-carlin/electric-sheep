@@ -30,31 +30,39 @@ This repository contains the deployment scripts and configuration for running vL
 ### 1. Install Prerequisites
 
 ```bash
-sudo bash install-prerequisites.sh
+sudo bash 01-install-prerequisites.sh
 ```
 
-Installs: system packages, Python 3.12, huggingface-cli, verifies GPUs and swap space.
+Installs: system packages, Python 3.12, hf CLI, verifies GPUs and swap space.
 
 ### 2. Setup Project Directory
 
 ```bash
-bash setup-project-directory.sh
+bash 02-setup-project-directory.sh
 ```
 
-Creates: virtual environment, environment configs, model startup scripts, downloads models.
+Creates: virtual environment, environment configs, shared models directory.
 
 ### 3. Build vLLM from Source
 
 ```bash
-bash build-vllm-xpu.sh
+bash 03-build-vllm-xpu.sh
 ```
 
 Compiles: PyTorch XPU, vllm-xpu-kernels, vLLM engine, enforces triton-xpu override.
 
-### 4. Apply MoE Patch (if using 35B-A3B)
+### 4. Download Models + Create Configs
 
 ```bash
-bash patch-vllm-moe-qzeros.sh
+bash 04-download-models.sh
+```
+
+Downloads models, creates env configs and startup scripts.
+
+### 5. Apply MoE Patch (if using 35B-A3B)
+
+```bash
+bash 05-patch-vllm-moe-qzeros.sh
 ```
 
 Fixes: `RuntimeError` on symmetric MoE expert layers with empty `qzeros`.
@@ -126,13 +134,49 @@ export VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16
 export COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'
 ```
 
+## Performance Optimizations
+
+The following optimizations from [Steve Seguin's b70-optimization-lab](https://github.com/steveseguin/b70-optimization-lab) are integrated:
+
+### GPU Affinity (`ZE_AFFINITY_MASK`)
+Binds GPUs to CPU cores for improved NUMA locality. Set in `set-env-*.sh` files.
+
+### Graph Capture with Communication (`VLLM_XPU_FORCE_GRAPH_WITH_COMM=1`)
+Forces graph capture even with communication ops, improving multi-GPU performance. Set in `set-env-*.sh` files.
+
+### oneAPI Compiler Pinning
+Pins to `oneAPI 2025.3` compiler to prevent SYCL build issues. Applied in `03-build-vllm-xpu.sh`.
+
+### Build Parallelism Limit (`VLLM_XPU_KERNELS_MAX_JOBS=4`)
+Prevents OOM during `paged_decode_xe2.cpp` compilation (which can use 120+ GB RSS). Applied in `03-build-vllm-xpu.sh`.
+
+### Compile Cache Root (`VLLM_CACHE_ROOT`)
+Sets `~/.cache/vllm` for warm starts, reducing cold launch times. Applied in all startup scripts.
+
+### GPU Memory Utilization
+Bumped from `0.85` to `0.90` for ~4 GiB additional VRAM for KV cache per GPU.
+
+### Display Offload (`xe.disable_display=1`)
+If your display is running on a B70, add `xe.disable_display=1` to kernel boot parameters to free ~1.5 GiB/GPU for vLLM. This requires a reboot:
+
+```bash
+# Add to /etc/default/grub
+GRUB_CMDLINE_LINUX="xe.disable_display=1"
+
+# Update GRUB
+sudo update-grub
+
+# Reboot
+sudo reboot
+```
+
 ## Known Issues
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | `No module named 'vllm_xpu_kernels._C'` | `.so` binaries not in `site-packages` | Manual `cp` fallback in build script |
 | `ImportError: cannot import name 'intel' from 'triton._C'` | Standard `triton` overwrote `triton-xpu` | `pip install triton-xpu --force-reinstall --no-deps` |
-| `RuntimeError: copy_() shape mismatch` on 35B-A3B | Empty `qzeros` on symmetric MoE layers | Run `patch-vllm-moe-qzeros.sh` |
+| `RuntimeError: copy_() shape mismatch` on 35B-A3B | Empty `qzeros` on symmetric MoE layers | Run `05-patch-vllm-moe-qzeros.sh` |
 | Pre-flight VRAM check fails at `0.90+` | Level-Zero driver reserves ~1.5 GiB/GPU | Use `--gpu-memory-utilization 0.80` |
 | `resource_tracker: leaked shared_memory` | Python IPC cleanup after process exit | Safe to ignore |
 

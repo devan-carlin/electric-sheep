@@ -1,6 +1,7 @@
 # Model Configuration Reference
 
-**Project:** `~/electric-sheep/vllm/`  
+**Project:** `~/electric-sheep/vllm/` (vLLM) + `~/electric-sheep/llama/` (llama.cpp)  
+**Shared Models:** `~/electric-sheep/models/`  
 **Hardware:** 4× Intel Arc Pro B70 (31.89 GiB each, `xe` driver)  
 **VRAM Budget:** ~25.5 GiB/GPU at `0.80` utilization
 
@@ -14,6 +15,7 @@
 | **Qwen 3.6 35B-A3B** | 35B (MoE) | INT4 Mixed AutoRound | ~18 GiB | ~4.5 GiB/GPU | ~9 GiB/GPU |
 | **Gemma 4 31B** | 31B | INT4 AutoRound V2 | ~16 GiB | ~4 GiB/GPU | ~8 GiB/GPU |
 | **Gemma 4 26B-A4B** | 26B (MoE) | INT4 AutoRound | ~13 GiB | ~3.2 GiB/GPU | ~6.5 GiB/GPU |
+| **DeepSeek V4-Flash** | ~38B (MoE) | UD-IQ3_XXS GGUF | ~98 GiB (4 shards) | ~8 GiB/GPU | N/A (TP=4 only) |
 
 ---
 
@@ -34,7 +36,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -54,14 +56,14 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 #### Qwen 3.6 35B-A3B (MoE — requires patch)
 
-> **Prerequisite:** Run `bash ~/electric-sheep/vllm-tuning/patch-vllm-moe-qzeros.sh` before first launch.
+> **Prerequisite:** Run `bash ~/electric-sheep/ubuntu-b70/vllm/05-patch-vllm-moe-qzeros.sh` before first launch.
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
     --served-model-name qwen3.6-35b-a3b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -86,7 +88,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-gemma-4-31B-it-int4-AutoRound-V2 \
+    --model ~/electric-sheep/models/Intel-gemma-4-31B-it-int4-AutoRound-V2 \
     --served-model-name gemma-4-31b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -107,7 +109,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-gemma-4-26B-A4B-it-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-gemma-4-26B-A4B-it-int4-AutoRound \
     --served-model-name gemma-4-26b-a4b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -120,6 +122,41 @@ python3 -m vllm.entrypoints.openai.api_server \
     --gpu-memory-utilization 0.80 \
     --generation-config vllm
 ```
+
+#### DeepSeek V4-Flash (GGUF — 4 shards, UD-IQ3_XXS)
+
+> **Prerequisites:**
+> 1. Install GGUF plugin: `pip install vllm-gguf-plugin`
+> 2. Pass `--tokenizer` with the base model repo (GGUF tokenizer is slow/buggy)
+> 3. Use `--hf-config-path` if the model is not supported by HuggingFace
+> 4. Point `--model` to the **first shard file** (not the directory)
+
+```bash
+source ~/electric-sheep/vllm/.venv/bin/activate
+source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+
+python3 -m vllm.entrypoints.openai.api_server \
+    --model ~/electric-sheep/models/DeepSeek-V4-Flash-0731-GGUF/UD-IQ3_XXS/UD-IQ3_XXS/DeepSeek-V4-Flash-0731-UD-IQ3_XXS-00001-of-00004.gguf \
+    --tokenizer deepseek-ai/DeepSeek-V4-Flash-0731 \
+    --hf-config-path deepseek-ai/DeepSeek-V4-Flash-0731 \
+    --served-model-name deepseek-v4-flash \
+    --host 0.0.0.0 \
+    --port 8030 \
+    --tensor-parallel-size 4 \
+    --max-model-len 65536 \
+    --max-num-batched-tokens 32768 \
+    --max-num-seqs 16 \
+    --kv-cache-dtype fp8 \
+    --enable-prefix-caching \
+    --trust-remote-code \
+    --gpu-memory-utilization 0.95
+```
+
+> **Notes:**
+> - GGUF support in vLLM is **experimental and under-optimized**
+> - Uses `0.95` GPU memory utilization (larger model needs headroom)
+> - 64K context window (UD-IQ3_XXS is aggressive ~3-bit quantization)
+> - TP=4 only — too large for TP=2 on B70s
 
 ---
 
@@ -139,7 +176,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -173,7 +210,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -197,7 +234,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-23-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
     --served-model-name qwen3.6-35b-a3b \
     --host 0.0.0.0 \
     --port 8031 \
@@ -236,5 +273,6 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 - **35B-A3B MoE:** Requires `patch-vllm-moe-qzeros.sh` before first launch. The patch guards against empty `qzeros` tensors on symmetric expert layers.
 - **Gemma 4 31B:** No special patching required. Standard INT4 AutoRound V2 quantization.
+- **DeepSeek V4-Flash (GGUF):** Requires `vllm-gguf-plugin` (`pip install vllm-gguf-plugin`). Always pass `--tokenizer` with the base model repo. Point `--model` to the first shard `.gguf` file (not the directory). GGUF support is experimental/under-optimized in vLLM.
 - **Port conflicts:** Dual-model deployments use `8030` (GPUs 0,1) and `8031` (GPUs 2,3).
 - **Open-WebUI:** Point to the desired port (`8030` or `8031`) via `OPENAI_API_BASE_URL`.
