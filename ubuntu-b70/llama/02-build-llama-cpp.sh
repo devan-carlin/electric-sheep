@@ -376,6 +376,7 @@ cmake -B "$BUILD_DIR" \
     -DCMAKE_C_COMPILER=icx \
     -DCMAKE_CXX_COMPILER=icpx \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_FLAGS="-Wno-return-type -Wno-missing-noreturn" \
     -DLLAMA_BUILD_TESTS=OFF
 
 echo "✓ CMake configuration complete"
