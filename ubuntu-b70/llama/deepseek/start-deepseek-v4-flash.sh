@@ -28,7 +28,7 @@ set -e
 # ============================================
 # Configuration
 # ============================================
-MODEL_DIR="$HOME/electric-sheep/models/unsloth-DeepSeek-V4-Flash-0731-GGUF/UD-IQ3_XXS/UD-IQ3_XXS"
+MODEL_DIR="$HOME/electric-sheep/models/unsloth-DeepSeek-V4-Flash-0731-GGUF/UD-IQ3_XXS"
 MODEL_FILE="$MODEL_DIR/DeepSeek-V4-Flash-0731-UD-IQ3_XXS-00001-of-00004.gguf"
 DRAFTER_FILE="$HOME/electric-sheep/models/unsloth-DeepSeek-V4-Flash-0731-GGUF/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf"
 LLAMA_DIR="$HOME/electric-sheep/llama"
