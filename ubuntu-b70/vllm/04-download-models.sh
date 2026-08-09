@@ -142,17 +142,16 @@ download_model() {
     local local_name="${repo//\//-}"  # "Intel/Qwen3.6-27B..." → "Intel-Qwen3.6-27B..."
     local local_path="$MODEL_DIR/$local_name"
 
-    # Get model size from HuggingFace before downloading
+    # Get total model size from HuggingFace (sum all files)
     local model_size
     model_size=$(python3 -c "
-from huggingface_hub import get_dataset_size, hf_hub_download
-import os
+from huggingface_hub import HfApi
 try:
-    from huggingface_hub import model_info
-    info = model_info('$repo', timeout=10)
-    size_gb = info.siblings[0].size / 1e9 if info.siblings else 0
-    print(f'{size_gb:.1f}')
-except:
+    api = HfApi()
+    info = api.model_info('$repo', timeout=10)
+    total = sum(s.size for s in info.siblings if s.size)
+    print(f'{total/1e9:.1f}')
+except Exception as e:
     print('N/A')
 " 2>/dev/null || echo "N/A")
 
@@ -160,8 +159,9 @@ except:
     echo "--- Downloading: $alias ---"
     echo "  Repo:       $repo"
     echo "  Model size: ${model_size}GB"
-    echo "  Est. VRAM/GPU (TP=4): ${est_vram}GB"
-    echo "  Available VRAM/GPU: ${vram_per_gpu}GB"
+    echo "  Est. VRAM:  ${est_vram}GB/GPU (TP=4)"
+    echo "  VRAM/GPU:   ${total_vram_per_gpu}GB"
+    echo "  Total VRAM: ${total_vram_all}GB"
 
     # VRAM fit check
     if ! will_fit "$est_vram"; then
