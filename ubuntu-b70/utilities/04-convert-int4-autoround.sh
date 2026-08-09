@@ -325,8 +325,11 @@ mkdir -p "$OUTPUT_DIR"
 # Export variables for the Python script
 export SOURCE_DIR OUTPUT_DIR BITS GROUP_SIZE SYMMETRIC CALIBRATION_SAMPLES CALIBRATION_DATASET SEQLEN ITERS LOW_GPU_MEM RECIPE
 
-# Run quantization via Python
-python3 << 'PYEOF'
+# Force unbuffered output so progress is visible immediately
+export PYTHONUNBUFFERED=1
+
+# Run quantization via Python (-u forces unbuffered stdout/stderr)
+python3 -u << 'PYEOF'
 import os
 import sys
 import time
