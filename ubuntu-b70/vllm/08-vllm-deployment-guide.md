@@ -33,8 +33,7 @@ sudo apt-get install -y intel-oneapi-toolkit
 Run the setup script to create the project structure, virtual environment, environment configs, and download all 4 models.
 
 ```bash
-# Run from your tuning directory
-bash ~/electric-sheep/vllm-tuning/setup-project-directory.sh
+bash ~/electric-sheep/ubuntu-b70/vllm/02-setup-project-directory.sh
 ```
 
 **What this creates:**
@@ -121,7 +120,7 @@ for i in range(torch.xpu.device_count()):
 If you plan to run the Qwen 35B-A3B MoE model, apply the guarded `qzeros` copy fix:
 
 ```bash
-bash ~/electric-sheep/vllm-tuning/patch-vllm-moe-qzeros.sh
+bash ~/electric-sheep/ubuntu-b70/vllm/05-patch-vllm-moe-qzeros.sh
 ```
 
 ---
@@ -137,7 +136,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -165,7 +164,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -189,7 +188,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-23-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
     --served-model-name qwen3.6-35b-a3b \
     --host 0.0.0.0 \
     --port 8031 \
@@ -219,7 +218,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-27B-int4-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
     --served-model-name qwen3.6-27b \
     --host 0.0.0.0 \
     --port 8030 \
@@ -243,7 +242,7 @@ source ~/electric-sheep/vllm/.venv/bin/activate
 source ~/electric-sheep/vllm/set-env-23-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
-    --model ~/electric-sheep/vllm/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
+    --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
     --served-model-name qwen3.6-35b-a3b \
     --host 0.0.0.0 \
     --port 8031 \
@@ -308,8 +307,9 @@ curl http://localhost:8030/v1/chat/completions \
 
 ## Reference Documents
 
-- `server-config-baseline.md` — Hardware & software baseline snapshot
-- `model-configs.md` — Full model matrix, VRAM budgets, and launch commands
-- `setup-project-directory.sh` — Automated project & model provisioning
-- `patch-vllm-moe-qzeros.sh` — MoE qzeros guarded copy fix
+- `06-server-config-baseline.md` — Hardware & software baseline snapshot
+- `05-model-configs.md` — Full model matrix, VRAM budgets, and launch commands
+- `02-setup-project-directory.sh` — Automated project & model provisioning
+- `05-patch-vllm-moe-qzeros.sh` — MoE qzeros guarded copy fix
+- `08-vllm-deployment-guide.md` — This guide
 - `.github/copilot-instructions.md` — Workspace rules & conventions

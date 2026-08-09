@@ -17,6 +17,12 @@ set -e
 # mismatched, safely fall back to setting ark_linear.qzeros = None.
 # ============================================
 
+# Detect if run via sudo — preserve original user's HOME
+if [ -n "$SUDO_USER" ]; then
+    export HOME=$(eval echo ~$SUDO_USER)
+    echo "Note: Running via sudo, using HOME=$HOME for user $SUDO_USER"
+fi
+
 VENV_DIR="$HOME/electric-sheep/vllm/.venv"
 TARGET_FILE="$VENV_DIR/lib/python3.12/site-packages/vllm/model_executor/layers/quantization/inc/schemes/inc_wna16_linear.py"
 
@@ -98,8 +104,12 @@ if old_block in content:
     with open(target_file, 'w') as f:
         f.write(content)
     print("SUCCESS: vLLM inc_wna16_linear.py patched successfully.")
+elif new_block in content:
+    print("SKIPPED: Patch already applied. No changes needed.")
 else:
-    print("WARNING: Target code block not found. The file may already be patched or the vLLM version has changed.")
+    print("WARNING: Neither the original nor patched code was found.")
+    print("         The vLLM version may have changed. Manual review recommended.")
+    sys.exit(1)
 PYTHON_SCRIPT
 
 # Verify patch was applied
