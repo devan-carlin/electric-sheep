@@ -354,7 +354,7 @@ print(f"Loading calibration dataset: {calibration_dataset}")
 from datasets import load_dataset
 
 try:
-    calib_dataset = load_dataset(calibration_dataset, split="train", trust_remote_code=True)
+    calib_dataset = load_dataset(calibration_dataset, split="train")
 except Exception:
     # Fallback to wikitext
     print("  Fallback: using wikitext")
@@ -376,13 +376,13 @@ print("  This may take several minutes for large models...")
 start_time = time.time()
 
 from auto_round import AutoRound
+from transformers import AutoModelForCausalLM
 
-model = AutoRound.from_pretrained(
-    model_name_or_path=source_dir,
+model = AutoModelForCausalLM.from_pretrained(
+    source_dir,
     torch_dtype=torch.float16,
     device_map="auto",
     trust_remote_code=True,
-    disable_gradient_checkpointing=True,
 )
 
 load_time = time.time() - start_time
