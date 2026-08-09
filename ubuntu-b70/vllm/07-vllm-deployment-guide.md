@@ -311,5 +311,5 @@ curl http://localhost:8030/v1/chat/completions \
 - `05-model-configs.md` — Full model matrix, VRAM budgets, and launch commands
 - `02-setup-project-directory.sh` — Automated project & model provisioning
 - `05-patch-vllm-moe-qzeros.sh` — MoE qzeros guarded copy fix
-- `08-vllm-deployment-guide.md` — This guide
+- `07-vllm-deployment-guide.md` — This guide
 - `.github/copilot-instructions.md` — Workspace rules & conventions

@@ -38,6 +38,9 @@ llama/llama.cpp/build/
 models/
 **/models/
 
+# vLLM source builds (re-cloned by 03-build-vllm-xpu.sh)
+vllm/vllm-src/
+
 # Temporary files
 *.tmp
 *.bak
