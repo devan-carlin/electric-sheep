@@ -12,46 +12,78 @@
 
 | Parameter | Value |
 |---|---|
-| Context window | 98,304 tokens (96K) |
+| Context window | 65,536 tokens (64K) with DSpark / 98,304 (96K) without |
 | Batch size | 4,096 |
-| CPU threads | 12 |
+| CPU threads | 6 |
+| CPU batch threads | 6 |
 | GPU split mode | layer |
 | Flash attention | auto |
 | KV cache dtype | f16 (default; q8_0 unsupported on SYCL) |
 | Load mode | mmap |
+| DSpark | Enabled (draft-dspark, n_max=3) |
 | Port | 8080 |
 
 ---
 
 ## Performance Benchmarks
 
-### Prompt Processing
+### Prompt Processing (DSpark, 35K prompt)
+
+| Tokens Processed | Time | Throughput |
+|---|---|---|
+| 4,096 | 42.0 s | **97.5 t/s** |
+| 8,192 | 87.5 s | **93.6 t/s** |
+| 16,384 | 192.5 s | **85.1 t/s** |
+| 24,576 | 312.9 s | **78.6 t/s** |
+| 32,768 | 451.1 s | **72.6 t/s** |
+| 35,226 (total) | 498.5 s | **70.7 t/s** |
+
+Prompt throughput degrades as context fills (more KV cache lookups per token).
+
+### Token Generation (DSpark)
 
 | Metric | Value |
 |---|---|
-| Prompt tokens | 414 |
-| Processing time | 7.12 s |
-| **Prompt throughput** | **58.12 tokens/s** |
+| **Avg generation speed** | **15.75 tokens/s** |
+| **3-second rolling avg** | **~16.3 tokens/s** |
+| Steady-state | ~16.3 t/s (very stable) |
 
-### Token Generation
+### Token Generation (No DSpark, for comparison)
 
 | Metric | Value |
 |---|---|
-| Tokens decoded | 898 |
 | **Avg generation speed** | **12.80 tokens/s** |
 | **3-second rolling avg** | **13.04 tokens/s** |
-| Steady-state (after warmup) | ~13.2 tokens/s |
+| Steady-state | ~13.2 tokens/s |
+
+### DSpark Speedup
+
+| Metric | No DSpark | With DSpark | Speedup |
+|---|---|---|---|
+| Generation speed | 12.80 t/s | 15.75 t/s | **1.23x** |
+| 3s rolling avg | 13.04 t/s | 16.3 t/s | **1.25x** |
 
 ### Model Load Time
 
 | Metric | Value |
 |---|---|
-| Cold load time | ~1 min 53 sec |
-| Model size | 98 GB (4 shards) |
+| Cold load (with DSpark) | ~2 min 22 sec |
+| Model size | 98 GB (4 shards) + 11 GB drafter |
 
 ---
 
-## VRAM Usage (96K Context)
+## VRAM Usage (64K Context + DSpark)
+
+| GPU | Used | Total | % Used | Headroom |
+|---|---|---|---|---|
+| GPU 0 | 29.3 GiB | 31.9 GiB | 92% | 2.6 GiB |
+| **GPU 1** | **31.6 GiB** | **31.9 GiB** | **99%** | **0.3 GiB** |
+| GPU 2 | 27.7 GiB | 31.9 GiB | 87% | 4.2 GiB |
+| GPU 3 | 25.3 GiB | 31.9 GiB | 79% | 6.6 GiB |
+
+**GPU 1 is the bottleneck** (99% utilization). DSpark drafter model landed on GPU 1 after main model layers filled it. Very tight — monitor for OOM on long conversations.
+
+### VRAM Usage (96K Context, No DSpark — for comparison)
 
 | GPU | Used | Total | % Used | Headroom |
 |---|---|---|---|---|
@@ -77,14 +109,14 @@
 
 ## Context Window Testing
 
-| Context | GPU 2 VRAM | Status | Notes |
+| Context | Worst GPU VRAM | Status | Notes |
 |---|---|---|---|
 | 32K | 27.3 GiB (86%) | ✅ Stable | Baseline |
-| 96K | 28.2 GiB (88%) | ✅ Stable | Current config (no DSpark) |
-| 64K + DSpark | ~29.5 GiB (est.) | ⚠️ Not tested | DSpark adds ~10GB VRAM |
+| 96K | 28.2 GiB GPU 2 (88%) | ✅ Stable | No DSpark, comfortable headroom |
+| 64K + DSpark | 31.6 GiB GPU 1 (99%) | ⚠️ Tight | GPU 1 is bottleneck, 0.3 GiB headroom |
 | 128K | — | ⚠️ Not tested | Would likely hit 93-95% |
 
-**Recommendation:** 96K without DSpark is the sweet spot. With DSpark, 64K keeps GPU 2 under 95%.
+**Recommendation:** 96K without DSpark is safest. With DSpark, 64K works but GPU 1 is at 99% — monitor for OOM on long conversations.
 
 ## DSpark (Speculative Decoding)
 
@@ -92,9 +124,11 @@ DSpark is DeepSeek's native speculative decoding algorithm (superior to MTP). It
 
 | Feature | Standard | With DSpark |
 |---|---|---|
-| **Decoding speed** | ~13 t/s | ~24 t/s (est. 1.9x) |
+| **Decoding speed** | 12.80 t/s | 15.75 t/s (1.23x) |
+| **3s rolling avg** | 13.04 t/s | 16.3 t/s (1.25x) |
 | **VRAM overhead** | — | +10 GB |
 | **Context (safe)** | 96K | 64K |
+| **Worst GPU** | GPU 2 (88%) | GPU 1 (99%) |
 | **Drafter file** | — | `dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf` |
 
 ### DSpark Flags
@@ -102,9 +136,10 @@ DSpark is DeepSeek's native speculative decoding algorithm (superior to MTP). It
 ```bash
 -md dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf \
 --spec-type draft-dspark \
---spec-draft-n-max 3 \
--ngld 99
+--spec-draft-n-max 3
 ```
+
+**Note:** Do not use `-ngld 99` — it causes DSpark init failure (`dflash requires ctx_other`). Let llama.cpp auto-assign drafter layers.
 
 ### Download DSpark Drafter
 
