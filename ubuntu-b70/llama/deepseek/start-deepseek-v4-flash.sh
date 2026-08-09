@@ -38,7 +38,8 @@ LLAMA_SERVER="$LLAMA_DIR/llama.cpp/build/bin/llama-server"
 PORT=8080
 HOST="0.0.0.0"
 PROMPT_BATCH_SIZE=4096
-CPU_THREADS=12
+CPU_THREADS=6          # Minimal threads for orchestration (token sampling, graph scheduling)
+CPU_THREADS_BATCH=6    # Threads for batch/prompt processing
 
 # Context sizes (tokens)
 CTX_STANDARD=98304    # 96K — default without DSpark (GPU 2: ~88%)
@@ -269,6 +270,7 @@ build_command() {
     CMD+=(-c "$ctx_size")
     CMD+=(--batch-size "$PROMPT_BATCH_SIZE")
     CMD+=(-t "$CPU_THREADS")
+    CMD+=(--threads-batch "$CPU_THREADS_BATCH")
     CMD+=(-sm layer)
     CMD+=(--port "$PORT")
     CMD+=(--host "$HOST")
