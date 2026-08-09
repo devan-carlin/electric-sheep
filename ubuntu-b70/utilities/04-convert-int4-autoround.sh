@@ -143,12 +143,57 @@ fi
 # ============================================
 print_header "INT4 AutoRound Conversion — Pre-flight"
 
+local errors=0
+
 # Check venv
 if [ ! -d "$VENV_DIR" ]; then
     fail "vLLM virtual environment not found at $VENV_DIR"
     echo "  Run: bash ~/ubuntu-b70/vllm/02-setup-project-directory.sh"
 fi
 print_ok "Virtual environment found"
+
+# Activate venv early for Python checks
+source "$VENV_DIR/bin/activate"
+
+# Check Python version
+python_version=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+echo "  Python: $python_version"
+if [[ "$python_version" != "3.12" && "$python_version" != "3.11" ]]; then
+    print_warn "Python $python_version detected — 3.11 or 3.12 recommended"
+fi
+
+# Check PyTorch with XPU support
+if python3 -c "import torch; assert torch.xpu.is_available()" 2>/dev/null; then
+    print_ok "PyTorch with XPU support"
+else
+    print_warn "PyTorch XPU not available — quantization will use CPU (slower)"
+fi
+
+# Check GPU devices (for VRAM estimation)
+if command -v sycl-ls >/dev/null 2>&1; then
+    gpu_count=$(sycl-ls 2>/dev/null | grep -c "level_zero:gpu" || echo "0")
+    if [ "$gpu_count" -gt 0 ]; then
+        total_vram_gb=0
+        while IFS= read -r line; do
+            vram=$(echo "$line" | grep -oP '[\d.]+ GB' | head -1 | awk '{print $1}')
+            if [ -n "$vram" ]; then
+                total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
+            fi
+        done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu")
+        echo "  GPUs: $gpu_count SYCL GPU(s), ~${total_vram_gb}GB total VRAM"
+    else
+        print_warn "No SYCL GPU devices — quantization will use CPU only"
+    fi
+else
+    print_warn "sycl-ls not found — cannot check GPU availability"
+fi
+
+# Check RAM (need ~2x model size for loading + quantization)
+available_ram_gb=$(free -g | awk '/^Mem:/{print $7}')
+echo "  Available RAM: ${available_ram_gb}GB"
+if [ "$available_ram_gb" -lt 64 ]; then
+    print_warn "Less than 64GB RAM — large models may fail to load"
+fi
 
 # Check hf CLI
 if ! command -v hf >/dev/null 2>&1; then
@@ -157,11 +202,26 @@ if ! command -v hf >/dev/null 2>&1; then
 fi
 print_ok "hf CLI available"
 
+# Check HF token (needed for gated models)
+if [ -z "$HF_TOKEN" ] && [ ! -f "$HOME/.cache/huggingface/token" ]; then
+    print_warn "No HF_TOKEN set — gated models (Llama, etc.) may fail"
+    echo "  Fix: export HF_TOKEN=hf_..."
+fi
+
 # Check disk space (need ~2x model size for source + output)
 available_gb=$(df --output=avail -BM "$HOME" | tail -1 | awk '{printf "%d", $1/1024}')
 echo "  Available disk: ${available_gb}GB"
 if [ "$available_gb" -lt 100 ]; then
     print_warn "Less than 100GB free — quantization may need more space"
+fi
+
+# Check datasets library (needed for calibration)
+if python3 -c "import datasets" 2>/dev/null; then
+    print_ok "datasets library available"
+else
+    echo "  Installing datasets..."
+    pip install datasets --quiet
+    print_ok "datasets installed"
 fi
 
 # ============================================
@@ -213,9 +273,7 @@ fi
 # ============================================
 # Install auto-round
 # ============================================
-print_header "Checking Dependencies"
-
-source "$VENV_DIR/bin/activate"
+print_header "Checking Quantization Dependencies"
 
 if python3 -c "import auto_round" 2>/dev/null; then
     print_ok "auto-round already installed"
