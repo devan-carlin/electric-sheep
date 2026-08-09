@@ -15,7 +15,7 @@ Tailscale creates a secure mesh network between your machines, enabling seamless
 
 | Machine | Tailscale IP | Role |
 |---|---|---|
-| HP Omen 45L (Windows) | `100.64.238.80` | RTX 5090, llama.cpp server |
+| HP Omen 45L (Windows) | `100.x.x.x` | RTX 5090, llama.cpp server |
 | AI Server (Ubuntu B70) | *(install below)* | 4× Intel Arc B70, vLLM server |
 
 ---
@@ -62,7 +62,7 @@ tailscale status
 
 From the Ubuntu server, ping your Windows machine:
 ```bash
-ping 100.64.238.80
+ping 100.x.x.x
 ```
 
 From Windows, ping the Ubuntu server (replace with actual Tailscale IP):
@@ -88,7 +88,7 @@ Should show `0.0.0.0:8080` (not `127.0.0.1:8080`).
 ### 3. Test from Ubuntu Server
 
 ```bash
-curl http://100.64.238.80:8080/v1/models
+curl http://100.x.x.x:8080/v1/models
 ```
 
 Should return the available models.
@@ -107,7 +107,7 @@ Your `chatLanguageModels.json` already has the Tailscale profile:
     {
       "id": "qwen3.6-27b",
       "name": "Qwen 3.6 27B (HP Omen RTX 5090 - Tailscale)",
-      "url": "http://100.64.238.80:8080/v1",
+      "url": "http://100.x.x.x:8080/v1",
       "toolCalling": true,
       "vision": true,
       "maxInputTokens": 229376,
@@ -128,7 +128,7 @@ Select this profile in VS Code's chat model selector when SSH'd into the Ubuntu 
 Enable MagicDNS in the [Tailscale Admin Console](https://login.tailscale.com/admin/dns) to use hostnames instead of IPs:
 
 ```bash
-# Instead of: http://100.64.238.80:8080/v1
+# Instead of: http://100.x.x.x:8080/v1
 # Use: http://omen-45l:8080/v1
 ```
 
@@ -141,7 +141,7 @@ Skip password/SSH key setup — use Tailscale SSH:
 sudo tailscale ssh --setup
 
 # SSH from any Tailscale machine
-tailscale ssh dc@ai-server
+tailscale ssh user@ai-server
 ```
 
 ### File Sharing (Serve)
