@@ -76,22 +76,19 @@ vram_summary=$(python3 -c "
 import torch
 gpu_count = torch.xpu.device_count()
 props = torch.xpu.get_device_properties(0)
-total_per_gpu = props.total_memory / 1e9
+total_per_gpu = props.total_memory / (1024**3)
 usable_per_gpu = total_per_gpu * $GPU_MEMORY_UTIL
 total_all = total_per_gpu * gpu_count
-usable_all = usable_per_gpu * gpu_count
-print(f'{total_per_gpu:.1f}|{usable_per_gpu:.1f}|{total_all:.1f}|{usable_all:.1f}')
-" 2>/dev/null || echo "0|0|0|0")
+print(f'{total_per_gpu:.2f}|{usable_per_gpu:.2f}|{total_all:.2f}')
+" 2>/dev/null || echo "0|0|0")
 
 total_vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f1)
 vram_per_gpu=$(echo "$vram_summary" | cut -d'|' -f2)
 total_vram_all=$(echo "$vram_summary" | cut -d'|' -f3)
-usable_vram_all=$(echo "$vram_summary" | cut -d'|' -f4)
 
-echo "✓ total_vram_per_gpu=${total_vram_per_gpu}GB"
-echo "✓ vram_per_gpu=${vram_per_gpu}GB (usable at ${GPU_MEMORY_UTIL})"
-echo "✓ total_vram_all=${total_vram_all}GB"
-echo "✓ usable_vram_all=${usable_vram_all}GB"
+echo "✓ total_vram_per_gpu=${total_vram_per_gpu}GiB"
+echo "✓ vram_per_gpu=${vram_per_gpu}GiB (usable at ${GPU_MEMORY_UTIL})"
+echo "✓ total_vram_all=${total_vram_all}GiB"
 echo ""
 
 # -------------------------------------------
@@ -142,9 +139,9 @@ download_model() {
 from huggingface_hub import HfApi
 try:
     api = HfApi()
-    info = api.model_info('$repo', timeout=10)
-    total = sum(s.size for s in info.siblings if s.size)
-    print(f'{total/1e9:.1f}')
+    info = api.model_info('$repo', files_metadata=True, timeout=10)
+    total = sum(getattr(s, 'size', 0) or 0 for s in info.siblings)
+    print(f'{total/(1024**3):.1f}')
 except Exception as e:
     print('N/A')
 " 2>/dev/null || echo "N/A")
@@ -152,10 +149,10 @@ except Exception as e:
     echo ""
     echo "--- Downloading: $alias ---"
     echo "  Repo:       $repo"
-    echo "  Model size: ${model_size}GB"
-    echo "  Est. VRAM:  ${est_vram}GB/GPU (TP=4)"
-    echo "  VRAM/GPU:   ${total_vram_per_gpu}GB"
-    echo "  Total VRAM: ${total_vram_all}GB"
+    echo "  Model size: ${model_size}GiB"
+    echo "  Est. VRAM:  ${est_vram}GiB/GPU (TP=4)"
+    echo "  VRAM/GPU:   ${total_vram_per_gpu}GiB"
+    echo "  Total VRAM: ${total_vram_all}GiB"
 
     # VRAM fit check
     if ! will_fit "$est_vram"; then
@@ -504,11 +501,11 @@ if [ "${1:-}" = "--list" ]; then
         if ! will_fit "$est_vram_tp4"; then
             fit="✗ too large"
         fi
-        printf "  %-20s %-55s %7sGB %7sGB [%s]\n" "$alias" "$repo" "$est_vram_tp4" "$est_vram_tp2" "$fit"
+        printf "  %-20s %-55s %7sGiB %7sGiB [%s]\n" "$alias" "$repo" "$est_vram_tp4" "$est_vram_tp2" "$fit"
     done
 
     echo ""
-    echo "  VRAM: ${vram_per_gpu}GB/GPU usable, ${usable_vram_all}GB total usable (${GPU_MEMORY_UTIL} utilization)"
+    echo "  VRAM: ${vram_per_gpu}GiB/GPU usable, ${total_vram_all}GiB total (${GPU_MEMORY_UTIL} utilization)"
     echo "  GPUs: $gpu_count"
     exit 0
 fi
