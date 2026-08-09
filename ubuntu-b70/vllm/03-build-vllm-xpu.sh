@@ -20,7 +20,7 @@ fi
 
 VLLM_DIR="$HOME/electric-sheep/vllm"
 VENV_DIR="$VLLM_DIR/.venv"
-VLLM_SRC="$HOME/vllm-src"
+VLLM_SRC="$VLLM_DIR/vllm-src"
 
 # Graceful error handler — keeps terminal open for investigation
 fail() {
