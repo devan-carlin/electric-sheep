@@ -143,7 +143,7 @@ fi
 # ============================================
 print_header "INT4 AutoRound Conversion — Pre-flight"
 
-local errors=0
+errors=0
 
 # Check venv
 if [ ! -d "$VENV_DIR" ]; then
