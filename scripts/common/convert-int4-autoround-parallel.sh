@@ -411,20 +411,17 @@ if tokenizer.pad_token is None:
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
 # Load calibration data
-print(f"Loading calibration dataset: {calibration_dataset}")
+print("Loading calibration dataset...")
 from datasets import load_dataset
 
-try:
-    calib_dataset = load_dataset(calibration_dataset, split="train")
-except Exception:
-    # Fallback to wikitext2 (wikitext is a collection, not a dataset)
-    print("  Fallback: using wikitext2")
-    calib_dataset = load_dataset("wikitext2", "wikitext-2-raw-v1", split="train")
+# Use Salesforce/wikitext (the canonical owner for the wikitext collection)
+calib_dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
 
 # Prepare calibration samples
 calib_data = []
 for i in range(min(calibration_samples, len(calib_dataset))):
-    text = calib_dataset[i]["text"] if "text" in calib_dataset[i] else str(calib_dataset[i])
+    # wikitext-2-raw-v1 has a "text" field with full article content
+    text = calib_dataset[i].get("text", str(calib_dataset[i]))
     if len(text.strip()) > 32:  # Skip very short samples
         calib_data.append(text.strip())
 
