@@ -205,7 +205,12 @@ if command -v sycl-ls >/dev/null 2>&1; then
         while IFS= read -r line; do
             vram=$(echo "$line" | grep -oP '[\d.]+ GB' | head -1 | awk '{print $1}')
             if [ -n "$vram" ]; then
-                total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
+                if command -v bc >/dev/null 2>&1; then
+                    total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
+                else
+                    # Fallback: integer addition if bc not available
+                    total_vram_gb=$((total_vram_gb + ${vram%.*}))
+                fi
             fi
         done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu")
         echo "  GPUs: $gpu_count SYCL GPU(s), ~${total_vram_gb}GB total VRAM"
