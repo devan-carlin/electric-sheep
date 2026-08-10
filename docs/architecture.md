@@ -28,7 +28,9 @@ electric-sheep/
 ├── docs/                          # Cross-platform documentation
 │   ├── architecture.md            # This file
 │   └── guides/
+│       ├── balanced-split-mode.md
 │       ├── deepseek-int4-conversion.md
+│       ├── deepseek-v4-gguf-llama-cpp.md
 │       ├── vllm-deployment.md
 │       ├── llama-deployment.md
 │       ├── rtx-5090-power-tuning.md
@@ -52,6 +54,7 @@ electric-sheep/
 │   │   └── 05-ollama-deployment-guide.md
 │   │
 │   └── common/                    # Shared utilities (runs on any platform)
+│       ├── apply-balanced-split-mode.sh
 │       ├── build-all.sh
 │       ├── convert-int4-autoround.sh
 │       ├── convert-int4-autoround-parallel.sh

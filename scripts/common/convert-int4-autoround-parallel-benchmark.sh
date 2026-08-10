@@ -1,46 +1,45 @@
 #!/usr/bin/env bash
 # =============================================================================
-# 04.1-convert-int4-autoround.sh — INT4 AutoRound Quantization (Parallel)
+# 04.1-convert-int4-autoround-benchmark.sh — INT4 AutoRound (SPEED BENCHMARK)
 # =============================================================================
-# Evolution from 04-:
-#   - Multi-GPU parallel processing (--parallel flag)
-#   - CPU threading optimization (OMP/MKL/OpenBLAS)
-#   - Batch layer processing (--batch-size flag)
-#   - Expected 4-8x speedup (2-4 hours vs 12-16 hours for large models)
+# ⚠️  BENCHMARK VERSION — Optimized for SPEED, not quality ⚠️
+#
+# Changes from original:
+#   - Iterations: 1000 → 100 (10x faster optimization)
+#   - Calibration samples: 128 → 32 (4x faster data prep)
+#   - Sequence length: 2048 → 512 (4x less context to process)
+#   - Parallel: always enabled
+#   - Batch size: default 8 (max concurrent layers)
+#   - CPU threads: maxed out
+#   - Low GPU mem: disabled (faster)
+#   - damp_percent: 0.01 → 0.05 (less conservative, faster convergence)
+#   - n_blocks: 100 → 200 (fewer save checkpoints)
+#   - enable_quanted_input: true → false (skips quantized input path)
+#   - enable_minmax_tuning: true → false (skips minmax search)
+#   - enable_outlier_channel_wise: true → false (simpler quantization)
+#   - per_channel: true → false (faster, less precise)
+#   - search_method: ammp → rms (faster search)
 #
 # Usage:
-#   bash 04.1-convert-int4-autoround.sh <huggingface-repo> [options]
+#   bash convert-int4-autoround-parallel-benchmark.sh <huggingface-repo> [options]
 #
-# Examples:
-#   # Max quality, single GPU (same as 04-)
-#   bash 04.1-convert-int4-autoround.sh apetersson/DeepSeek-V4-Flash-0731-Abliterated-FP8
+# Example:
+#   bash convert-int4-autoround-parallel-benchmark.sh apetersson/DeepSeek-V4-Flash-0731-Abliterated-FP8
 #
-#   # Parallel mode — all 4 GPUs, 24 CPU threads
-#   bash 04.1-convert-int4-autoround.sh apetersson/DeepSeek-V4-Flash-0731-Abliterated-FP8 --parallel
-#
-#   # Parallel with custom batch size (4 layers concurrent)
-#   bash 04.1-convert-int4-autoround.sh apetersson/DeepSeek-V4-Flash-0731-Abliterated-FP8 --parallel --batch-size 4
-#
-# Options:
+# Options (overrides benchmark defaults):
 #   --bits N              Quantization bits (default: 4)
 #   --group-size N        Group size (default: 64)
 #   --sym                 Symmetric quantization (default: asymmetric)
-#   --samples N           Calibration samples (default: 128)
-#   --seqlen N            Sequence length (default: 2048)
-#   --iters N             Optimization iterations (default: 1000)
-#   --low-gpu-mem         Conservative VRAM mode (default: true)
-#   --recipe NAME         Quantization recipe (default: auto-round-best)
-#   --output-dir PATH     Output directory (default: models/<repo>-int4-AutoRound)
-#   --download-only       Download source model only, skip quantization
-#   --parallel            Enable multi-GPU parallel processing
-#   --batch-size N        Concurrent layers per batch (default: 1, recommended: 4 for 4 GPUs)
+#   --samples N           Calibration samples (benchmark default: 32)
+#   --seqlen N            Sequence length (benchmark default: 512)
+#   --iters N             Optimization iterations (benchmark default: 100)
+#   --batch-size N        Concurrent layers (benchmark default: 8)
+#   --output-dir PATH     Output directory
+#   --download-only       Download source model only
 #   --help                Show this help
 #
-# Performance Notes:
-#   - Single GPU mode: safe for any model, ~12-16 hours for 30B+ models
-#   - Parallel mode: uses all GPUs + CPU threads, ~2-4 hours for 30B+ models
-#   - Batch size 4: optimal for 4× Arc Pro B70 (128 GiB total VRAM)
-#   - CPU threads: 24 threads (12C/24T Threadripper PRO 3945WX)
+# Expected speed: ~10-20x faster than original (minutes vs hours)
+# Quality trade-off: Perplexity will be higher (worse) — use for validation only
 # =============================================================================
 
 set -euo pipefail
@@ -51,20 +50,20 @@ set -euo pipefail
 VENV_DIR="$HOME/electric-sheep/vllm/.venv"
 MODELS_DIR="$HOME/electric-sheep/models"
 
-# Quantization defaults
+# Quantization defaults — BENCHMARK (speed-optimized)
 BITS=4
 GROUP_SIZE=64
 SYMMETRIC=false
-CALIBRATION_SAMPLES=128
+CALIBRATION_SAMPLES=32
 CALIBRATION_DATASET="json"
-SEQLEN=2048
-ITERS=1000
-LOW_GPU_MEM=true
+SEQLEN=512
+ITERS=100
+LOW_GPU_MEM=false
 RECIPE="auto-round-best"
 
-# Parallel processing defaults (NEW in 04.1-)
-PARALLEL=false
-BATCH_SIZE=1
+# Parallel processing defaults — always enabled for benchmark
+PARALLEL=true
+BATCH_SIZE=8
 
 # ============================================
 # Helpers
@@ -149,8 +148,11 @@ fi
 if [ "$PARALLEL" = true ]; then
     # Parallel mode disables low GPU memory for faster processing
     LOW_GPU_MEM=false
-    echo "  Parallel mode enabled — disabling low GPU memory mode"
+    echo "  ✓ BENCHMARK MODE — Parallel enabled, low GPU mem disabled"
     echo "  Batch size: $BATCH_SIZE (concurrent layers)"
+    echo "  Iterations: $ITERS (reduced from 1000 for speed)"
+    echo "  Samples: $CALIBRATION_SAMPLES (reduced from 128 for speed)"
+    echo "  Seq length: $SEQLEN (reduced from 2048 for speed)"
 fi
 
 # ============================================
@@ -387,13 +389,14 @@ recipe = os.environ["RECIPE"]
 parallel = os.environ["PARALLEL"].lower() == "true"
 batch_size = int(os.environ["BATCH_SIZE"])
 
-print(f"\nLoading model from: {source_dir}")
+print(f"\n⚠️  BENCHMARK MODE — Speed optimized, quality reduced ⚠️")
+print(f"Loading model from: {source_dir}")
 print(f"Quantization: {bits}-bit, group_size={group_size}, sym={symmetric}")
 print(f"Recipe: {recipe}")
-print(f"Iterations: {iters} (1000=highest accuracy)")
+print(f"Iterations: {iters} (benchmark: reduced from 1000)")
 print(f"Parallel mode: {parallel}")
 print(f"Batch size: {batch_size} (concurrent layers)")
-print(f"Low GPU memory mode: {low_gpu_mem} (saves ~20GB VRAM)")
+print(f"Low GPU memory mode: {low_gpu_mem}")
 print(f"Calibration: {calibration_samples} samples from {calibration_dataset}")
 print(f"Sequence length: {seqlen}\n")
 
@@ -450,7 +453,7 @@ model = AutoModelForCausalLM.from_pretrained(
 load_time = time.time() - start_time
 print(f"  Model loaded in {load_time:.0f}s, starting quantization...")
 
-# Quantize with maximum quality settings
+# Quantize with BENCHMARK settings (speed over quality)
 start_time = time.time()
 
 model_q, _ = AutoRound.quantize_model(
@@ -465,20 +468,20 @@ model_q, _ = AutoRound.quantize_model(
     iters=iters,
     low_gpu_mem_usage=low_gpu_mem,
     enable_torch_compile=False,
-    enable_quanted_input=True,
+    enable_quanted_input=False,       # Skip quantized input path (faster)
     batch_size=batch_size if parallel else 1,
     seqlen=seqlen,
     amp=True,
-    n_blocks=100,
+    n_blocks=200,                     # Fewer save checkpoints (faster)
     gradient_accumulation_steps=1,
-    lr=1e-3,
+    lr=5e-3,                          # Higher LR for faster convergence with fewer iters
     minmax_range=0,
-    enable_quantscale_search=False,
-    enable_minmax_tuning=True,
-    enable_outlier_channel_wise=True,
-    per_channel=True,
-    damp_percent=0.01,
-    search_method="ammp",
+    enable_quantscale_search=False,   # Skip scale search (faster)
+    enable_minmax_tuning=False,       # Skip minmax tuning (faster)
+    enable_outlier_channel_wise=False, # Simpler outlier handling (faster)
+    per_channel=False,                # Cross-channel quantization (faster)
+    damp_percent=0.05,                # Less conservative damping (faster)
+    search_method="rms",              # RMS search instead of AMMP (faster)
     dynamic_config=None,
 )
 
