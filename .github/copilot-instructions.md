@@ -9,18 +9,24 @@
 
 ## Project Structure Conventions
 
-- **Setup scripts:** `~/ubuntu-b70/` (numbered: `01-`, `02-`, `03-`, ...)
+- **Setup scripts:** `~/electric-sheep/scripts/ubuntu/` (numbered: `01-`, `02-`, `03-`, ...)
+- **Common utilities:** `~/electric-sheep/scripts/common/` (platform-agnostic)
+- **Windows scripts:** `~/electric-sheep/scripts/windows/` (PowerShell)
+- **Runtime configs:** `~/electric-sheep/configs/` (vllm/, llama/deepseek/)
+- **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **vLLM project root:** `~/electric-sheep/vllm/`
 - **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12)
 - **vLLM environment config:** `~/electric-sheep/vllm/set-env-*.sh`
 - **llama.cpp project root:** `~/electric-sheep/llama/`
 - **llama.cpp source:** `~/electric-sheep/llama/llama.cpp/` (cloned repo, build in `build/`)
 - **llama.cpp environment config:** `~/electric-sheep/llama/set-env.sh`
-- **llama.cpp DeepSeek scripts:** `~/electric-sheep/llama/deepseek/`
+- **llama.cpp DeepSeek configs:** `~/electric-sheep/configs/llama/deepseek/`
 - **Model storage:** `~/electric-sheep/models/` (shared by vLLM and llama.cpp)
-- **Do NOT** reference legacy paths (`~/.venv-b70-minimax`, `/mnt/fast-ai/`, `/home/dc/intel-vllm-01/`, `~/llama.cpp/`) in new documents.
+- **Do NOT** reference legacy paths (`~/.venv-b70-minimax`, `/mnt/fast-ai/`, `/home/dc/intel-vllm-01/`, `~/llama.cpp/`, `~/ubuntu-b70/`, `~/windows-5090/`, `~/code-8-7-26/`) in new documents.
 
 ## Hardware Context
+
+### AI Server (Ubuntu — Intel Arc B70)
 
 - **OS:** Ubuntu 26.04 LTS (Kernel 7.0.0-29)
 - **CPU:** AMD Threadripper PRO 3945WX (12C/24T)
@@ -28,6 +34,13 @@
 - **GPU:** 4× Intel Arc Pro B70 (31.89 GiB each, `xe` driver)
 - **Storage:** Samsung 990 PRO 2TB NVMe
 - **oneAPI:** 2026.1.0, Level Zero driver 26.22.38646.7
+
+### Workstation (Windows — RTX 5090)
+
+- **GPU:** NVIDIA RTX 5090 (32 GB, Blackwell sm_100)
+- **CUDA:** 13.1
+- **Build:** MSVC 2022, CMake 4.x
+- **Power tuning:** MSI Afterburner (70% power cap ≈ 315W, ~10% throughput reduction)
 
 ## vLLM Deployment Rules
 
@@ -51,9 +64,9 @@
 
 5. **DeepSeek V4-Flash UD-IQ3_XXS** (`unsloth/DeepSeek-V4-Flash-0731-GGUF`) — ~98 GB, 4 shards, 96K context, ~13 t/s decode
 
-See `ubuntu-b70/vllm/06-model-configs.md` for vLLM launch commands and VRAM budgets.
-See `ubuntu-b70/llama/03-llama-cpp-deployment-guide.md` for llama.cpp deployment.
-See `ubuntu-b70/llama/deepseek/run-stats.md` for DeepSeek performance benchmarks.
+See `configs/vllm/model-configs.md` for vLLM launch commands and VRAM budgets.
+See `docs/guides/llama-deployment.md` for llama.cpp deployment.
+See `configs/llama/deepseek/run-stats.md` for DeepSeek performance benchmarks.
 
 ## CLI Tools
 

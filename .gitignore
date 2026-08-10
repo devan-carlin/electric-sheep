@@ -46,6 +46,17 @@ vllm/vllm-src/
 *.bak
 /swap_b70.img
 
+# Backup folder (temporary, delete after validation)
+ubuntu-b70-backup/
+
+# Old structure (delete after validation)
+ubuntu-b70/
+
+# Legacy folders
+vllm-tuning/
+ollama-tuning/
+llama.cpp-tuning/
+
 # IDE
 .idea/
 *.sublime-*
