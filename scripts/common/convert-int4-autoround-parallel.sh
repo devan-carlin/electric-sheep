@@ -417,9 +417,13 @@ from datasets import load_dataset
 try:
     calib_dataset = load_dataset(calibration_dataset, split="train")
 except Exception:
-    # Fallback to wikitext
+    # Fallback to wikitext (use namespace/name format for newer huggingface_hub)
     print("  Fallback: using wikitext")
-    calib_dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+    try:
+        calib_dataset = load_dataset("wikitext/wikitext-2-raw-v1", split="train")
+    except Exception:
+        # Alternative: use the original format
+        calib_dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
 
 # Prepare calibration samples
 calib_data = []
