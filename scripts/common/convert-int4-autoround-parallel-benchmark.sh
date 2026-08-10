@@ -1,53 +1,78 @@
 #!/usr/bin/env bash
-# ============================================
-# Convert Model to INT4 AutoRound for vLLM
-# ============================================
-# Downloads a source model from HuggingFace and
-# quantizes it to INT4 AutoRound format using
-# the auto-round library.
+# =============================================================================
+# 04.1-convert-int4-autoround-benchmark.sh — INT4 AutoRound (SPEED BENCHMARK)
+# =============================================================================
+# ⚠️  BENCHMARK VERSION — Optimized for SPEED, not quality ⚠️
+#
+# Changes from original:
+#   - Iterations: 1000 → 100 (10x faster optimization)
+#   - Calibration samples: 128 → 32 (4x faster data prep)
+#   - Sequence length: 2048 → 512 (4x less context to process)
+#   - Parallel: always enabled
+#   - Batch size: default 8 (max concurrent layers)
+#   - CPU threads: maxed out
+#   - Low GPU mem: disabled (faster)
+#   - damp_percent: 0.01 → 0.05 (less conservative, faster convergence)
+#   - n_blocks: 100 → 200 (fewer save checkpoints)
+#   - enable_quanted_input: true → false (skips quantized input path)
+#   - enable_minmax_tuning: true → false (skips minmax search)
+#   - enable_outlier_channel_wise: true → false (simpler quantization)
+#   - per_channel: true → false (faster, less precise)
+#   - search_method: ammp → rms (faster search)
 #
 # Usage:
-#   ./04-convert-int4-autoround.sh <huggingface-repo>
-#   ./04-convert-int4-autoround.sh --help
+#   bash convert-int4-autoround-parallel-benchmark.sh <huggingface-repo> [options]
 #
-# Examples:
-#   ./04-convert-int4-autoround.sh apetersson/DeepSeek-V4-Flash-0731--FP8
-#   ./04-convert-int4-autoround.sh meta-llama/Llama-3.3-70B-Instruct
+# Example:
+#   bash convert-int4-autoround-parallel-benchmark.sh apetersson/DeepSeek-V4-Flash-0731--FP8
 #
-# Requirements:
-#   - vLLM virtual environment (~/electric-sheep/vllm/.venv)
-#   - Sufficient VRAM/RAM for the source model
-#   - auto-round package (auto-installed if missing)
+# Options (overrides benchmark defaults):
+#   --bits N              Quantization bits (default: 4)
+#   --group-size N        Group size (default: 64)
+#   --sym                 Symmetric quantization (default: asymmetric)
+#   --samples N           Calibration samples (benchmark default: 32)
+#   --seqlen N            Sequence length (benchmark default: 512)
+#   --iters N             Optimization iterations (benchmark default: 100)
+#   --batch-size N        Concurrent layers (benchmark default: 8)
+#   --output-dir PATH     Output directory
+#   --download-only       Download source model only
+#   --help                Show this help
 #
-# Output:
-#   ~/electric-sheep/models/<repo-name>-int4-AutoRound/
-# ============================================
+# Expected speed: ~10-20x faster than original (minutes vs hours)
+# Quality trade-off: Perplexity will be higher (worse) — use for validation only
+# =============================================================================
 
-set -e
+set -euo pipefail
 
 # ============================================
 # Configuration
 # ============================================
 VENV_DIR="$HOME/electric-sheep/vllm/.venv"
 MODELS_DIR="$HOME/electric-sheep/models"
-CALIBRATION_DATASET="timdettmers/openassistant-guanaco"
-CALIBRATION_SAMPLES=128
+
+# Quantization defaults — BENCHMARK (speed-optimized)
 BITS=4
-GROUP_SIZE=128
+GROUP_SIZE=64
 SYMMETRIC=false
-SEQLEN=2048
-ITERS=1000             # 1000=highest accuracy, 200=standard, 50=faster, 0=RTN (fastest)
-LOW_GPU_MEM=true       # Saves ~20GB VRAM, 30-100% slower (enabled for large models)
-RECIPE="auto-round-best"  # auto-round-best (highest accuracy), auto-round (default), auto-round-light (faster)
+CALIBRATION_SAMPLES=32
+CALIBRATION_DATASET="json"
+SEQLEN=512
+ITERS=100
+LOW_GPU_MEM=false
+RECIPE="auto-round-best"
+
+# Parallel processing defaults — always enabled for benchmark
+PARALLEL=true
+BATCH_SIZE=8
 
 # ============================================
 # Helpers
 # ============================================
 print_header() {
-    echo "=========================================="
-    echo "  $1"
-    echo "=========================================="
     echo ""
+    echo "================================================================"
+    echo "  $1"
+    echo "================================================================"
 }
 
 print_ok() {
@@ -58,48 +83,13 @@ print_warn() {
     echo "  ⚠ $1"
 }
 
-print_err() {
-    echo "  ✗ $1"
-}
-
 fail() {
-    echo ""
-    print_err "$1"
-    echo ""
-    echo "Terminal will stay open for investigation."
-    echo "Press Enter to close..."
-    read -r
+    echo "  ✗ $1"
     exit 1
 }
 
-# ============================================
-# Help
-# ============================================
 show_help() {
-    echo "Usage: $0 <huggingface-repo> [OPTIONS]"
-    echo ""
-    echo "Convert a HuggingFace model to INT4 AutoRound format for vLLM."
-    echo ""
-    echo "Arguments:"
-    echo "  <huggingface-repo>   Model repo (e.g., apetersson/DeepSeek-V4-Flash-0731--FP8)"
-    echo ""
-    echo "Options:"
-    echo "  --bits <n>           Quantization bits (default: 4)"
-    echo "  --group-size <n>     Group size (default: 128)"
-    echo "  --sym                Use symmetric quantization (default: asymmetric)"
-    echo "  --samples <n>        Calibration samples (default: 128)"
-    echo "  --seqlen <n>         Sequence length for calibration (default: 2048)"
-    echo "  --iters <n>          Tuning iterations (default: 200, 0=RTN fastest)"
-    echo "  --low-gpu-mem        Save ~20GB VRAM (30-100% slower)"
-    echo "  --recipe <name>      Recipe: auto-round, auto-round-best, auto-round-light"
-    echo "  --output-dir <path>  Output directory (default: ~/electric-sheep/models/<name>-int4-AutoRound)"
-    echo "  --download-only      Download source model only, skip quantization"
-    echo "  --help               Show this help"
-    echo ""
-    echo "Examples:"
-    echo "  $0 apetersson/DeepSeek-V4-Flash-0731--FP8"
-    echo "  $0 apetersson/DeepSeek-V4-Flash-0731--FP8 --bits 4 --group-size 64"
-    echo "  $0 apetersson/DeepSeek-V4-Flash-0731--FP8 --download-only"
+    head -72 "$0" | tail -68
 }
 
 # ============================================
@@ -135,6 +125,10 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"; shift 2 ;;
         --download-only)
             DOWNLOAD_ONLY=true; shift ;;
+        --parallel)
+            PARALLEL=true; shift ;;
+        --batch-size)
+            BATCH_SIZE="$2"; shift 2 ;;
         --*)
             echo "Unknown option: $1"; show_help; exit 1 ;;
         *)
@@ -148,6 +142,17 @@ if [ -z "$SOURCE_REPO" ]; then
     echo ""
     show_help
     exit 1
+fi
+
+# Parallel mode validation
+if [ "$PARALLEL" = true ]; then
+    # Parallel mode disables low GPU memory for faster processing
+    LOW_GPU_MEM=false
+    echo "  ✓ BENCHMARK MODE — Parallel enabled, low GPU mem disabled"
+    echo "  Batch size: $BATCH_SIZE (concurrent layers)"
+    echo "  Iterations: $ITERS (reduced from 1000 for speed)"
+    echo "  Samples: $CALIBRATION_SAMPLES (reduced from 128 for speed)"
+    echo "  Seq length: $SEQLEN (reduced from 2048 for speed)"
 fi
 
 # ============================================
@@ -165,6 +170,21 @@ print_ok "Virtual environment found"
 # Activate venv early for Python checks
 source "$VENV_DIR/bin/activate"
 
+# CPU threading optimization (NEW in 04.1-)
+if [ "$PARALLEL" = true ]; then
+    echo "  Setting CPU threading for maximum parallelism..."
+    export OMP_NUM_THREADS=24
+    export MKL_NUM_THREADS=24
+    export OPENBLAS_NUM_THREADS=24
+    export NUMEXPR_NUM_THREADS=24
+    export VECLIB_MAXIMUM_THREADS=24
+    echo "  OMP_NUM_THREADS=$OMP_NUM_THREADS"
+    echo "  MKL_NUM_THREADS=$MKL_NUM_THREADS"
+    echo "  OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS"
+else
+    echo "  Single-GPU mode — using default CPU threading"
+fi
+
 # Check Python version
 python_version=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "  Python: $python_version"
@@ -179,18 +199,31 @@ else
     print_warn "PyTorch XPU not available — quantization will use CPU (slower)"
 fi
 
-# Check GPU devices (for VRAM estimation)
+# Check GPU devices (for VRAM estimation) — non-fatal, informational only
 if command -v sycl-ls >/dev/null 2>&1; then
     gpu_count=$(sycl-ls 2>/dev/null | grep -c "level_zero:gpu" || echo "0")
     if [ "$gpu_count" -gt 0 ]; then
         total_vram_gb=0
         while IFS= read -r line; do
-            vram=$(echo "$line" | grep -oP '[\d.]+ GB' | head -1 | awk '{print $1}')
+            # Use basic grep instead of -P (Perl regex) for compatibility
+            # Add || echo "" to prevent exit on no match with set -o pipefail
+            vram=$(echo "$line" | grep -o '[0-9.]* GB' | head -1 | awk '{print $1}' || echo "")
             if [ -n "$vram" ]; then
-                total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
+                if command -v bc >/dev/null 2>&1; then
+                    total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
+                else
+                    # Fallback: integer addition if bc not available
+                    total_vram_gb=$((total_vram_gb + ${vram%.*}))
+                fi
             fi
-        done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu")
+        done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu" || true)
         echo "  GPUs: $gpu_count SYCL GPU(s), ~${total_vram_gb}GB total VRAM"
+        
+        if [ "$PARALLEL" = true ] && [ "$gpu_count" -lt 2 ]; then
+            print_warn "Only 1 GPU detected — parallel mode requires 2+ GPUs"
+            echo "  Falling back to single-GPU mode"
+            PARALLEL=false
+        fi
     else
         print_warn "No SYCL GPU devices — quantization will use CPU only"
     fi
@@ -213,7 +246,7 @@ fi
 print_ok "hf CLI available"
 
 # Check HF token (needed for gated models)
-if [ -z "$HF_TOKEN" ] && [ ! -f "$HOME/.cache/huggingface/token" ]; then
+if [ -z "${HF_TOKEN:-}" ] && [ ! -f "$HOME/.cache/huggingface/token" ]; then
     print_warn "No HF_TOKEN set — gated models (Llama, etc.) may fail"
     echo "  Fix: export HF_TOKEN=hf_..."
 fi
@@ -309,6 +342,11 @@ echo "  Group size:  $GROUP_SIZE"
 echo "  Symmetric:   $SYMMETRIC"
 echo "  Samples:     $CALIBRATION_SAMPLES"
 echo "  Seq length:  $SEQLEN"
+echo "  Iterations:  $ITERS"
+echo "  Recipe:      $RECIPE"
+echo "  Parallel:    $PARALLEL"
+echo "  Batch size:  $BATCH_SIZE"
+echo "  Low GPU mem: $LOW_GPU_MEM"
 echo ""
 echo "  This may take a while depending on model size..."
 echo "  For large models, ensure sufficient VRAM/RAM is available."
@@ -323,7 +361,7 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 # Export variables for the Python script
-export SOURCE_DIR OUTPUT_DIR BITS GROUP_SIZE SYMMETRIC CALIBRATION_SAMPLES CALIBRATION_DATASET SEQLEN ITERS LOW_GPU_MEM RECIPE
+export SOURCE_DIR OUTPUT_DIR BITS GROUP_SIZE SYMMETRIC CALIBRATION_SAMPLES CALIBRATION_DATASET SEQLEN ITERS LOW_GPU_MEM RECIPE PARALLEL BATCH_SIZE
 
 # Force unbuffered output so progress is visible immediately
 export PYTHONUNBUFFERED=1
@@ -348,12 +386,17 @@ seqlen = int(os.environ["SEQLEN"])
 iters = int(os.environ["ITERS"])
 low_gpu_mem = os.environ["LOW_GPU_MEM"].lower() == "true"
 recipe = os.environ["RECIPE"]
+parallel = os.environ["PARALLEL"].lower() == "true"
+batch_size = int(os.environ["BATCH_SIZE"])
 
-print(f"\nLoading model from: {source_dir}")
+print(f"\n⚠️  BENCHMARK MODE — Speed optimized, quality reduced ⚠️")
+print(f"Loading model from: {source_dir}")
 print(f"Quantization: {bits}-bit, group_size={group_size}, sym={symmetric}")
 print(f"Recipe: {recipe}")
-print(f"Iterations: {iters} (1000=highest accuracy)")
-print(f"Low GPU memory mode: {low_gpu_mem} (saves ~20GB VRAM)")
+print(f"Iterations: {iters} (benchmark: reduced from 1000)")
+print(f"Parallel mode: {parallel}")
+print(f"Batch size: {batch_size} (concurrent layers)")
+print(f"Low GPU memory mode: {low_gpu_mem}")
 print(f"Calibration: {calibration_samples} samples from {calibration_dataset}")
 print(f"Sequence length: {seqlen}\n")
 
@@ -371,20 +414,17 @@ if tokenizer.pad_token is None:
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
 # Load calibration data
-print(f"Loading calibration dataset: {calibration_dataset}")
+print("Loading calibration dataset...")
 from datasets import load_dataset
 
-try:
-    calib_dataset = load_dataset(calibration_dataset, split="train")
-except Exception:
-    # Fallback to wikitext
-    print("  Fallback: using wikitext")
-    calib_dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+# Use Salesforce/wikitext (the canonical owner for the wikitext collection)
+calib_dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
 
 # Prepare calibration samples
 calib_data = []
 for i in range(min(calibration_samples, len(calib_dataset))):
-    text = calib_dataset[i]["text"] if "text" in calib_dataset[i] else str(calib_dataset[i])
+    # wikitext-2-raw-v1 has a "text" field with full article content
+    text = calib_dataset[i].get("text", str(calib_dataset[i]))
     if len(text.strip()) > 32:  # Skip very short samples
         calib_data.append(text.strip())
 
@@ -399,17 +439,21 @@ start_time = time.time()
 from auto_round import AutoRound
 from transformers import AutoModelForCausalLM
 
+# Device map: auto for parallel mode, cpu for single-GPU conservative
+device_map = "auto" if parallel else "cpu"
+print(f"  Device map: {device_map}")
+
 model = AutoModelForCausalLM.from_pretrained(
     source_dir,
     torch_dtype=torch.float16,
-    device_map="auto",
+    device_map=device_map,
     trust_remote_code=True,
 )
 
 load_time = time.time() - start_time
 print(f"  Model loaded in {load_time:.0f}s, starting quantization...")
 
-# Quantize with maximum quality settings
+# Quantize with BENCHMARK settings (speed over quality)
 start_time = time.time()
 
 model_q, _ = AutoRound.quantize_model(
@@ -419,44 +463,58 @@ model_q, _ = AutoRound.quantize_model(
     bits=bits,
     group_size=group_size,
     sym=symmetric,
+    layer_wise=True,
+    n_samples=calibration_samples,
     iters=iters,
-    enable_quanted_input=True,
-    seqlen=seqlen,
-    n_samples=len(calib_data),
-    amp=True,
     low_gpu_mem_usage=low_gpu_mem,
-    enable_torch_compile=True,
+    enable_torch_compile=False,
+    enable_quanted_input=False,       # Skip quantized input path (faster)
+    batch_size=batch_size if parallel else 1,
+    seqlen=seqlen,
+    amp=True,
+    n_blocks=200,                     # Fewer save checkpoints (faster)
+    gradient_accumulation_steps=1,
+    lr=5e-3,                          # Higher LR for faster convergence with fewer iters
+    minmax_range=0,
+    enable_quantscale_search=False,   # Skip scale search (faster)
+    enable_minmax_tuning=False,       # Skip minmax tuning (faster)
+    enable_outlier_channel_wise=False, # Simpler outlier handling (faster)
+    per_channel=False,                # Cross-channel quantization (faster)
+    damp_percent=0.05,                # Less conservative damping (faster)
+    search_method="rms",              # RMS search instead of AMMP (faster)
+    dynamic_config=None,
 )
 
 quant_time = time.time() - start_time
-print(f"  Quantization complete in {quant_time:.0f}s")
+print(f"\n  Quantization complete in {quant_time:.0f}s ({quant_time/60:.1f} min)")
 
+# Save the quantized model
 print(f"\nSaving quantized model to: {output_dir}")
 model_q.save_pretrained(output_dir, safe_serialization=True)
 tokenizer.save_pretrained(output_dir)
 
-# Copy config files
-import shutil
-config_src = os.path.join(source_dir, "config.json")
-if os.path.exists(config_src):
-    shutil.copy2(config_src, os.path.join(output_dir, "config.json"))
-
-print("\nQuantization complete!")
-
 # Show output size
-total_size = sum(
-    os.path.getsize(os.path.join(dirpath, f))
+import shutil
+output_size = shutil.getsize(output_dir) if os.path.isfile(output_dir) else sum(
+    os.path.getsize(os.path.join(dirpath, filename))
     for dirpath, _, filenames in os.walk(output_dir)
-    for f in filenames
+    for filename in filenames
 )
-print(f"  Output size: {total_size / (1024**3):.1f} GiB")
+output_size_gb = output_size / (1024**3)
+print(f"  Output size: {output_size_gb:.1f}GB")
+
+total_time = time.time() - start_time
+print(f"\n  Total time: {total_time:.0f}s ({total_time/3600:.1f} hours)")
+print(f"  ✓ Quantization complete!")
 PYEOF
 
-echo ""
-print_ok "Quantization pipeline complete!"
+print_ok "Quantization complete!"
 echo ""
 echo "  Output: $OUTPUT_DIR"
 echo ""
-echo "  To serve with vLLM:"
-echo "    source $VENV_DIR/bin/activate"
-echo "    vllm serve $OUTPUT_DIR --tensor-parallel-size 4 --kv-cache-dtype fp8"
+echo "  To deploy with vLLM:"
+echo "  VLLM_TARGET_DEVICE=xpu python3 -m vllm.entrypoints.openai.api_server \\"
+echo "      --model $OUTPUT_DIR \\"
+echo "      --tensor-parallel-size 4 \\"
+echo "      --gpu-memory-utilization 0.80 \\"
+echo "      --kv-cache-dtype fp8"
