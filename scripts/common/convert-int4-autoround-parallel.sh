@@ -197,13 +197,14 @@ else
     print_warn "PyTorch XPU not available — quantization will use CPU (slower)"
 fi
 
-# Check GPU devices (for VRAM estimation)
+# Check GPU devices (for VRAM estimation) — non-fatal, informational only
 if command -v sycl-ls >/dev/null 2>&1; then
     gpu_count=$(sycl-ls 2>/dev/null | grep -c "level_zero:gpu" || echo "0")
     if [ "$gpu_count" -gt 0 ]; then
         total_vram_gb=0
         while IFS= read -r line; do
-            vram=$(echo "$line" | grep -oP '[\d.]+ GB' | head -1 | awk '{print $1}')
+            # Use basic grep instead of -P (Perl regex) for compatibility
+            vram=$(echo "$line" | grep -o '[0-9.]* GB' | head -1 | awk '{print $1}')
             if [ -n "$vram" ]; then
                 if command -v bc >/dev/null 2>&1; then
                     total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
