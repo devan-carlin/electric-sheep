@@ -244,7 +244,7 @@ fi
 print_ok "hf CLI available"
 
 # Check HF token (needed for gated models)
-if [ -z "$HF_TOKEN" ] && [ ! -f "$HOME/.cache/huggingface/token" ]; then
+if [ -z "${HF_TOKEN:-}" ] && [ ! -f "$HOME/.cache/huggingface/token" ]; then
     print_warn "No HF_TOKEN set — gated models (Llama, etc.) may fail"
     echo "  Fix: export HF_TOKEN=hf_..."
 fi
