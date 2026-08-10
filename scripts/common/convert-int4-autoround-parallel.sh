@@ -204,7 +204,8 @@ if command -v sycl-ls >/dev/null 2>&1; then
         total_vram_gb=0
         while IFS= read -r line; do
             # Use basic grep instead of -P (Perl regex) for compatibility
-            vram=$(echo "$line" | grep -o '[0-9.]* GB' | head -1 | awk '{print $1}')
+            # Add || echo "" to prevent exit on no match with set -o pipefail
+            vram=$(echo "$line" | grep -o '[0-9.]* GB' | head -1 | awk '{print $1}' || echo "")
             if [ -n "$vram" ]; then
                 if command -v bc >/dev/null 2>&1; then
                     total_vram_gb=$(echo "$total_vram_gb + $vram" | bc)
@@ -213,7 +214,7 @@ if command -v sycl-ls >/dev/null 2>&1; then
                     total_vram_gb=$((total_vram_gb + ${vram%.*}))
                 fi
             fi
-        done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu")
+        done < <(sycl-ls 2>/dev/null | grep "level_zero:gpu" || true)
         echo "  GPUs: $gpu_count SYCL GPU(s), ~${total_vram_gb}GB total VRAM"
         
         if [ "$PARALLEL" = true ] && [ "$gpu_count" -lt 2 ]; then
