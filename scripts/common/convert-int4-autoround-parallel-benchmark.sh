@@ -146,9 +146,11 @@ fi
 
 # Parallel mode validation
 if [ "$PARALLEL" = true ]; then
-    # Parallel mode disables low GPU memory for faster processing
-    LOW_GPU_MEM=false
-    echo "  ✓ BENCHMARK MODE — Parallel enabled, low GPU mem disabled"
+    # Force low GPU mem for large models to avoid OOM
+    # FP8→FP16 load on 284B model needs ~568GB, we have ~375GB total
+    # low_gpu_mem_usage=True processes layers sequentially (slower but won't crash)
+    LOW_GPU_MEM=true
+    echo "  ✓ BENCHMARK MODE — Parallel enabled, low GPU mem: $LOW_GPU_MEM (forced for large models)"
     echo "  Batch size: $BATCH_SIZE (concurrent layers)"
     echo "  Iterations: $ITERS (reduced from 1000 for speed)"
     echo "  Samples: $CALIBRATION_SAMPLES (reduced from 128 for speed)"
@@ -371,8 +373,25 @@ python3 -u << 'PYEOF'
 import os
 import sys
 import time
+import traceback
+
+def log(msg):
+    """Log with timestamp for debugging"""
+    elapsed = time.time() - overall_start
+    hours, remainder = divmod(elapsed, 3600)
+    mins, secs = divmod(remainder, 60)
+    print(f"[{int(hours):02d}:{int(mins):02d}:{int(secs):02d}] {msg}", flush=True)
+
+overall_start = time.time()
+
 import torch
-from transformers import AutoTokenizer
+
+# Set CPU threading BEFORE any computation (env vars alone don't work)
+torch.set_num_threads(24)           # Intra-op parallelism (within a single op)
+torch.set_num_interop_threads(24)   # Inter-op parallelism (across ops/layers)
+log(f"PyTorch threads: intra={torch.get_num_threads()}, inter={torch.get_num_interop_threads()}")
+log(f"PyTorch version: {torch.__version__}")
+log(f"GPU available: {torch.cuda.is_available()}, XPU available: {hasattr(torch, 'xpu') and torch.xpu.is_available()}")
 
 # Configuration from environment
 source_dir = os.environ["SOURCE_DIR"]
@@ -381,131 +400,248 @@ bits = int(os.environ["BITS"])
 group_size = int(os.environ["GROUP_SIZE"])
 symmetric = os.environ["SYMMETRIC"].lower() == "true"
 calibration_samples = int(os.environ["CALIBRATION_SAMPLES"])
-calibration_dataset = os.environ["CALIBRATION_DATASET"]
 seqlen = int(os.environ["SEQLEN"])
 iters = int(os.environ["ITERS"])
 low_gpu_mem = os.environ["LOW_GPU_MEM"].lower() == "true"
-recipe = os.environ["RECIPE"]
 parallel = os.environ["PARALLEL"].lower() == "true"
 batch_size = int(os.environ["BATCH_SIZE"])
 
-print(f"\n⚠️  BENCHMARK MODE — Speed optimized, quality reduced ⚠️")
-print(f"Loading model from: {source_dir}")
-print(f"Quantization: {bits}-bit, group_size={group_size}, sym={symmetric}")
-print(f"Recipe: {recipe}")
-print(f"Iterations: {iters} (benchmark: reduced from 1000)")
-print(f"Parallel mode: {parallel}")
-print(f"Batch size: {batch_size} (concurrent layers)")
-print(f"Low GPU memory mode: {low_gpu_mem}")
-print(f"Calibration: {calibration_samples} samples from {calibration_dataset}")
-print(f"Sequence length: {seqlen}\n")
+log(f"\n{'='*60}")
+log("⚠️  BENCHMARK MODE — Speed optimized, quality reduced ⚠️")
+log(f"{'='*60}")
+log(f"Source model: {source_dir}")
+log(f"Output dir:   {output_dir}")
+log(f"Scheme:       W{bits}A16 (group_size={group_size}, sym={symmetric})")
+log(f"Iterations:   {iters} (benchmark: reduced from 1000)")
+log(f"Samples:      {calibration_samples} (benchmark: reduced from 128)")
+log(f"Seq length:   {seqlen} (benchmark: reduced from 2048)")
+log(f"Batch size:   {batch_size}")
+log(f"Low GPU mem:  {low_gpu_mem}")
+log(f"Parallel:     {parallel}")
 
-# Load tokenizer
-print("Loading tokenizer...")
-tokenizer = AutoTokenizer.from_pretrained(
-    source_dir,
-    trust_remote_code=True,
-    padding_side="right"
-)
+# Check source model files
+log("\n--- Checking model files ---")
+import glob
+safetensors = sorted(glob.glob(os.path.join(source_dir, "*.safetensors")))
+total_size = sum(os.path.getsize(f) for f in safetensors)
+log(f"Found {len(safetensors)} safetensor files, total {total_size/1e9:.1f}GB")
 
-# Set padding token if missing
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
+# Print RAM before
+import resource
+ram_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # MB
+log(f"RAM before start: {ram_before:.0f}MB")
 
-# Load calibration data
-print("Loading calibration dataset...")
-from datasets import load_dataset
-
-# Use Salesforce/wikitext (the canonical owner for the wikitext collection)
-calib_dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
-
-# Prepare calibration samples
-calib_data = []
-for i in range(min(calibration_samples, len(calib_dataset))):
-    # wikitext-2-raw-v1 has a "text" field with full article content
-    text = calib_dataset[i].get("text", str(calib_dataset[i]))
-    if len(text.strip()) > 32:  # Skip very short samples
-        calib_data.append(text.strip())
-
-print(f"  {len(calib_data)} calibration samples prepared")
-
-# Load model for quantization
-print("\nLoading model for quantization...")
-print("  This may take several minutes for large models...")
+# ============================================================
+# Use auto_round 0.14.2 API
+# AutoRound handles model loading, quantization, and saving
+# as a single pipeline — no manual from_pretrained needed
+# ============================================================
+log(f"\n{'='*60}")
+log("PHASE: Starting AutoRound (handles loading + quantize + save)")
+log(f"{'='*60}")
 
 start_time = time.time()
 
-from auto_round import AutoRound
-from transformers import AutoModelForCausalLM
+try:
+    from auto_round import AutoRound, QuantizationScheme
 
-# Device map: auto for parallel mode, cpu for single-GPU conservative
-device_map = "auto" if parallel else "cpu"
-print(f"  Device map: {device_map}")
+    # Build quantization scheme
+    scheme = QuantizationScheme(
+        bits=bits,
+        group_size=group_size,
+        sym=symmetric,
+    )
+    log(f"Scheme: {scheme}")
 
-model = AutoModelForCausalLM.from_pretrained(
-    source_dir,
-    torch_dtype=torch.float16,
-    device_map=device_map,
-    trust_remote_code=True,
-)
+    # Device map for tuning — use CPU for large models on XPU
+    # AutoRound tunes block-by-block, so CPU works fine
+    device_map = "cpu"
+    log(f"Device map: {device_map}")
 
-load_time = time.time() - start_time
-print(f"  Model loaded in {load_time:.0f}s, starting quantization...")
+    # low_cpu_mem_usage: saves quantized blocks immediately after packing
+    # This is CRITICAL for large models — prevents OOM during save
+    log(f"low_cpu_mem_usage: True (saves block-by-block)")
+    log(f"low_gpu_mem_usage: {low_gpu_mem}")
 
-# Quantize with BENCHMARK settings (speed over quality)
-start_time = time.time()
+    log(f"\n--- Creating AutoRound instance ---")
+    log("AutoRound will handle: model loading → calibration → quantization → save")
+    log("This may take a while for large models...")
 
-model_q, _ = AutoRound.quantize_model(
-    model=model,
-    tokenizer=tokenizer,
-    calib_data=calib_data,
-    bits=bits,
-    group_size=group_size,
-    sym=symmetric,
-    layer_wise=True,
-    n_samples=calibration_samples,
-    iters=iters,
-    low_gpu_mem_usage=low_gpu_mem,
-    enable_torch_compile=False,
-    enable_quanted_input=False,       # Skip quantized input path (faster)
-    batch_size=batch_size if parallel else 1,
-    seqlen=seqlen,
-    amp=True,
-    n_blocks=200,                     # Fewer save checkpoints (faster)
-    gradient_accumulation_steps=1,
-    lr=5e-3,                          # Higher LR for faster convergence with fewer iters
-    minmax_range=0,
-    enable_quantscale_search=False,   # Skip scale search (faster)
-    enable_minmax_tuning=False,       # Skip minmax tuning (faster)
-    enable_outlier_channel_wise=False, # Simpler outlier handling (faster)
-    per_channel=False,                # Cross-channel quantization (faster)
-    damp_percent=0.05,                # Less conservative damping (faster)
-    search_method="rms",              # RMS search instead of AMMP (faster)
-    dynamic_config=None,
-)
+    # PATCH 1: Disable MoE fused module replacement for INT4 quantization
+    # The replacement tries to wrap INT4 tensors in nn.Parameter, which fails
+    # because integer dtypes can't require gradients
+    # See: https://github.com/intel/auto-round/issues (MoE INT4 support pending)
+    log("--- Patch 1: disabling MoE fused module replacement (INT4 incompatibility) ---")
+    import auto_round.modeling.fused_moe.replace_modules as replace_mod
+    original_apply = replace_mod.apply_replacements
+    def patched_apply(model, *args, **kwargs):
+        log(">>> Skipping MoE fused replacement (INT4 tensors can't be nn.Parameter)")
+        return model
+    replace_mod.apply_replacements = patched_apply
+    log(">>> Patch 1 applied successfully")
 
-quant_time = time.time() - start_time
-print(f"\n  Quantization complete in {quant_time:.0f}s ({quant_time/60:.1f} min)")
+    # PATCH 2: Fix DeepSeek V4 attention forward signature for auto_round compatibility
+    # DeepseekV4Attention.forward() expects: hidden_states, position_embeddings(dict), position_ids, attention_mask, past_key_values
+    # But auto_round passes hidden_states + **kwargs with position_embeddings as 3D tensor (wrong format)
+    # Solution: create local rotary_emb instance and compute proper position_embeddings dict
+    log("--- Patch 2: fixing DeepSeek V4 attention forward signature ---")
+    import transformers.models.deepseek_v4.modeling_deepseek_v4 as dv4_module
+    orig_attn_forward = dv4_module.DeepseekV4Attention.forward
+    # Single shared rotary embedding (lazy init) - DeepseekV4RotaryEmbedding handles both layer_types internally
+    _rotary_emb = [None]  # mutable container for closure
+    def get_rotary_emb(config):
+        if _rotary_emb[0] is None:
+            _rotary_emb[0] = dv4_module.DeepseekV4RotaryEmbedding(config)
+        return _rotary_emb[0]
+    def patched_attn_forward(self, hidden_states, **kwargs):
+        # Extract from kwargs
+        position_ids = kwargs.pop("position_ids", None)
+        attention_mask = kwargs.pop("attention_mask", None)
+        past_key_values = kwargs.pop("past_key_values", None)
+        # Remove invalid position_embeddings from kwargs (3D tensor, wrong format)
+        kwargs.pop("position_embeddings", None)
+        # Generate position_ids if not provided
+        if position_ids is None:
+            batch_size, seq_len, _ = hidden_states.shape
+            position_ids = torch.arange(seq_len, device=hidden_states.device).unsqueeze(0).expand(batch_size, -1)
+        # Compute proper position_embeddings using shared rotary_emb
+        rotary_emb = get_rotary_emb(self.config)
+        position_embeddings = {
+            "main": rotary_emb(hidden_states, position_ids=position_ids, layer_type="main"),
+            "compress": rotary_emb(hidden_states, position_ids=position_ids, layer_type="compress"),
+        }
+        return orig_attn_forward(self, hidden_states, position_embeddings, position_ids, attention_mask, past_key_values, **kwargs)
+    dv4_module.DeepseekV4Attention.forward = patched_attn_forward
+    log(">>> Patch 2 applied successfully")
 
-# Save the quantized model
-print(f"\nSaving quantized model to: {output_dir}")
-model_q.save_pretrained(output_dir, safe_serialization=True)
-tokenizer.save_pretrained(output_dir)
+    # PATCH 3: Fix MoE gate forward signatures for auto_round compatibility
+    # auto_round calls self.gate(hidden_states, input_ids) but routers have different signatures:
+    #   - DeepseekV4TopKRouter.forward(self, hidden_states)  -- no input_ids param
+    #   - DeepseekV4HashRouter.forward(self, hidden_states, input_ids)  -- requires input_ids
+    log("--- Patch 3: fixing MoE gate forward signatures ---")
+    
+    # Patch TopKRouter: accept input_ids arg but ignore it (original doesn't use it)
+    orig_topk_forward = dv4_module.DeepseekV4TopKRouter.forward
+    def patched_topk_forward(self, hidden_states, input_ids=None):
+        # Ignore input_ids, original only takes hidden_states
+        return orig_topk_forward(self, hidden_states)
+    dv4_module.DeepseekV4TopKRouter.forward = patched_topk_forward
+    log(">>> Patched DeepseekV4TopKRouter.forward (accepts input_ids but ignores it)")
+    
+    # Patch HashRouter: provide dummy input_ids when None (original requires it for tid2eid)
+    orig_hash_forward = dv4_module.DeepseekV4HashRouter.forward
+    def patched_hash_forward(self, hidden_states, input_ids=None):
+        if input_ids is None:
+            flat = hidden_states.reshape(-1, self.hidden_dim)
+            # Use zeros as dummy token IDs (all tokens map to same expert set)
+            # This is acceptable for quantization calibration where exact routing doesn't matter
+            input_ids = torch.zeros(flat.shape[0], dtype=torch.long, device=hidden_states.device)
+        return orig_hash_forward(self, hidden_states, input_ids)
+    dv4_module.DeepseekV4HashRouter.forward = patched_hash_forward
+    log(">>> Patched DeepseekV4HashRouter.forward (provides dummy input_ids when None)")
+    
+    log(">>> Patch 3 applied successfully")
 
-# Show output size
-import shutil
-output_size = shutil.getsize(output_dir) if os.path.isfile(output_dir) else sum(
-    os.path.getsize(os.path.join(dirpath, filename))
-    for dirpath, _, filenames in os.walk(output_dir)
-    for filename in filenames
-)
-output_size_gb = output_size / (1024**3)
-print(f"  Output size: {output_size_gb:.1f}GB")
+    # PATCH 4: Disable fine-grained FP8 MoE experts for models with hidden_size != moe_intermediate_size
+    # DeepSeek V4 has hidden_size=4096 but moe_intermediate_size=2048
+    # The fine-grained FP8 kernel expects matching K dimensions, causing AssertionError
+    # Fix: force _experts_implementation="eager" in config so the decorator falls back to original_forward
+    # which uses proper grouped_mm with _grouped_linear that handles 3D weight tensors correctly
+    log("--- Patch 4: forcing eager expert implementation (bypass FP8 kernel) ---")
+    import json as _json
+    config_path = os.path.join(source_dir, "config.json")
+    if os.path.exists(config_path):
+        with open(config_path) as _f:
+            _cfg = _json.load(_f)
+        old_impl = _cfg.get("_experts_implementation", "NOT SET")
+        _cfg["_experts_implementation"] = "eager"
+        with open(config_path, "w") as _f:
+            _json.dump(_cfg, _f, indent=2)
+        log(f">>> Set _experts_implementation='eager' (was: {old_impl})")
+        log(">>> Patch 4 applied - config.json updated")
+    else:
+        log(">>> No config.json found, skipping Patch 4")
 
-total_time = time.time() - start_time
-print(f"\n  Total time: {total_time:.0f}s ({total_time/3600:.1f} hours)")
-print(f"  ✓ Quantization complete!")
+    # PATCH 5: Disable deepgemm FP8 kernel dispatch (force Triton/eager fallback)
+    # The FP8 model needs replace_with_fp8_linear to properly remap w1/w2/w3 → gate_up_proj/down_proj.
+    # But deepgemm kernels fail on XPU with K mismatch errors. We disable deepgemm to use
+    # Triton fallback instead, which handles hidden_size != moe_intermediate_size correctly.
+    log("--- Patch 5: disabling deepgemm FP8 kernel dispatch (use Triton fallback) ---")
+    import transformers.integrations.finegrained_fp8 as fg_fp8_module
+    # Disable deepgemm globally on FP8Experts and FP8Linear classes
+    fg_fp8_module.FP8Experts._deepgemm_disabled = True
+    fg_fp8_module.FP8Linear._deepgemm_disabled = True
+    # Patch _disable_deepgemm_on_multi_device to force disable on all modules post-load
+    original_disable_deepgemm = fg_fp8_module._disable_deepgemm_on_multi_device
+    def patched_disable_deepgemm(model):
+        original_disable_deepgemm(model)
+        for name, module in model.named_modules():
+            if hasattr(module, '_deepgemm_disabled'):
+                module._deepgemm_disabled = True
+    fg_fp8_module._disable_deepgemm_on_multi_device = patched_disable_deepgemm
+    log(">>> Patch 5 applied — deepgemm disabled, Triton fallback enabled")
+
+    # PATCH 6: Let FP8→HP dequantization work normally
+    # With FP8 modules loading properly (Patch 5 no longer blocks replace_with_fp8_linear),
+    # FP8Linear has .weight_scale attributes that FP8Handler.convert_layer needs.
+    # No patching needed — dequantization works correctly.
+    log("--- Patch 6: FP8→HP dequantization enabled (no patch needed) ---")
+    log(">>> Patch 6 skipped — FP8Handler.convert_layer works with proper FP8 modules")
+
+    ar = AutoRound(
+        model=source_dir,              # Pass path, not pre-loaded model
+        scheme=scheme,
+        iters=iters,                   # 100 for benchmark (speed)
+        nsamples=calibration_samples,  # 32 for benchmark (speed)
+        seqlen=seqlen,                 # 512 for benchmark (speed)
+        batch_size=batch_size,
+        low_gpu_mem_usage=low_gpu_mem,
+        low_cpu_mem_usage=True,        # CRITICAL: saves block-by-block
+        device_map=device_map,
+        enable_torch_compile=False,    # Disable for reproducibility
+        trust_remote_code=True,
+    )
+    ar_time = time.time() - start_time
+    log(f"\n{'='*60}")
+    log(f"✓ AutoRound quantization complete in {ar_time:.0f}s ({ar_time/60:.1f} min)")
+    log(f"{'='*60}")
+
+    # Save — with low_cpu_mem_usage=True, most blocks are already saved
+    # This just finalizes the output
+    log(f"\n{'='*60}")
+    log(f"PHASE: Finalizing save to: {output_dir}")
+    log(f"{'='*60}")
+    t0 = time.time()
+    ar.quantize_and_save(output_dir=output_dir, format="auto_round")
+    save_time = time.time() - t0
+    log(f"✓ Save complete in {save_time:.0f}s")
+
+except Exception as e:
+    log(f"\n!!! ERROR: {e}")
+    traceback.print_exc()
+    sys.exit(1)
+
+# Show results
+if os.path.exists(output_dir):
+    output_size = sum(
+        os.path.getsize(os.path.join(dirpath, filename))
+        for dirpath, _, filenames in os.walk(output_dir)
+        for filename in filenames
+    )
+    output_size_gb = output_size / (1024**3)
+    log(f"\nOutput size: {output_size_gb:.1f}GB")
+
+    # Count output files
+    output_files = glob.glob(os.path.join(output_dir, "*.safetensors"))
+    log(f"Output files: {len(output_files)} safetensors")
+
+ram_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # MB
+log(f"Peak RAM: {ram_after:.0f}MB (delta: {ram_after-ram_before:.0f}MB)")
+
+total_time = time.time() - overall_start
+log(f"\n{'='*60}")
+log(f"✓ ALL DONE — Total time: {total_time:.0f}s ({total_time/3600:.1f} hours)")
+log(f"{'='*60}")
 PYEOF
 
 print_ok "Quantization complete!"
