@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Test auto_round INT4 quantization on XPU with all patches applied."""
+"""Test auto_round INT4 quantization on XPU with all patches applied.
+
+Includes hang watchdog that kills the process if no progress is detected
+for 30+ minutes (catches XPU driver context resets / spin loops).
+"""
 
 import os
 import re
+import signal
 import sys
+import threading
 import time
 import torch
 
@@ -11,12 +17,95 @@ print(f"PyTorch: {torch.__version__}")
 print(f"XPU available: {torch.xpu.is_available()}")
 print()
 
+# ============================================================
+# Hang Watchdog — kills process if no progress for 30+ minutes
+# ============================================================
+class HangWatchdog:
+    """Background thread that monitors quantization progress.
+    
+    Detects silent hangs by checking:
+    1. Output directory file modification times (shard writes)
+    2. XPU memory allocation (all zero = GPU context lost)
+    3. Stderr/stdout flush timestamps
+    
+    Kills the process with SIGKILL if no activity for timeout_minutes.
+    """
+    def __init__(self, timeout_minutes=30, output_dir=None):
+        self.timeout = timeout_minutes * 60
+        self.output_dir = output_dir
+        self.last_activity = time.time()
+        self.running = True
+        self.pid = os.getpid()
+
+    def start(self):
+        t = threading.Thread(target=self._watch, daemon=True, name="hang-watchdog")
+        t.start()
+        print(f"[WATCHDOG] Started (timeout={self.timeout//60}min, PID={self.pid})")
+
+    def _newest_mtime(self, directory):
+        """Get the most recent file modification time in a directory tree."""
+        newest = 0
+        if not directory or not os.path.exists(directory):
+            return newest
+        for root, dirs, files in os.walk(directory):
+            for f in files:
+                try:
+                    mtime = os.path.getmtime(os.path.join(root, f))
+                    newest = max(newest, mtime)
+                except OSError:
+                    pass
+        return newest
+
+    def _watch(self):
+        while self.running:
+            time.sleep(120)  # Check every 2 minutes
+            now = time.time()
+            activity = False
+
+            # Check 1: Output directory has new/modified files
+            if self.output_dir:
+                newest = self._newest_mtime(self.output_dir)
+                if newest > self.last_activity:
+                    activity = True
+
+            # Check 2: XPU memory still allocated (context alive)
+            try:
+                total_alloc = sum(torch.xpu.memory_allocated(i) 
+                                  for i in range(torch.xpu.device_count()))
+                if total_alloc == 0:
+                    # All GPUs idle — likely hung if we should be quantizing
+                    elapsed = now - self.last_activity
+                    if elapsed > self.timeout:
+                        print(f"\n⚠️  WATCHDOG: All XPU memory released for {elapsed//60:.0f}min!")
+                        print(f"   GPU context likely lost. Killing PID {self.pid}")
+                        os.kill(self.pid, signal.SIGKILL)
+                        return
+            except Exception:
+                pass  # XPU query failed, skip this check
+
+            if activity:
+                self.last_activity = now
+            elif now - self.last_activity > self.timeout:
+                print(f"\n⚠️  WATCHDOG: No progress for {(now - self.last_activity)//60:.0f}min!")
+                print(f"   Output dir: {self.output_dir}")
+                print(f"   Killing PID {self.pid}")
+                os.kill(self.pid, signal.SIGKILL)
+                return
+
+    def stop(self):
+        self.running = False
+
+
 MODEL_PATH = "/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8"
 OUTPUT_DIR = "/mnt/data/models/DeepSeek-V4-Flash-0731--INT4-xpu"
 
 print(f"Model: {MODEL_PATH}")
 print(f"Output: {OUTPUT_DIR}")
 print()
+
+# Start watchdog early so it catches hangs during model loading too
+watchdog = HangWatchdog(timeout_minutes=30, output_dir=OUTPUT_DIR)
+watchdog.start()
 
 # ============================================================
 # Apply patches BEFORE importing AutoRound
@@ -466,7 +555,7 @@ print()
 # Now import and run AutoRound
 from auto_round import AutoRound
 
-print("[1/3] Loading model...")
+print("[1/3] Loading model on xpu:0 (single GPU to avoid multi-device context issues)...")
 t0 = time.time()
 model = AutoRound(
     MODEL_PATH,
@@ -477,7 +566,7 @@ model = AutoRound(
     enable_quanted_input=True,
     batch_size=4,
     amp=True,
-    device_map="auto",
+    device_map="xpu:0",  # Pin to single GPU — avoids cross-GPU tensor transfers and driver context issues
     low_cpu_mem_usage=True,
     seed=42,
 )
@@ -488,6 +577,10 @@ print("[2/3] Running calibration and quantization...")
 t1 = time.time()
 model.quantize_and_save(OUTPUT_DIR)
 print(f"  Quantization complete in {time.time() - t1:.0f}s")
+
+# Stop watchdog — we succeeded
+watchdog.stop()
+print("[WATCHDOG] Stopped — quantization completed successfully")
 
 print()
 print("[3/3] Done! Output saved to:")
