@@ -16,17 +16,34 @@ desktop.ini
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.egg-info
 dist/
 build/
 *.egg
+*.whl
+*.dist-info/
+*.dist-info
 
-# Virtual environments (git-lfs or excluded)
+# Virtual environments (any directory containing lib/python*/site-packages)
 .venv/
 venv/
+autoround-test/
+**/lib/python*/site-packages/
+**/lib/python*/ensurepip/
+
+# Model files (safetensors, bin, etc.)
+*.safetensors
+*.safetensors.index.json
+*.bin
+*.pt
+*.ckpt
+*.pth
+*/configs/
 
 # llama.cpp build output
 llama.cpp/build/
 llama/llama.cpp/build/
+llama/llama.cpp/
 
 # Build artifacts
 *.so
