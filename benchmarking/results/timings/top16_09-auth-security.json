@@ -1,0 +1,10 @@
+{
+  "topk": "16",
+  "prompt": "09-auth-security",
+  "elapsed_ms": 6645,
+  "prompt_tokens": 225,
+  "completion_tokens": 512,
+  "total_tokens": 737,
+  "prompt_tok_per_sec": 33.8,
+  "gen_tok_per_sec": 77.0
+}

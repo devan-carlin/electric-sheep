@@ -1,0 +1,10 @@
+{
+  "topk": "16",
+  "prompt": "06-code-transform",
+  "elapsed_ms": 6624,
+  "prompt_tokens": 474,
+  "completion_tokens": 512,
+  "total_tokens": 986,
+  "prompt_tok_per_sec": 71.5,
+  "gen_tok_per_sec": 77.2
+}

@@ -1,0 +1,10 @@
+{
+  "topk": "8",
+  "prompt": "04-security-audit",
+  "elapsed_ms": 6500,
+  "prompt_tokens": 1078,
+  "completion_tokens": 512,
+  "total_tokens": 1590,
+  "prompt_tok_per_sec": 165.8,
+  "gen_tok_per_sec": 78.7
+}
