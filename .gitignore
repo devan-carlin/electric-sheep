@@ -54,6 +54,8 @@ llama/llama.cpp/
 # Models (huge — never commit)
 models/
 **/models/
+# local symlink to /mnt/data/models
+/models
 
 # vLLM source builds (re-cloned by 03-build-vllm-xpu.sh)
 vllm/vllm-src/

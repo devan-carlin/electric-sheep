@@ -1,0 +1,8 @@
+{
+  "prompt": "01-math-reasoning",
+  "elapsed_ms": 16786,
+  "prompt_tokens": 312,
+  "completion_tokens": 512,
+  "total_tokens": 824,
+  "gen_tok_per_sec": 30.5
+}

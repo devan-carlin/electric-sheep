@@ -1,0 +1,8 @@
+{
+  "prompt": "05-debugging",
+  "elapsed_ms": 42668,
+  "prompt_tokens": 510,
+  "completion_tokens": 2048,
+  "total_tokens": 2558,
+  "gen_tok_per_sec": 47.9
+}

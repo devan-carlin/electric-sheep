@@ -1,0 +1,8 @@
+{
+  "prompt": "07-system-design",
+  "elapsed_ms": 69903,
+  "prompt_tokens": 196,
+  "completion_tokens": 3367,
+  "total_tokens": 3563,
+  "gen_tok_per_sec": 48.1
+}

@@ -51,46 +51,60 @@ class Handler(BaseHTTPRequestHandler):
 Requirements: `sync.RWMutex` (RLock for reads), proper error handling, `GET /{key}`, `PUT /{key}`, `DELETE /{key}`, `GET /health`. Produce just the Go code.
 
 ## Response
-Thinking Process:
+The user wants to convert a Python HTTP key-value store handler to Go.
+The Python code implements a simple in-memory key-value store with TTL (Time To Live) support.
+It handles GET, PUT, and DELETE requests.
+It uses a lock for thread safety.
+It has a health check endpoint.
 
-1.  **Deconstruct the Python code:**
-    *   Imports: `time`, `threading`, `json`, `http.server`.
-    *   Global state: `store = {}`, `lock = threading.Lock()`.
-    *   Handler class: `BaseHTTPRequestHandler`.
-    *   `do_GET`:
-        *   Path parsing: `self.path.strip('/')`.
-        *   Special case: `health` -> 200 `{"status": "ok"}`.
-        *   Locking: `with lock`.
-        *   Logic: Check existence, check TTL, return value or 404.
-        *   Response: `_json` helper.
-    *   `do_PUT`:
-        *   Path parsing.
-        *   Read body: `json.loads`.
-        *   Locking: `with lock`.
-        *   Logic: Write to store with TTL.
-        *   Response: 201.
-    *   `do_DELETE`:
-        *   Path parsing.
-        *   Locking: `with lock`.
-        *   Logic: Delete if exists, return 200 or 404.
-    *   `_json` helper: Send response code, headers, body.
+Key features to implement in Go:
+1.  Use `net/http` for the server.
+2.  Use `sync.RWMutex` for concurrency control. The prompt specifically asks for `sync.RWMutex` and mentions "RLock for reads".
+3.  Implement the store logic:
+    *   Store: `map[string]struct{value string, expiry time.Time}` (or similar).
+    *   TTL logic: Check if current time > expiry time.
+4.  Endpoints:
+    *   `GET /health`: Returns `{"status": "ok"}`.
+    *   `GET /{key}`: Returns value and remaining TTL if exists and not expired. Returns 404 if not found or expired.
+    *   `PUT /{key}`: Sets value and TTL (default 3600s). Returns 201.
+    *   `DELETE /{key}`: Deletes key. Returns 200 if deleted, 404 if not found.
+5.  Error handling: Proper JSON responses for errors.
+6.  Input parsing: Read body for PUT requests.
 
-2.  **Map to Go constructs:**
-    *   `net/http` server: `http.HandleFunc`, `http.ListenAndServe`.
-    *   Global state: `mu sync.RWMutex`, `store map[string]item`.
-    *   Item structure: `type item struct { value string; exp int64 }`.
-    *   `sync.RWMutex`: `RLock`/`RUnlock` for reads, `Lock`/`Unlock` for writes.
-    *   *Requirement Check:* The prompt asks for `sync.RWMutex` and mentions "RLock for reads". The Python code uses a single `Lock` for everything. Go allows finer granularity. I should use `RLock` for GET and `Lock` for PUT/DELETE.
-    *   Path parsing: `strings.TrimPrefix(r.URL.Path, "/")`.
-    *   JSON: `json.Marshal`, `json.Unmarshal`.
-    *   Time: `time.Now().Unix()`.
-    *   Error handling: Check errors from `json.Unmarshal`, `io.ReadAll`, etc.
+Let's refine the data structure.
+The Python code stores `(value, expiry)`.
+In Go, a struct is cleaner.
+```go
+type item struct {
+    value  string
+    expiry time.Time
+}
+```
 
-3.  **Drafting
+The store will be `map[string]item`.
+
+Concurrency:
+The prompt asks for `sync.RWMutex`.
+Read operations (GET) should use `RLock`.
+Write operations (PUT, DELETE) should use `Lock`.
+
+However, there's a nuance with the TTL check.
+In the Python code:
+```python
+with lock:
+    if key not in store:
+        ...
+    val, exp = store[key]
+    if time.time() > exp:
+        del store[key]
+        ...
+```
+The deletion of an expired key happens inside the lock. This is important to prevent race conditions where a key expires and is read simultaneously.
+So, even for GET,
 
 ## Metadata
 - **Top-k**: 8
-- **Elapsed**: 6085ms
+- **Elapsed**: 6249ms
 - **Prompt tokens**: 474
 - **Completion tokens**: 512
 - **Total tokens**: 986

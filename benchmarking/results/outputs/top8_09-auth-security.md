@@ -17,25 +17,35 @@ Here's a thinking process:
 
 1.  **Analyze User Input:**
    - **Topic:** Auth Security Design Decisions
-   - **Format:** Answer each of 6 questions in 1-2 bullet points
+   - **Format:** 6 specific questions, each requiring 1-2 bullet points per answer.
    - **Questions:**
-     1. Password hashing: bcrypt vs argon2 vs scrypt? Pick one, why, cost factor?
+     1. Password hashing: bcrypt vs argon2 vs scrypt? Pick one, why? Cost factor?
      2. JWT signing: HS256 vs RS256 vs EdDSA? Tradeoffs for microservices?
-     3. Refresh tokens: Rotation implementation? Detect token theft?
-     4. Account lockout: N failed attempts, lock M minutes. What N/M? Prevent lockout DoS?
-     5. Token revocation: Stateless JWTs vs "logout all"? Options: short-lived + refresh DB check, blacklist in Redis?
-     6. Rate limiting: Login 5/min/IP, Reg 3/hour/IP. Where store counters? Redis vs in-memory? Distributed deployments?
-   - **Constraint:** 1-2 bullet points per question.
+     3. Refresh tokens: Rotation implementation? Detect token theft/session hijacking?
+     4. Account lockout: N failed attempts, lock for M minutes. What are N and M? Prevent lockout DoS?
+     5. Token revocation: Stateless JWTs vs "logout all devices". Options: short-lived JWT + refresh token DB check? Token blacklist in Redis?
+     6. Rate limiting: Login (5/min/IP), Registration (3/hour/IP). Where store counters? Redis vs in-memory? Distributed deployments?
+   - **Constraints:** 1-2 bullet points per answer.
 
-2.  **Evaluate Each Question & Formulate Answers (Mental Draft):**
-   - *Q1: Password hashing.* Modern consensus: Argon2id is the winner (OWASP, NIST). It's memory-hard, resistant to GPU/ASIC attacks. Pick Argon2id. Cost: time=2, memory=64MB, parallelism=4 (or similar OWASP-recommended defaults). bcrypt is legacy, scrypt is outdated.
-   - *Q2: JWT signing.* HS256 needs shared secret (bad for microservices). RS256/EdDSA use asymmetric keys. EdDSA (Ed25519) is faster, smaller, and cryptographically stronger than RSA. Tradeoff: EdDSA requires key distribution via JWKS, but no secret sharing. Pick EdDSA.
-   - *Q3: Refresh tokens.* Rotation: issue new refresh token on use, invalidate old one atomically. Detect theft: compare token fingerprint (hash of token + IP/UserAgent) or use device binding; flag mismatched context.
-   - *Q4: Account lockout.* N=5, M=15-30 mins is standard. Prevent DoS: lock by username, not IP; use exponential backoff instead of hard lock; or rely on CAPTCHA/rate limiting rather than account lockout (modern auth prefers sliding windows
+2.  **Deconstruct & Draft Answers (Mental Refinement):**
+
+   *Q1: Password hashing*
+   - Pick: Argon2id (winner of Password Hashing Competition)
+   - Why: Memory-hard, resistant to GPU/ASIC attacks, configurable memory/time/CPU costs
+   - Cost: 64MB memory, 3 iterations, 1 thread (or similar modern defaults), tuned to ~100ms on target hardware
+   - Format: 1-2 bullets
+   - Draft: 
+     • **Argon2id** – Winner of the Password Hashing Competition; it’s memory-hard and highly resistant to GPU/ASIC cracking while remaining CPU-efficient for legitimate verification.
+     • **Cost:** 64 MB memory, 3 iterations, 1 thread (tuned to ~100ms on target servers), with automatic fallback to lower costs if hardware constraints change.
+
+   *Q2: JWT signing*
+   - Pick: EdDSA (Ed25519)
+   - Why: Stronger security than RSA/ECDSA, smaller signatures, faster verification, no padding oracle vulnerabilities, ideal for microservices
+   - Tradeoffs: Requires asymmetric key management (public key distribution), but avoids shared secret risks of HS256 and key size/per
 
 ## Metadata
 - **Top-k**: 8
-- **Elapsed**: 6091ms
+- **Elapsed**: 6149ms
 - **Prompt tokens**: 225
 - **Completion tokens**: 512
 - **Total tokens**: 737

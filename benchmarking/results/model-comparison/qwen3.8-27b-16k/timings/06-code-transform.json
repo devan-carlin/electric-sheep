@@ -1,0 +1,8 @@
+{
+  "prompt": "06-code-transform",
+  "elapsed_ms": 483198,
+  "prompt_tokens": 516,
+  "completion_tokens": 14623,
+  "total_tokens": 15139,
+  "gen_tok_per_sec": 30.2
+}

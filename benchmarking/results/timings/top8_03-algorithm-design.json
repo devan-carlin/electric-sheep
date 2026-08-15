@@ -1,10 +1,10 @@
 {
   "topk": "8",
   "prompt": "03-algorithm-design",
-  "elapsed_ms": 6092,
+  "elapsed_ms": 6164,
   "prompt_tokens": 163,
   "completion_tokens": 512,
   "total_tokens": 675,
-  "prompt_tok_per_sec": 26.7,
-  "gen_tok_per_sec": 84.0
+  "prompt_tok_per_sec": 26.4,
+  "gen_tok_per_sec": 83.0
 }

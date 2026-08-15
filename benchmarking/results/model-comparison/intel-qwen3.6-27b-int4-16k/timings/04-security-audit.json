@@ -1,0 +1,8 @@
+{
+  "prompt": "04-security-audit",
+  "elapsed_ms": 161494,
+  "prompt_tokens": 1078,
+  "completion_tokens": 7762,
+  "total_tokens": 8840,
+  "gen_tok_per_sec": 48.0
+}
