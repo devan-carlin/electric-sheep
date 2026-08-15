@@ -1,10 +1,10 @@
 {
   "topk": "8",
   "prompt": "01-math-reasoning",
-  "elapsed_ms": 7012,
+  "elapsed_ms": 6588,
   "prompt_tokens": 270,
   "completion_tokens": 512,
   "total_tokens": 782,
-  "prompt_tok_per_sec": 38.5,
-  "gen_tok_per_sec": 73.0
+  "prompt_tok_per_sec": 40.9,
+  "gen_tok_per_sec": 77.7
 }

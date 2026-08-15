@@ -13,39 +13,34 @@ You're designing an auth service. Answer each in 1-2 bullet points:
 6. **Rate limiting:** Login endpoint: 5 attempts/min/IP. Registration: 3 attempts/hour/IP. Where do you store counters? Redis? In-memory? What about distributed deployments?
 
 ## Response
-Thinking Process:
+Here's a thinking thinking sequence
 
-1.  **Deconstruct the Prompt:**
-    *   Goal: Design an auth service.
-    *   Constraint: Answer each in 1-2 bullet points.
-    *   Topics:
-        1.  Password hashing (bcrypt vs argon2 vs scrypt, pick, why, cost).
-        2.  JWT signing (HS256 vs RS256 vs EdDSA, tradeoffs microservice).
-        3.  Refresh tokens (rotation, theft detection).
-        4.  Account lockout (N, M, DoS prevention).
-        5.  Token revocation (logout all, stateless JWT vs stateful check).
-        6.  Rate limiting (Login/Reg limits, storage, distributed).
+1.  **Deconstruct and Analyze each question:**
+    *   *Goal:* Answer each question in 1-2 bullet points.
+    *   *Context:* Designing an auth service, microservice architecture implied (especially for JWT and rate limiting).
 
-2.  **Draft Answers per Topic (Mental Check against constraints):**
-    *   *Topic 1: Hashing.*
-        *   Pick: Argon2id. Why: Memory-hard, best against GPU/ASIC attacks, winner of Password Hashing Competition.
-        *   Cost: Time cost 2-3 seconds, memory 64MB.
-        *   *Bullet 1:* Argon2id; memory-hard algorithm wins PHC, superior GPU resistance.
-        *   *Bullet 2:* Time cost 2-3s, memory 64MB; balances security vs latency.
-        *   *Result:* 2 bullets. Good.
+    *   *Question 1: Password hashing.*
+        *   *Options:* bcrypt, argon2, scrypt.
+        *   *Decision:* Argon2 is generally the current gold standard (winner of Password Hashing Competition). It's resistant to GPU attacks and memory-hard.
+        *   *Why:* Security, memory-hardness.
+        *   *Cost factor:* Needs to be high enough to slow down attackers but low enough to not impact UX. Usually ~100ms. Argon2id is preferred.
+        *   *Drafting:* Argon2id. Memory-hard, resistant to GPU attacks. Cost: ~100ms latency (e.g., `time_cost=3`, `memory_cost=65536`).
 
-    *   *Topic 2: JWT Signing.*
-        *   HS256: Shared secret, simple, but key management hard in microservices.
-        *   RS256: Asymmetric, good for key rotation, but larger tokens, CPU heavy.
-        *   EdDSA: Fast, small, but less standard support? Actually EdDSA is great.
-        *   Tradeoff Microservice: RS256 allows independent key management per service, no shared secret leakage. Or EdDSA for speed?
-        *   *Decision:* RS256 is the classic answer for microservices due to key isolation. EdDSA is modern but RS256 is the "tradeoff" answer usually expected.
-        *   *Bullet 1:* RS256; asymmetric keys isolate signing secrets per service, enable independent key rotation without re-issuing tokens.
-        *   *Bullet 2:* HS256 avoids
+    *   *Question 2: JWT signing.*
+        *   *Options:* HS256, RS256, EdDSA.
+        *   *Context:* Microservice architecture.
+        *   *Tradeoffs:* HS256 requires shared secret (hard to distribute securely across services). RS256 uses asymmetric keys (public key can be shared, private kept secure), good for distributed systems. EdDSA is newer, faster, smaller signatures, but RS256 is more widely supported in existing libraries/ecosystems.
+        *   *Decision:* RS256 is the safest bet for microservices due to key distribution. EdDSA is a strong contender for performance, but RS256 is the standard answer for "microservice architecture" tradeoffs regarding key management.
+        *   *Drafting:* RS256. Asymmetric keys allow public key distribution to all microservices without sharing secrets; private key stays secure in auth service. EdDSA is faster/smaller but RS256 offers better ecosystem compatibility and key isolation.
+
+    *   *Question 3: Refresh tokens.*
+        *   *Sub-questions:* Rotation? Detection of theft?
+        *   *Rotation:* Revoke old, issue new. Store in DB.
+        *   *Detection:* Device fingerprinting, IP tracking, or "one active session
 
 ## Metadata
 - **Top-k**: 16
-- **Elapsed**: 6645ms
+- **Elapsed**: 6489ms
 - **Prompt tokens**: 225
 - **Completion tokens**: 512
 - **Total tokens**: 737

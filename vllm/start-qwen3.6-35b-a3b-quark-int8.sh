@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Qwen 3.6 35B-A3B Quark W8A8 INT4 - INT8 MoE model (experimental)
-# Uses all 4 GPUs (TP=4), requires Quark quantization support
+# Uses all 4 GPUs (TP=4), 192K context, requires Quark quantization support
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh"
 
@@ -17,14 +17,14 @@ MODEL_PATH="$HOME/electric-sheep/models/nameistoken-Qwen3.6-35B-A3B-Quark-W8A8-I
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model "$MODEL_PATH" \
-    --served-model-name qwen3.6-35b-a3b-quark-int8 \
+    --served-model-name qwen-192k \
     --host 0.0.0.0 \
-    --port 8005 \
+    --port 8000 \
     --tensor-parallel-size $TP_SIZE \
-    --max-model-len 32768 \
-    --max-num-seqs 48 \
+    --max-model-len 196608 \
+    --max-num-seqs 8 \
     --max-num-batched-tokens 8192 \
-    --kv-cache-dtype auto \
+    --kv-cache-dtype fp8 \
     --quantization quark \
     --trust-remote-code \
     --gpu-memory-utilization 0.80 \

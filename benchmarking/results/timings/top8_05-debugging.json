@@ -1,10 +1,10 @@
 {
   "topk": "8",
   "prompt": "05-debugging",
-  "elapsed_ms": 6106,
+  "elapsed_ms": 6271,
   "prompt_tokens": 510,
   "completion_tokens": 512,
   "total_tokens": 1022,
-  "prompt_tok_per_sec": 83.5,
-  "gen_tok_per_sec": 83.8
+  "prompt_tok_per_sec": 81.3,
+  "gen_tok_per_sec": 81.6
 }

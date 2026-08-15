@@ -1,0 +1,8 @@
+{
+  "prompt": "09-auth-security",
+  "elapsed_ms": 42534,
+  "prompt_tokens": 225,
+  "completion_tokens": 2048,
+  "total_tokens": 2273,
+  "gen_tok_per_sec": 48.1
+}

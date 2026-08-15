@@ -1,0 +1,10 @@
+{
+  "topk": "32",
+  "prompt": "07-system-design",
+  "elapsed_ms": 7028,
+  "prompt_tokens": 196,
+  "completion_tokens": 512,
+  "total_tokens": 708,
+  "prompt_tok_per_sec": 27.8,
+  "gen_tok_per_sec": 72.8
+}

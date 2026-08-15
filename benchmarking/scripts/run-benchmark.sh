@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-benchmark.sh — Benchmark Huihui- with different expert routing (top-k)
+# run-benchmark.sh — Benchmark Intel Qwen3.6-35B-A3B with different expert routing (top-k)
 #
 # Usage:
 #   ./run-benchmark.sh [topk_values]
@@ -36,7 +36,7 @@ VLLM_HOST="localhost"
 MAX_TOKENS=512
 TEMPERATURE=0.2
 TOP_P=0.9
-# MoE model is ~65 GiB across 4x34GB GPUs with TP=4
+# Intel Qwen3.6-35B-A3B INT4 model is ~21 GiB across 4x34GB GPUs with TP=4
 GPU_MEMORY_UTILIZATION=0.8
 MAX_MODEL_LEN=8192
 TENSOR_PARALLEL_SIZE=4
@@ -76,7 +76,7 @@ start_vllm() {
     check_port_clear
     log "Starting vLLM for top-${topk} (TP=${TENSOR_PARALLEL_SIZE}, GPUs=0,1,2,3)..."
     vllm serve "$model_dir" \
-        --served-model-name "huihui-" \
+        --served-model-name "intel-qwen3.6-35b-a3b" \
         --port "$VLLM_PORT" \
         --host 0.0.0.0 \
         --tensor-parallel-size "$TENSOR_PARALLEL_SIZE" \
@@ -169,7 +169,7 @@ run_prompt() {
             --argjson temperature "$TEMPERATURE" \
             --argjson top_p "$TOP_P" \
             '{
-                model: "huihui-",
+                model: "intel-qwen3.6-35b-a3b",
                 messages: [{role: "user", content: $prompt}],
                 max_tokens: $max_tokens,
                 temperature: $temperature,
@@ -240,12 +240,12 @@ generate_summary() {
     local summary_file="$RESULTS_DIR/SUMMARY.md"
 
     cat > "$summary_file" <<'HEADER'
-# Huihui- MoE Expert Routing Benchmark
+# Intel Qwen3.6-35B-A3B MoE Expert Routing Benchmark
 
 ## Model
-- **Name**: Huihui---35B-
+- **Name**: Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound
 - **Architecture**: Qwen3.5 MoE (256 experts, 40 layers)
-- **Total params**: ~35B
+- **Total params**: ~35B (INT4 quantized, ~21 GB)
 - **Test date**: $(date)
 
 ## Test Matrix

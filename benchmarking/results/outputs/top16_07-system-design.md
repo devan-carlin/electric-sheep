@@ -14,42 +14,44 @@ Design a URL shortener (like bit.ly). Answer each in 1-2 bullet points:
 7. **Expiration:** How do you clean up expired links without scanning the whole table?
 
 ## Response
-Thinking Process:
+Here's a thinking process:
 
-1.  **Deconstruct the Prompt:**
-    *   Goal: System Design URL Shortener.
-    *   Constraint: Key Decisions Only, 1-2 bullet points per question.
-    *   Questions: ID gen, DB schema, Redirect flow, Caching, Scaling, Custom aliases, Expiration.
+1.  **Analyze User Input:**
+   - **Topic:** System Design - URL Shortener
+   - **Constraint:** Answer each in 1-2 bullet points
+   - **Questions:**
+     1. ID generation: Base62? Hash? Why?
+     2. Database schema: Core table? Key indexes?
+     3. Redirect flow: 301 vs 302? Why? Cache invalidation?
+     4. Caching: Redis content? TTL strategy? Cache misses?
+     5. Scaling: 10M redirects/day, 1M creates/day. Read/write ratio? Bottleneck?
+     6. Custom aliases: Collisions? Race conditions?
+     7. Expiration: Cleanup without full table scan?
 
-2.  **Draft Answers per Question (Mental Check against constraints):**
+2.  **Deconstruct & Draft Answers (Mental Refinement):**
+   *Constraint Check:* Each answer must be exactly 1-2 bullet points. I'll structure each response as a single bullet or two concise bullets.
 
-    *   *ID generation:* Base62 vs Hash. Base62 is deterministic and space-efficient. Hash is random but might collide or be longer. Base62 is standard.
-        *   *Draft:* Base62 encoding of a monotonically increasing counter. Deterministic, space-efficient, avoids random collision checks.
-        *   *Check:* 1 bullet? Yes. Key decision? Yes.
+   **1. ID generation:**
+   - Base62 encoding of a monotonically increasing integer (or distributed ID generator like Snowflake) ensures uniqueness, compactness, and human-readable alphanumeric codes.
+   - Avoids hash collisions and provides predictable, sequential IDs that scale well across distributed systems.
 
-    *   *Database schema:* Core table. Key indexes.
-        *   *Draft:* Table `short_url` with columns `id`, `short_code`, `long_url`, `created_at`. PK on `id`. Unique index on `short_code`.
-        *   *Check:* 1 bullet? Yes. Key decision? Yes.
+   **2. Database schema:**
+   - Core table: `short_urls(id, short_code, original_url, created_at, expires_at, custom_alias, status)`.
+   - Indexes: Unique index on `short_code` (or `custom_alias`), and secondary indexes on `created_at`/`expires_at` for expiration cleanup and analytics.
 
-    *   *Redirect flow:* 301 vs 302. Cache invalidation.
-        *   *Draft:* 302 for analytics/ability to change target; 301 for SEO/permanent. Cache invalidation via write-through or TTL.
-        *   *Check:* 1 bullet? Yes. Key decision? Yes.
+   **3. Redirect flow:**
+   - Use 302 (temporary) for standard redirects to allow cache invalidation and dynamic routing changes; use 301 only for permanent/custom links.
+   - Cache invalidation via Redis TTL expiration + a background job that updates/invalidates cached entries when the underlying URL or status changes.
 
-    *   *Caching:* Redis. TTL. Misses.
-        *   *Draft:* Cache `short_code` -> `long_url`. TTL matches link expiration. Misses go to DB, write-through cache.
-        *   *Check:* 1 bullet? Yes. Key decision? Yes.
+   **4. Caching:**
+   - Redis stores `short_code → original_url` mappings with a TTL (e.g., 24h) to reduce DB load and latency.
+   - Cache misses trigger a DB lookup, then populate Redis; use a write-through or cache-aside pattern with a short TTL to balance freshness and performance.
 
-    *   *Scaling:* 10M read, 1M write. Ratio. Bottleneck.
-        *   *Draft:* Read-heavy (10:1). Bottleneck is DB read on cache miss. Shard by hash of short_code or use read replicas.
-        *   *Check:* 1 bullet? Yes. Key decision? Yes.
-
-    *   *Custom aliases:* Collisions. Race conditions.
-        *   *Draft:* Unique index check. Use DB transaction or optimistic locking with retry.
-        *   *Check:* 1 bullet? Yes.
+   **5.
 
 ## Metadata
 - **Top-k**: 16
-- **Elapsed**: 6553ms
+- **Elapsed**: 6454ms
 - **Prompt tokens**: 196
 - **Completion tokens**: 512
 - **Total tokens**: 708

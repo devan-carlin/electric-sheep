@@ -1,0 +1,10 @@
+{
+  "topk": "32",
+  "prompt": "02-logic-puzzle",
+  "elapsed_ms": 7056,
+  "prompt_tokens": 285,
+  "completion_tokens": 512,
+  "total_tokens": 797,
+  "prompt_tok_per_sec": 40.3,
+  "gen_tok_per_sec": 72.5
+}
