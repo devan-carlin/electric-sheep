@@ -77,18 +77,20 @@ echo "Using GPUs: $GPU_SET  (TP=$TP_SIZE)"
 # --- 3. Optimization options -------------------------------------------------
 echo
 echo "=== Optimization options ==="
-read -rp "Context length (1=32768, 2=65536, 3=131072, 4=196608, 5=262144, 0=custom): " cl
+cl="$(ask "Context length (1=32768, 2=65536, 3=131072, 4=196608, 5=262144, 0=custom)" "5")"
 case "$cl" in
   1) MAX_LEN=32768 ;; 2) MAX_LEN=65536 ;; 3) MAX_LEN=131072 ;;
   4) MAX_LEN=196608 ;; 5) MAX_LEN=262144 ;;
   0) MAX_LEN="$(ask "Custom max-model-len" "262144")" ;;
   *) MAX_LEN=262144 ;;
 esac
-read -rp "KV cache dtype (1=fp8, 2=auto): " kv;   KV_DTYPE=$([[ "$kv" == "2" ]] && echo auto || echo fp8)
-read -rp "Prefix caching? (y/n): " pc;            PREFIX=$([[ "${pc,,}" == "n" ]] && echo "--no-enable-prefix-caching" || echo "--enable-prefix-caching")
-read -rp "Enable MTP speculative decoding? (y/n): " mtp
-read -rp "GPU memory utilization: " gpu_util;     GPU_UTIL="${gpu_util:-0.85}"
-read -rp "Port: " port;                           PORT="${port:-8000}"
+kv="$(ask "KV cache dtype (1=fp8, 2=auto)" "1")"
+KV_DTYPE=$([[ "$kv" == "2" ]] && echo auto || echo fp8)
+pc="$(ask "Prefix caching? (y/n)" "y")"
+PREFIX=$([[ "${pc,,}" == "n" ]] && echo "--no-enable-prefix-caching" || echo "--enable-prefix-caching")
+mtp="$(ask "Enable MTP speculative decoding? (y/n)" "n")"
+GPU_UTIL="$(ask "GPU memory utilization" "0.85")"
+PORT="$(ask "Port" "8000")"
 
 # Served name = qwen-<context window size in k>
 SERVED="qwen-$((MAX_LEN/1024))k"
