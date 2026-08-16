@@ -27,6 +27,7 @@ build/
 # Virtual environments (any directory containing lib/python*/site-packages)
 .venv/
 venv/
+output/
 autoround-test/
 **/lib/python*/site-packages/
 **/lib/python*/ensurepip/

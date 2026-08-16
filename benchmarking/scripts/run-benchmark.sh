@@ -20,7 +20,7 @@ if [ -f "$VENV_DIR/bin/activate" ]; then
 fi
 
 # Source GPU environment for 4-GPU tensor parallelism
-source "/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"

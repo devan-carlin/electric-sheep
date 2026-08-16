@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Quantize Qwen3.8-27B-heretic-ara (BF16, OFFICIAL ARA model) -> INT4 AutoRound
-# (W4A16, group_size 128, sym). QUALITY-MAXIMIZING config.
+# Quantize Qwen3.8-27B-heretic (BF16, OUR directional-ablation model) -> INT4
+# AutoRound (W4A16, group_size 128, sym).
 #
-# Base recipe mirrors the proven base-model run (quantize-qwen3.8-27b-int4.sh),
-# same qwen3_5 hybrid GDN architecture:
+# Recipe is IDENTICAL to the proven base-model run
+# (quantize-qwen3.8-27b-int4.sh -> Qwen3.8-27B-int4-AutoRound), same qwen3_5
+# hybrid GDN architecture:
 #   - bits=4, group_size=128, sym, format=auto_round:auto_gptq (vLLM-loadable)
 #   - GDN gate projections kept 16-bit (numerically sensitive, tiny [48,5120]):
 #       model.language_model.layers.N.linear_attn.in_proj_a  (48 layers)
@@ -12,36 +13,23 @@
 #   - mtp.fc kept 16-bit
 #   - lm_head NOT quantized
 #
-# QUALITY LEVERS (bumped vs the base run to maximize fidelity):
-#   - --iters 10            : GPTQ tuning iterations per layer (base used default 1).
-#                             More iters = weights fit the calibration data better.
-#                             Push to 50-100 for even more quality (much slower).
-#   - --nsamples 256        : calibration samples (base used 128). More data =
-#                             better per-layer quantization decisions.
-#   - --enable_quanted_input: propagate QUANTIZED activations through the net, so
-#                             each layer is tuned against the real (lossy) input it
-#                             will see at inference, not the clean BF16 input.
-#   - --scale_dtype fp32    : store quantization scales in fp32 (max precision;
-#                             tiny size cost) instead of the default lower precision.
-#
-# Hardware: 4x Arc Pro B70 (34.2GB each). Model is 52GB BF16, so
+# Hardware: 4x Arc Pro B70 (34.2GB each). Model is 51GB BF16, so
 # --device_map auto distributes it across all 4 XPU devices.
 #
 # PREREQUISITE: No other vLLM server running (needs all 4 GPUs free).
 #   pkill -9 -f "vllm.entrypoints.openai.api_server"; pkill -9 -f "VLLM::"; fuser -k 8000/tcp
 #
-# Estimated runtime: longer than the base run due to iters=10 + nsamples=256.
-# Budget several hours (overnight is safe).
+# Estimated runtime: 1-3 hours (calibration + per-layer GPTQ tuning).
 # =============================================================================
 set -euo pipefail
 
 cd /home/dc/electric-sheep/vllm
 source .venv/bin/activate
-source set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
+source env/set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
 
-MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic-ara
-OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic-ara-int4-AutoRound
-LOG=/tmp/autoround-qwen3.8-27b-heretic-ara.log
+MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic
+OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic-int4-AutoRound
+LOG=/tmp/autoround-qwen3.8-27b-heretic.log
 
 # GDN gate projections + mtp.fc excluded from quantization (16-bit).
 # ignore_layers uses substring matching, so these patterns cover all 48 layers.
@@ -54,12 +42,9 @@ auto-round quantize \
   --format auto_round:auto_gptq \
   --device_map auto \
   --dataset NeelNanda/pile-10k \
-  --nsamples 256 \
+  --nsamples 128 \
   --seqlen 2048 \
   --batch_size 8 \
-  --iters 10 \
-  --enable_quanted_input \
-  --scale_dtype fp32 \
   --ignore_layers "$IGNORE_LAYERS" \
   --no-quant_lm_head \
   --output_dir "$OUT" \

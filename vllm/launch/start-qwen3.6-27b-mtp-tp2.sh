@@ -3,7 +3,7 @@
 # Uses GPUs 0,1 (TP=2), 160K context
 # Leaves GPUs 2,3 free for another model
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
-source "/home/dc/electric-sheep/vllm/set-env-01-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-01-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"

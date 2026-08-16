@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Quantize Qwen3.8-27B-heretic (BF16, OUR directional-ablation model) -> INT4
-# AutoRound (W4A16, group_size 128, sym).
+# Quantize Qwen3.8-27B (BF16) -> INT4 AutoRound (W4A16, group_size 128, sym)
 #
-# Recipe is IDENTICAL to the proven base-model run
-# (quantize-qwen3.8-27b-int4.sh -> Qwen3.8-27B-int4-AutoRound), same qwen3_5
-# hybrid GDN architecture:
+# Recipe mirrors the proven Intel-Qwen3.6-27B-int4-AutoRound model (same
+# qwen3_5 hybrid GDN architecture):
 #   - bits=4, group_size=128, sym, format=auto_round:auto_gptq (vLLM-loadable)
 #   - GDN gate projections kept 16-bit (numerically sensitive, tiny [48,5120]):
 #       model.language_model.layers.N.linear_attn.in_proj_a  (48 layers)
 #       model.language_model.layers.N.linear_attn.in_proj_b  (48 layers)
 #   - mtp.fc kept 16-bit
-#   - lm_head NOT quantized
+#   - lm_head NOT quantized (matches Intel model)
 #
-# Hardware: 4x Arc Pro B70 (34.2GB each). Model is 51GB BF16, so
+# Hardware: 4x Arc Pro B70 (34.2GB each). Model is 52GB BF16, so
 # --device_map auto distributes it across all 4 XPU devices.
 #
 # PREREQUISITE: No other vLLM server running (needs all 4 GPUs free).
@@ -25,11 +23,11 @@ set -euo pipefail
 
 cd /home/dc/electric-sheep/vllm
 source .venv/bin/activate
-source set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
+source env/set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
 
-MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic
-OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-heretic-int4-AutoRound
-LOG=/tmp/autoround-qwen3.8-27b-heretic.log
+MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B
+OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-int4-AutoRound
+LOG=/tmp/autoround-qwen3.8-27b.log
 
 # GDN gate projections + mtp.fc excluded from quantization (16-bit).
 # ignore_layers uses substring matching, so these patterns cover all 48 layers.
