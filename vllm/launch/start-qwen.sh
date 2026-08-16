@@ -43,18 +43,25 @@ GPU_IDS="${GPU_IDS:-0 1 2 3}"   # fallback if detection failed
 echo "=== Qwen model selection ==="
 # Trailing slash: $MODELS_DIR is a symlink to /mnt/data/models; find won't
 # follow a symlink starting point without it.
-mapfile -t QWEN < <(find "$MODELS_DIR/" -maxdepth 2 -name config.json -exec dirname {} \; 2>/dev/null | grep -iE "qwen" | sort)
+# Discover by directory name (any nesting depth for config.json).
+mapfile -t QWEN < <(find "$MODELS_DIR/" -maxdepth 1 -type d 2>/dev/null | grep -iE "qwen" | sort)
 if [[ ${#QWEN[@]} -eq 0 ]]; then echo "ERROR: no Qwen models found in $MODELS_DIR"; exit 1; fi
 for i in "${!QWEN[@]}"; do
   # show name + context window + size
-  ctx="$(python3 -c "import json;c=json.load(open('${QWEN[$i]}/config.json'));tc=c.get('text_config',c);print(tc.get('max_position_embeddings','?'))" 2>/dev/null)"
+  cfg="$(find "${QWEN[$i]}" -name config.json 2>/dev/null | head -1)"
+  ctx="$(python3 -c "import json;c=json.load(open('${cfg}'));tc=c.get('text_config',c);print(tc.get('max_position_embeddings','?'))" 2>/dev/null)"
   size="$(du -sh "${QWEN[$i]}" 2>/dev/null | cut -f1)"
   printf "  %2d) %-55s ctx=%-7s %s\n" "$((i+1))" "${QWEN[$i]#$MODELS_DIR/}" "$ctx" "$size"
 done
 read -rp "Qwen model number: " qn
 MODEL_PATH="${QWEN[$((qn-1))]:-}"
-[[ -z "$MODEL_PATH" || ! -f "$MODEL_PATH/config.json" ]] && { echo "ERROR: bad selection."; exit 1; }
-echo "Model: $MODEL_PATH"
+[[ -z "$MODEL_PATH" ]] && { echo "ERROR: bad selection."; exit 1; }
+# Resolve the actual model directory (where config.json lives) — handles
+# both flat layouts and nested subdirectories.
+CFG_FILE="$(find "$MODEL_PATH" -name config.json 2>/dev/null | head -1)"
+[[ -z "$CFG_FILE" ]] && { echo "ERROR: no config.json found under $MODEL_PATH"; exit 1; }
+MODEL_DIR="$(dirname "$CFG_FILE")"
+echo "Model: $MODEL_DIR"
 
 # --- 2. GPU selection --------------------------------------------------------
 echo
@@ -89,7 +96,7 @@ read -rp "Served model name: " served;            SERVED="${served:-$SERVED}"
 
 # Auto-detect quantization method
 QUANT_FLAG=""
-QM="$(python3 -c "import json;c=json.load(open('$MODEL_PATH/config.json'));print((c.get('quantization_config') or {}).get('quant_method',''))" 2>/dev/null)"
+QM="$(python3 -c "import json;c=json.load(open('$CFG_FILE'));print((c.get('quantization_config') or {}).get('quant_method',''))" 2>/dev/null)"
 case "$QM" in
   quark) QUANT_FLAG="--quantization quark" ;;
   auto-round|auto_round) QUANT_FLAG="--quantization auto-round" ;;
@@ -129,7 +136,7 @@ fi
 
 # --- 5. Build + run ----------------------------------------------------------
 CMD=(python3 -m vllm.entrypoints.openai.api_server
-  --model "$MODEL_PATH"
+  --model "$MODEL_DIR"
   --served-model-name "$SERVED"
   --host 0.0.0.0
   --port "$PORT"
