@@ -82,7 +82,7 @@ Original HF Model (256 experts, 147 GB)
 
 ## Phase 1: REAP Pruning
 
-**Script**: `electric-sheep/vllm/reap-deepseek-v4.py`
+**Script**: `electric-sheep/vllm/experimental/reap-deepseek-v4.py`
 
 REAP (Runtime Expert Adaptation and Pruning) analyzes expert importance scores and zeros out the least-used experts. The original implementation:
 
@@ -98,7 +98,7 @@ REAP (Runtime Expert Adaptation and Pruning) analyzes expert importance scores a
 
 ### Attempt 1: Full Model Loading (v1)
 
-**Script**: `electric-sheep/vllm/slice-reap-deepseek-v4.py`
+**Script**: `electric-sheep/vllm/experimental/slice-reap-deepseek-v4.py`
 
 **Approach**: Load the pruned model via PyTorch, slice tensors in memory, save.
 
@@ -108,7 +108,7 @@ REAP (Runtime Expert Adaptation and Pruning) analyzes expert importance scores a
 
 ### Attempt 2: Direct Safetensors — Gate Only (v2)
 
-**Script**: `electric-sheep/vllm/slice-reap-deepseek-v4-v2.py`
+**Script**: `electric-sheep/vllm/experimental/slice-reap-deepseek-v4-v2.py`
 
 **Approach**: Read safetensors shards directly (no model loading), slice gate weight tensors from `[4096, 256]` → `[4096, 192]`.
 
@@ -120,7 +120,7 @@ REAP (Runtime Expert Adaptation and Pruning) analyzes expert importance scores a
 
 ### Attempt 3: Per-Expert Removal (v3)
 
-**Script**: `electric-sheep/vllm/slice-reap-deepseek-v4-v3.py`
+**Script**: `electric-sheep/vllm/experimental/slice-reap-deepseek-v4-v3.py`
 
 **Approach**: Direct safetensors + gate slicing + per-expert tensor removal.
 
@@ -130,7 +130,7 @@ REAP (Runtime Expert Adaptation and Pruning) analyzes expert importance scores a
 
 ### Attempt 4: Expert Renumbering (v4)
 
-**Script**: `electric-sheep/vllm/slice-reap-deepseek-v4-v4.py`
+**Script**: `electric-sheep/vllm/experimental/slice-reap-deepseek-v4-v4.py`
 
 **Approach**: Gate slicing + expert removal + sequential renumbering (0-191).
 
@@ -145,7 +145,7 @@ GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as) failed
 
 ### Attempt 5: Complete Solution (v5) ✅
 
-**Script**: `electric-sheep/vllm/slice-reap-deepseek-v4-v4.py` (final version)
+**Script**: `electric-sheep/vllm/experimental/slice-reap-deepseek-v4-v4.py` (final version)
 
 **Approach**: Four-step process, all operating on raw safetensors data:
 

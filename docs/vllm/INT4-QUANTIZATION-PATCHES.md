@@ -460,7 +460,7 @@ The patches must be applied in this specific order:
 
 ## References
 
-- Script: `/home/dc/electric-sheep/vllm/test-autoround-xpu-patched.py`
+- Script: `/home/dc/electric-sheep/vllm/experimental/test-autoround-xpu-patched.py`
 - Model: `/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8`
 - Output: `/mnt/data/models/DeepSeek-V4-Flash-0731--INT4-xpu`
 - Kernel: `~/.cache/huggingface/hub/kernels--kernels-community--finegrained-fp8/snapshots/7cdb05d472d6c954c7d03182ed836ebfd4610df0/build/torch-xpu/grouped.py`

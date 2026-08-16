@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Qwen 3.6 27B INT4 - Primary model
-# Uses all 4 GPUs (TP=4), 192K context
+# Qwen 3.6 35B-A3B INT4 - Mixture of Experts model
+# Uses all 4 GPUs (TP=4), 192K context, requires patching
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
-source "/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"
 
-MODEL_PATH="$HOME/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound"
+MODEL_PATH="$HOME/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound"
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model "$MODEL_PATH" \
@@ -24,4 +24,5 @@ python3 -m vllm.entrypoints.openai.api_server \
     --enable-auto-tool-choice \
     --tool-call-parser qwen3_coder \
     --gpu-memory-utilization 0.80 \
-    --enable-prefix-caching
+    --enable-prefix-caching \
+    --hf-overrides '{"fix_mistral_regex": true}'

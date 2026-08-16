@@ -16,7 +16,11 @@
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **vLLM project root:** `~/electric-sheep/vllm/`
 - **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12)
-- **vLLM environment config:** `~/electric-sheep/vllm/set-env-*.sh`
+- **vLLM launchers:** `~/electric-sheep/vllm/launch/` (per-model `start-*.sh` + interactive `vllm-launch.sh` / `start-qwen.sh`)
+- **vLLM quantization:** `~/electric-sheep/vllm/quantize/` (AutoRound INT4 scripts)
+- **vLLM environment config:** `~/electric-sheep/vllm/env/set-env-*.sh`
+- **vLLM experimental:** `~/electric-sheep/vllm/experimental/` (one-off reap/slice/test/fix scripts)
+- **vLLM patch reference:** `~/electric-sheep/docs/vllm/` (INT4-QUANTIZATION-PATCHES.md, PATCHES-DIFF.md)
 - **llama.cpp project root:** `~/electric-sheep/llama/`
 - **llama.cpp source:** `~/electric-sheep/llama/llama.cpp/` (cloned repo, build in `build/`)
 - **llama.cpp environment config:** `~/electric-sheep/llama/set-env.sh`

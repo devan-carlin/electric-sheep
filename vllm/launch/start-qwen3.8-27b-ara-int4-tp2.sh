@@ -4,7 +4,7 @@
 # Leaves GPUs 2,3 free for another model.
 # NO MTP / speculative decoding (measured slower on XPU: 34.9 vs 52.2 tok/s at TP=4).
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
-source "/home/dc/electric-sheep/vllm/set-env-01-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-01-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"

@@ -3,7 +3,7 @@
 # Uses all 4 GPUs (TP=4), 256K context
 # Mirrors the BF16 launch (start-qwen3.8-27b) + --quantization auto-round
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
-source "/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"

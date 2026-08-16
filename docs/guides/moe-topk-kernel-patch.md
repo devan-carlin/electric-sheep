@@ -19,7 +19,7 @@ Extend `vllm-xpu-kernels` to support `num_experts_per_tok` values of TopK=16, 32
 | vLLM | 0.26.1rc1.dev500+gc39076fef.xpu (FlashAttention v2, TP=4) |
 | Compiler | Intel oneAPI 2026.1 (icx/icpx) |
 | Model | Huihui---35B- (Qwen3.5 MoE, 256 experts, 40 layers, ~67 GB) |
-| GPU env | `/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh` (TP_SIZE=4, GPUs 0-3) |
+| GPU env | `/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh` (TP_SIZE=4, GPUs 0-3) |
 
 ## Background
 
@@ -158,7 +158,7 @@ cd /home/dc/electric-sheep/vllm/vllm-src/vllm-xpu-kernels
 rm -rf build/temp build/lib* .deps/*-subbuild
 
 # 3. Set GPU environment and activate venv
-source /home/dc/electric-sheep/vllm/set-env-0123-gpu.sh
+source /home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh
 source /home/dc/electric-sheep/vllm/.venv/bin/activate
 
 # 4. Build and install (editable mode)

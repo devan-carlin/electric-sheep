@@ -52,15 +52,22 @@ electric-sheep/
 │   ├── windows/         # Workstation setup (PowerShell)
 │   └── common/          # Shared utilities (both platforms)
 ├── configs/
-│   ├── vllm/            # vLLM runtime configs
+│   ├── vllm/            # vLLM runtime configs (model + server)
 │   └── llama/           # llama.cpp runtime configs
 ├── docs/
 │   ├── architecture.md  # Hardware specs + project layout
-│   └── guides/          # Deployment guides
+│   ├── guides/          # Deployment + technique guides
+│   └── vllm/            # vLLM patch reference (INT4 quant, patch diffs)
 ├── vllm/                # vLLM runtime (created by setup scripts)
+│   ├── launch/          # start-*.sh launchers (per model) + interactive launchers
+│   ├── quantize/        # AutoRound INT4 quantization scripts
+│   ├── env/             # set-env-*.sh XPU environment configs
+│   └── experimental/    # one-off scripts (reap/slice, test, fix)
 ├── llama/               # llama.cpp runtime (created by setup scripts)
-├── models/              # Shared model storage
-└── llm-stress-tests/    # Model evaluation prompts
+├── models/              # Shared model storage (symlink -> /mnt/data/models)
+├── benchmarking/        # Throughput + model-comparison benchmark suite
+├── llm-stress-tests/    # 53-prompt quality evaluation suite
+└── articles/            # Draft articles (issues, optimizations, experiments)
 ```
 
 ---
@@ -165,11 +172,15 @@ See `configs/vllm/model-configs.md` for launch commands and VRAM budgets.
 
 ## Runtime Configs
 
-All startup scripts and environment configs live in `configs/`:
+Launchers live in `vllm/launch/`, XPU environment configs in `vllm/env/`, and
+reference configs in `configs/`:
 
 ```bash
-# Start vLLM (check configs/vllm/ for set-env scripts)
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+# Start vLLM (per-model launcher; sources the matching env config)
+bash ~/electric-sheep/vllm/launch/start-qwen3.8-27b-int4.sh
+
+# Or source the env config manually and serve any model
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 vllm serve <model-path> --tensor-parallel-size 4 --kv-cache-dtype fp8
 
 # Start llama.cpp DeepSeek

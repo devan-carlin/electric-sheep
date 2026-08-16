@@ -23,7 +23,7 @@ set -euo pipefail
 
 cd /home/dc/electric-sheep/vllm
 source .venv/bin/activate
-source set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
+source env/set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
 
 MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B
 OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-int4-AutoRound

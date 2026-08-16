@@ -2,7 +2,7 @@
 # Qwen 3.6 35B-A3B Quark W8A8 INT4 - INT8 MoE model (experimental)
 # Uses all 4 GPUs (TP=4), 192K context, requires Quark quantization support
 source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
-source "/home/dc/electric-sheep/vllm/set-env-0123-gpu.sh"
+source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"

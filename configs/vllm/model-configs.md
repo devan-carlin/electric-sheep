@@ -33,7 +33,7 @@
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
@@ -60,7 +60,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
@@ -85,7 +85,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-gemma-4-31B-it-int4-AutoRound-V2 \
@@ -106,7 +106,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-gemma-4-26B-A4B-it-int4-AutoRound \
@@ -133,7 +133,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-0123-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/DeepSeek-V4-Flash-0731-GGUF/UD-IQ3_XXS/UD-IQ3_XXS/DeepSeek-V4-Flash-0731-UD-IQ3_XXS-00001-of-00004.gguf \
@@ -173,7 +173,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 **Terminal 1 — GPUs 0,1 (Qwen 27B):**
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-01-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
@@ -207,7 +207,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 **Terminal 1 — GPUs 0,1 (Qwen 27B, 128k Context):**
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-01-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-01-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-Qwen3.6-27B-int4-AutoRound \
@@ -231,7 +231,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 **Terminal 2 — GPUs 2,3 (Qwen 35B-A3B, 128k Context):**
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate
-source ~/electric-sheep/vllm/set-env-23-gpu.sh
+source ~/electric-sheep/vllm/env/set-env-23-gpu.sh
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model ~/electric-sheep/models/Intel-Qwen3.6-35B-A3B-int4-mixed-AutoRound \
