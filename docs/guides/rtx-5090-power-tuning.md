@@ -190,6 +190,9 @@ nvidia-smi -pl 315  # Set power limit to 315W
 
 ## Comparison: Ubuntu B70 vs Windows 5090
 
+See `arc-b70-power-tuning.md` for the full B70 guide (sysfs caps, frequency
+limits, systemd persistence, and the `setup-gpu-power-limits.sh` script).
+
 | Aspect | Ubuntu B70 (4×) | Windows 5090 (1×) |
 |---|---|---|
 | Tool | sysfs / systemd | MSI Afterburner |

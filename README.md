@@ -197,6 +197,7 @@ bash ~/electric-sheep/configs/llama/deepseek/start-deepseek-v4-flash.sh
 | `docs/guides/vllm-deployment.md` | vLLM XPU deployment on Intel Arc |
 | `docs/guides/llama-deployment.md` | llama.cpp SYCL deployment on Intel Arc |
 | `docs/guides/deepseek-int4-conversion.md` | Full INT4 quantization walkthrough |
+| `docs/guides/arc-b70-power-tuning.md` | sysfs power caps + frequency limits for Intel Arc B70 |
 | `docs/guides/rtx-5090-power-tuning.md` | MSI Afterburner power limits for RTX 5090 |
 | `docs/guides/tailscale-setup.md` | Mesh networking between machines |
 
