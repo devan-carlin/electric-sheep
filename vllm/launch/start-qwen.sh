@@ -91,6 +91,12 @@ PREFIX=$([[ "${pc,,}" == "n" ]] && echo "--no-enable-prefix-caching" || echo "--
 mtp="$(ask "Enable MTP speculative decoding? (y/n)" "n")"
 GPU_UTIL="$(ask "GPU memory utilization" "0.85")"
 PORT="$(ask "Port" "8000")"
+# Perf flags (defaults from the B70 vLLM gist: prefill 11k+ tok/s, gen ~90 tok/s)
+BLOCK_SIZE="$(ask "KV block size" "32")"
+MAX_BATCHED="$(ask "Max batched tokens (prefill)" "16384")"
+MAX_SEQS="$(ask "Max concurrent sequences" "2")"
+lm="$(ask "Language-model-only (skip vision tower)? (y/n)" "y")"
+LM_ONLY=$([[ "${lm,,}" == "y" ]] && echo "--language-model-only" || echo "")
 
 # Served name = qwen-<context window size in k>
 SERVED="qwen-$((MAX_LEN/1024))k"
@@ -148,12 +154,16 @@ CMD=(python3 -m vllm.entrypoints.openai.api_server
   "$PREFIX"
   --trust-remote-code
   --gpu-memory-utilization "$GPU_UTIL"
+  --block-size "$BLOCK_SIZE"
+  --max-num-batched-tokens "$MAX_BATCHED"
+  --max-num-seqs "$MAX_SEQS"
   --reasoning-parser qwen3
   --enable-auto-tool-choice
   --tool-call-parser qwen3_coder
   --generation-config vllm
 )
 [[ -n "$QUANT_FLAG" ]] && CMD+=($QUANT_FLAG)
+[[ -n "$LM_ONLY" ]] && CMD+=($LM_ONLY)
 if [[ "${mtp,,}" == "y" ]]; then
   CMD+=(--speculative-config '{"method":"mtp","num_speculative_tokens":1}')
 fi
@@ -161,7 +171,7 @@ fi
 echo
 echo "=== Launch command ==="
 printf '%q ' "${CMD[@]}"; echo
-echo "GPUs=$GPU_SET  TP=$TP_SIZE  ctx=$MAX_LEN  served=$SERVED  kv=$KV_DTYPE  util=$GPU_UTIL  quant=${QM:-none}  mtp=${mtp:-n}"
+echo "GPUs=$GPU_SET  TP=$TP_SIZE  ctx=$MAX_LEN  served=$SERVED  kv=$KV_DTYPE  util=$GPU_UTIL  quant=${QM:-none}  mtp=${mtp:-n}  block=$BLOCK_SIZE  batched=$MAX_BATCHED  seqs=$MAX_SEQS  lm-only=${lm:-y}"
 echo
 
 if [[ "$DRY_RUN" == "1" ]]; then
