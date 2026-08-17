@@ -37,6 +37,8 @@ electric-sheep/
 │   │   └── tailscale-setup.md
 │   └── vllm/                      # vLLM patch reference
 │       ├── INT4-QUANTIZATION-PATCHES.md
+│       ├── INT8-W8A16-QUANTIZATION.md
+│       ├── xpu-int8-w8a16-kernel-gap.md
 │       └── PATCHES-DIFF.md
 │
 ├── scripts/
