@@ -110,6 +110,7 @@ case "$QM" in
   auto-round|auto_round) QUANT_FLAG="--quantization auto-round" ;;
   gptq) QUANT_FLAG="--quantization gptq" ;;
   fp8) QUANT_FLAG="--quantization fp8" ;;
+  compressed-tensors) QUANT_FLAG="--quantization compressed-tensors" ;;  # INT8 W8A16 (WNA16)
   "") : ;;
   *) echo "NOTE: unrecognized quant_method '$QM'." ;;
 esac
