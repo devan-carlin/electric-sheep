@@ -98,9 +98,8 @@ MAX_SEQS="$(ask "Max concurrent sequences" "2")"
 lm="$(ask "Language-model-only (skip vision tower)? (y/n)" "y")"
 LM_ONLY=$([[ "${lm,,}" == "y" ]] && echo "--language-model-only" || echo "")
 
-# Served name = qwen-<context window size in k>
-SERVED="qwen-$((MAX_LEN/1024))k"
-read -rp "Served model name: " served;            SERVED="${served:-$SERVED}"
+# Served name = qwen-<context window size in k> (default shown in prompt)
+SERVED="$(ask "Served model name" "qwen-$((MAX_LEN/1024))k")"
 
 # Auto-detect quantization method
 QUANT_FLAG=""
@@ -116,8 +115,13 @@ case "$QM" in
 esac
 
 # --- 4. XPU environment (supersedes set-env-*.sh) ----------------------------
-export ONEAPI_DEVICE_SELECTOR="level_zero:$GPU_SET"
+# Device selection: ZE_AFFINITY_MASK picks the PHYSICAL GPUs and renumbers
+# them 0..N-1; ONEAPI_DEVICE_SELECTOR is then applied to that filtered space.
+# It must therefore use 0..N-1, NOT the physical ids — physical ids (e.g. 2,3)
+# point past the end of the filtered list and torch sees 0 devices, which
+# breaks any non-identity subset (0,1,2,3 happened to work: identity mapping).
 export ZE_AFFINITY_MASK="$GPU_SET"
+export ONEAPI_DEVICE_SELECTOR="level_zero:$(seq -s, 0 $((TP_SIZE-1)))"
 export UR_L0_SYNC_MODE=BLOCKING
 export TORCH_LLM_ALLREDUCE=1
 export CCL_ZE_IPC_EXCHANGE=pidfd
