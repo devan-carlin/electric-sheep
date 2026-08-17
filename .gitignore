@@ -65,6 +65,9 @@ models/
 # vLLM source builds (re-cloned by 03-build-vllm-xpu.sh)
 vllm/vllm-src/
 
+# Personal / local-only (never commit)
+BACKLOG.md
+
 # Temporary files
 *.tmp
 *.bak
