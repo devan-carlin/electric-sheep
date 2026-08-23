@@ -1,0 +1,28 @@
+# ninfer-sycl local ignores (parent repo root is /home/dc/electric-sheep)
+
+# Large external clones / prebuilt binaries (not part of the engine)
+llama-src/
+llama-sycl/
+
+# Nested git repos (managed independently, not as gitlinks)
+ninfer/
+ninfer-porting-kit/
+
+# Models (huge) — also covered by root .gitignore
+models/
+
+# Build outputs
+build/
+*.o
+*.so
+*.a
+
+# Compiled bench binaries (rebuild via bench/build.sh)
+bench/bench1_gemm
+bench/bench2_graph
+bench/bench3_bandwidth
+bench/diag_graph
+bench/probe_gemm
+bench/probe_graph
+bench/probe_graph_flags
+bench/probe_graph_names
