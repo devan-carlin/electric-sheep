@@ -21,7 +21,7 @@ the SYCL interop API (`dnnl_sycl.hpp`).
 
 ## Target
 
-- Artifact: `models/qwen3_8_27b.ninfer` (SHA-verified vs published manifest).
+- Artifact: `models/ninfer/qwen3_8_27b/qwen3_8_27b.ninfer` (SHA-verified vs published manifest).
 - GPU 0.
 - Validation: reference server `192.168.68.54:8080` (live NInfer) + local IPEX.
 

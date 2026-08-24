@@ -3,7 +3,7 @@
 Source of truth: `ninfer/src/artifact/storage_layouts.cpp`, `reader.cpp`, and the
 dequant atoms in `ninfer/src/ops/linear/{q4,q5,q6,w8}/*_rowsplit_*.cuh`.
 All geometry verified byte-exact against all 9 quantized tensor shapes in
-`models/qwen3_8_27b.ninfer`.
+`models/ninfer/qwen3_8_27b/qwen3_8_27b.ninfer`.
 
 ## Container (.ninfer v2)
 

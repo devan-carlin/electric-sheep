@@ -30,7 +30,7 @@ static float f16_to_f32(std::uint16_t h) {
 }
 
 int main() {
-    nsycl::artifact::Reader reader("models/qwen3_8_27b.ninfer");
+    nsycl::artifact::Reader reader("models/ninfer/qwen3_8_27b/qwen3_8_27b.ninfer");
     const auto* t = reader.find("text/token_embedding");
     if (!t) { std::fprintf(stderr, "no embedding tensor\n"); return 1; }
     const auto* td = std::get_if<nsycl::artifact::TensorDescriptor>(t);

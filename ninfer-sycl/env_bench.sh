@@ -10,7 +10,7 @@ pkill -f "llama-server.*Qwen3.8-27B" 2>/dev/null
 sleep 3
 
 env "$@" ./llama-src/build-sycl/bin/llama-server \
-  -m models/gguf/Qwen3.8-27B-UD-Q4_K_XL.gguf \
+  -m models/unsloth/Qwen3.8-27B/Qwen3.8-27B-UD-Q4_K_XL.gguf \
   -dev SYCL0 -sm none -mg 0 -ngl 99 \
   -c 262144 -b 512 -ub 512 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
