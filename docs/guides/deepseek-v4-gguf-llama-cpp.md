@@ -55,7 +55,7 @@
 source ~/electric-sheep/llama/set-env.sh
 cd ~/llama.cpp/build
 ./bin/llama-server \
-  -m ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
+  -m ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
   --host 0.0.0.0 \
   --port 8080 \
   --gpu-layers 999 \
@@ -76,7 +76,7 @@ cd ~/llama.cpp/build
 source ~/electric-sheep/llama/set-env.sh
 cd ~/llama.cpp/build
 ./bin/llama-server \
-  -m ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
+  -m ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
   --host 0.0.0.0 \
   --port 8080 \
   --gpu-layers 999 \
@@ -165,7 +165,7 @@ The default `--split-mode layer` (pipelined) assigns whole layers to GPUs in rou
 source ~/electric-sheep/llama/set-env.sh
 cd ~/llama.cpp/build
 ./bin/llama-server \
-  -m ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
+  -m ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
   --host 0.0.0.0 \
   --port 8080 \
   --gpu-layers 999 \

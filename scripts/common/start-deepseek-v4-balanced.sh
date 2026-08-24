@@ -31,7 +31,7 @@ step()  { echo -e "${CYAN}>>>${NC} $*"; }
 # ============================================
 LLAMA_DIR="$HOME/llama.cpp"
 LLAMA_SERVER="$LLAMA_DIR/build/bin/llama-server"
-MODEL_FILE="$HOME/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf"
+MODEL_FILE="$HOME/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf"
 DRAFTER_FILE="$HOME/electric-sheep/models/unsloth-DeepSeek-V4-Flash-0731-GGUF/dspark-DeepSeek-V4-Flash-0731-Q8_0.gguf"
 
 # Server settings (prefer 8080, fall back to 8081)

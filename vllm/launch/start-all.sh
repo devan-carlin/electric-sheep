@@ -20,7 +20,7 @@
 #                GEMMA_PORT, GEMMA_GPU, GEMMA_MAX_LEN, GEMMA_KV_DTYPE,
 #                GEMMA_GPU_MEM_UTIL, GEMMA_CPU_OFFLOAD_GB
 #
-# NOTE: gemma-4-ortenzya-31b- is served as INT4 AutoRound (~18 GB),
+# NOTE: davidau-gemma-4-ortenzya-31b- is served as INT4 AutoRound (~18 GB),
 # which fits fully on one 32 GB B70 with no CPU offload.
 #
 # KV cache: fp8 is the ONLY working kv-cache-dtype for Gemma4 on this vLLM/XPU
@@ -49,13 +49,13 @@ COMFY_GPU_B="${COMFY_GPU_B:-1}"
 
 QWEN_PORT="${QWEN_PORT:-8088}"
 QWEN_GPU="${QWEN_GPU:-2}"
-QWEN_MODEL="$MODELS_DIR/Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
+QWEN_MODEL="$MODELS_DIR/devan-carlin-Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
 QWEN_NAME="qwen-256k"
 QWEN_MAX_LEN="${QWEN_MAX_LEN:-262144}"
 
 GEMMA_PORT="${GEMMA_PORT:-8089}"
 GEMMA_GPU="${GEMMA_GPU:-3}"
-GEMMA_MODEL="$MODELS_DIR/gemma-4-ortenzya-31b--int4-AutoRound/gemma-4-ortenzya-31b--w4g128"
+GEMMA_MODEL="$MODELS_DIR/davidau-gemma-4-ortenzya-31b--int4-AutoRound/gemma-4-ortenzya-31b--w4g128"
 GEMMA_NAME="gemma-31b"
 GEMMA_MAX_LEN="${GEMMA_MAX_LEN:-32768}"
 GEMMA_KV_DTYPE="${GEMMA_KV_DTYPE:-fp8}"

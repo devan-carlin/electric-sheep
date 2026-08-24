@@ -9,7 +9,7 @@ source "/home/dc/electric-sheep/vllm/env/set-env-01-gpu.sh"
 # Compile cache root for warm starts (faster cold launches)
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"
 
-MODEL_PATH="$HOME/electric-sheep/models/Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
+MODEL_PATH="$HOME/electric-sheep/models/devan-carlin-Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
 
 python3 -m vllm.entrypoints.openai.api_server \
     --model "$MODEL_PATH" \

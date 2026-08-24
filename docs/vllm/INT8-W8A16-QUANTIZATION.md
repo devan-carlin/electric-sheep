@@ -1,7 +1,7 @@
 # INT8 W8A16 Quantization for Qwen3.5-family Models on Intel Arc B70 XPU
 
 **Date:** 2026-08-17
-**Model:** `Qwen3.8-27B--ara` (qwen3_5 arch, 27B, 52 GB bf16)
+**Model:** `-org-Qwen3.8-27B--ara` (qwen3_5 arch, 27B, 52 GB bf16)
 **Hardware:** 4× Intel Arc Pro B70 (32 GB each), Threadripper PRO 3945WX, 247 GB RAM
 **Status:** WORKING — model quantized, loads, and runs at 47.8 tok/s (TP=4, cudagraph), matching the INT4 baseline (48.0 tok/s)
 
@@ -248,20 +248,20 @@ bottleneck; the environment (cudagraph, TP) is.
 source /home/dc/electric-sheep/vllm/.venv/bin/activate
 cd /home/dc/electric-sheep/vllm/int8-w8a16
 python quantize-w8a16.py \
-  /mnt/data/models/Qwen3.8-27B--ara \
-  /mnt/data/models/Qwen3.8-27B--ara-int8-w8a16
+  /mnt/data/models/-org-Qwen3.8-27B--ara \
+  /mnt/data/models/devan-carlin-Qwen3.8-27B--ara-int8-w8a16
 
 # 2. Sanity check (main venv, TP=2, eager)
 source /opt/intel/oneapi/setvars.sh
 ONEAPI_DEVICE_SELECTOR=level_zero:0,1 CUDA_VISIBLE_DEVICES="" \
-  python diag-int8-model.py /mnt/data/models/Qwen3.8-27B--ara-int8-w8a16 2
+  python diag-int8-model.py /mnt/data/models/devan-carlin-Qwen3.8-27B--ara-int8-w8a16 2
 
 # 3. Benchmark (main venv, TP=4, cudagraph)
 source /home/dc/electric-sheep/vllm/.venv/bin/activate
 source /opt/intel/oneapi/setvars.sh
 source /home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh
 CUDA_VISIBLE_DEVICES="" \
-  python bench-decode-cg.py /mnt/data/models/Qwen3.8-27B--ara-int8-w8a16 4 cg
+  python bench-decode-cg.py /mnt/data/models/devan-carlin-Qwen3.8-27B--ara-int8-w8a16 4 cg
 ```
 
 ## Files
@@ -272,7 +272,7 @@ CUDA_VISIBLE_DEVICES="" \
 | `vllm/int8-w8a16/diag-int8-model.py` | Correctness check (raw token IDs + decode). |
 | `vllm/int8-w8a16/bench-decode-cg.py` | Throughput bench with `eager`/`cg` mode arg. |
 | `vllm/env/set-env-0123-gpu.sh` | XPU graph + device env vars (cudagraph enabler). |
-| `/mnt/data/models/Qwen3.8-27B--ara-int8-w8a16/` | The quantized checkpoint (31.62 GB). |
+| `/mnt/data/models/devan-carlin-Qwen3.8-27B--ara-int8-w8a16/` | The quantized checkpoint (31.62 GB). |
 
 ## Related
 

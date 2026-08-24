@@ -6,7 +6,7 @@ import sys
 
 from vllm import LLM, SamplingParams
 
-MODEL = sys.argv[1] if len(sys.argv) > 1 else "/mnt/data/models/Qwen3.8-27B-int4-AutoRound"
+MODEL = sys.argv[1] if len(sys.argv) > 1 else "/mnt/data/models/devan-carlin-Qwen3.8-27B-int4-AutoRound"
 PROMPT = "What is 17 * 23? Answer with just the number."
 
 

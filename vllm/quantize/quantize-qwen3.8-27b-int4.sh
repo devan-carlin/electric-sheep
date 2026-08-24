@@ -26,7 +26,7 @@ source .venv/bin/activate
 source env/set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
 
 MODEL=/home/dc/electric-sheep/models/Qwen3.8-27B
-OUT=/home/dc/electric-sheep/models/Qwen3.8-27B-int4-AutoRound
+OUT=/home/dc/electric-sheep/models/devan-carlin-Qwen3.8-27B-int4-AutoRound
 LOG=/tmp/autoround-qwen3.8-27b.log
 
 # GDN gate projections + mtp.fc excluded from quantization (16-bit).

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Quantize gemma-4-ortenzya-31b- (BF16, ~59GB) -> INT4 AutoRound
+# Quantize davidau-gemma-4-ortenzya-31b- (BF16, ~59GB) -> INT4 AutoRound
 # (W4A16, group_size 128, sym). vLLM-loadable on a single 32GB B70.
 #
 # Base recipe mirrors the proven Qwen int4 runs (quantize-qwen3.8-27b-*-int4.sh):
@@ -31,8 +31,8 @@ cd /home/dc/electric-sheep/vllm
 source .venv/bin/activate
 source env/set-env-0123-gpu.sh   # ZE_AFFINITY_MASK=0,1,2,3 (all 4 GPUs visible)
 
-MODEL=/home/dc/electric-sheep/models/gemma-4-ortenzya-31b-
-OUT=/home/dc/electric-sheep/models/gemma-4-ortenzya-31b--int4-AutoRound
+MODEL=/home/dc/electric-sheep/models/davidau-gemma-4-ortenzya-31b-
+OUT=/home/dc/electric-sheep/models/davidau-gemma-4-ortenzya-31b--int4-AutoRound
 LOG=/tmp/autoround-gemma-4-ortenzya-31b.log
 
 auto-round quantize \

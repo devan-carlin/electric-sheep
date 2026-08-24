@@ -18,7 +18,7 @@
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| **Model** | DeepSeek-V4-Flash-0731--DS4-Quality128 (102.8 GB GGUF) | |
+| **Model** | apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128 (102.8 GB GGUF) | |
 | **Context** | 131,072 tokens (128K) | |
 | **Split Mode** | Balanced (quantization-aware, MoE-aware) | |
 | **DSpark** | Enabled (draft-dspark, n_max=2) | Sweet spot vs n_max=5 |
@@ -211,7 +211,7 @@
 source ~/electric-sheep/llama/set-env.sh
 cd ~/llama.cpp/build
 ./bin/llama-server \
-  -m ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
+  -m ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
   --host 0.0.0.0 --port 8080 \
   --gpu-layers 999 \
   --split-mode balanced \
@@ -230,10 +230,10 @@ cd ~/llama.cpp/build
 source ~/electric-sheep/llama/set-env.sh
 cd ~/llama.cpp/build
 ./bin/llama-server \
-  -m ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
+  -m ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128.gguf \
   --host 0.0.0.0 --port 8081 \
   --spec-type draft-dspark \
-  --spec-draft-model ~/electric-sheep/models/DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128-llamacpp-DSpark-support.gguf \
+  --spec-draft-model ~/electric-sheep/models/apetersson-DeepSeek-V4-Flash-0731--DS4-Quality128/DeepSeek-V4-Flash-0731--DS4-Quality128-llamacpp-DSpark-support.gguf \
   --spec-draft-n-max 5 \
   --ctx-size 131072 \
   --batch-size 4096 \

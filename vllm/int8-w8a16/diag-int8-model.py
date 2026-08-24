@@ -5,7 +5,7 @@ import sys
 
 from vllm import LLM, SamplingParams
 
-MODEL = sys.argv[1] if len(sys.argv) > 1 else "/mnt/data/models/Qwen3.8-27B--ara-int8-w8a16"
+MODEL = sys.argv[1] if len(sys.argv) > 1 else "/mnt/data/models/devan-carlin-Qwen3.8-27B--ara-int8-w8a16"
 TP = int(sys.argv[2]) if len(sys.argv) > 2 else 2
 
 
