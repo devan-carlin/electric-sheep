@@ -191,7 +191,7 @@ GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as) failed
 
 **Command**:
 ```bash
-cd /home/dc/llama.cpp && python3 convert_hf_to_gguf.py \
+cd /home/dc/electric-sheep/llama/llama.cpp && python3 convert_hf_to_gguf.py \
   /mnt/data/models/DeepSeek-V4-Flash-0731--REAP-192experts-sliced \
   --outtype bf16 \
   --outfile ggml-model-reap-sliced-bf16.gguf

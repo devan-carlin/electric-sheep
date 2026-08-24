@@ -73,11 +73,12 @@ quantized linear (GDN `in_proj_qkvz`).
 
 ## The fix (implemented)
 
-Test tree: `vllm/vllm-src-int8-test/` — vLLM `83f591d` (main),
-vllm-xpu-kernels `13013c5` (main). Test venv: `.venv-int8-test`
-(torch `2.13.0+xpu`, triton-xpu `3.7.2`). Patches saved to
-`/tmp/int8-w8a16-kernels.patch` (315 lines) and
-`/tmp/int8-w8a16-vllm.patch` (109 lines).
+Test tree: `vllm/vllm-src-int8-test/` (removed 2026-08-24; scripts preserved in
+`vllm/int8-w8a16/`) — vLLM `83f591d` (main),
+vllm-xpu-kernels `13013c5` (main). Test venv: `.venv-int8-test` (removed;
+kernel now ported to the main venv). Patches saved to
+`arc-b70-vllm-optimized/patches/int8-w8a16-kernels.patch` (315 lines) and
+`arc-b70-vllm-optimized/patches/int8-w8a16-vllm.patch` (109 lines).
 
 ### C++ side (vllm-xpu-kernels) — 5 files
 
@@ -150,7 +151,8 @@ The engine that handles this descriptor is `jit:gemm:any`
 
 ## Results (2026-08-16)
 
-Test venv `.venv-int8-test`: vLLM `83f591d`, vllm-xpu-kernels `13013c5` +
+Test venv `.venv-int8-test` (removed 2026-08-24; kernel ported to main venv):
+vLLM `83f591d`, vllm-xpu-kernels `13013c5` +
 patch, torch `2.13.0+xpu`, oneAPI 2026.1.0, 2x Arc Pro B70 (TP=2).
 
 - **Kernel**: standalone repro (`repro-int8-gemm.py`) passes; numerical check

@@ -69,7 +69,7 @@ change, but it is the difference between 19.6 and 47.8 tok/s, so it is documente
 
 ### 1. The RTN quantizer (`quantize-w8a16.py`)
 
-**Location:** `vllm/vllm-src-int8-test/quantize-w8a16.py`
+**Location:** `vllm/int8-w8a16/quantize-w8a16.py`
 **Usage:** `python quantize-w8a16.py <src_dir> <dst_dir> [--group-size 128]`
 
 Per-group quantization core (group_size=128, symmetric):
@@ -245,13 +245,13 @@ bottleneck; the environment (cudagraph, TP) is.
 
 ```bash
 # 1. Quantize (bf16 -> INT8 W8A16)
-source /home/dc/electric-sheep/vllm/.venv-int8-test/bin/activate
-cd /home/dc/electric-sheep/vllm/vllm-src-int8-test
+source /home/dc/electric-sheep/vllm/.venv/bin/activate
+cd /home/dc/electric-sheep/vllm/int8-w8a16
 python quantize-w8a16.py \
   /mnt/data/models/Qwen3.8-27B--ara \
   /mnt/data/models/Qwen3.8-27B--ara-int8-w8a16
 
-# 2. Sanity check (test venv, TP=2, eager)
+# 2. Sanity check (main venv, TP=2, eager)
 source /opt/intel/oneapi/setvars.sh
 ONEAPI_DEVICE_SELECTOR=level_zero:0,1 CUDA_VISIBLE_DEVICES="" \
   python diag-int8-model.py /mnt/data/models/Qwen3.8-27B--ara-int8-w8a16 2
@@ -268,9 +268,9 @@ CUDA_VISIBLE_DEVICES="" \
 
 | File | Purpose |
 |------|---------|
-| `vllm/vllm-src-int8-test/quantize-w8a16.py` | The RTN quantizer. |
-| `vllm/vllm-src-int8-test/diag-int8-model.py` | Correctness check (raw token IDs + decode). |
-| `vllm/vllm-src-int8-test/bench-decode-cg.py` | Throughput bench with `eager`/`cg` mode arg. |
+| `vllm/int8-w8a16/quantize-w8a16.py` | The RTN quantizer. |
+| `vllm/int8-w8a16/diag-int8-model.py` | Correctness check (raw token IDs + decode). |
+| `vllm/int8-w8a16/bench-decode-cg.py` | Throughput bench with `eager`/`cg` mode arg. |
 | `vllm/env/set-env-0123-gpu.sh` | XPU graph + device env vars (cudagraph enabler). |
 | `/mnt/data/models/Qwen3.8-27B--ara-int8-w8a16/` | The quantized checkpoint (31.62 GB). |
 
