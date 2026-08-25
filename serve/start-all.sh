@@ -4,8 +4,8 @@
 #
 #   GPU 0  ComfyUI instance A  ->  http://<host>:8188   (image rendering)
 #   GPU 1  ComfyUI instance B  ->  http://<host>:8189   (image rendering)
-#   GPU 2  vLLM Qwen3.8-27B--ara-int4  ->  http://<host>:8088  (book writing)
-#   GPU 3  vLLM gemma-4-ortenzya-31b--int4 ->  http://<host>:8089 (VN writing)
+#   GPU 2  llama.cpp Qwen (currently Qwen3.6-35B-A3B Aggressive) ->  http://<host>:8088 (book writing)
+#   GPU 3  llama.cpp Gemma (currently Gemma4 26B-A4B Balanced) ->  http://<host>:8089 (VN writing)
 #
 # On start it first kills any existing ComfyUI python processes (same pattern
 # as comfyui/run.sh), then launches all four services in the background.
@@ -14,29 +14,38 @@
 #   bash start-all.sh           # kill old comfyui, start all 4 services
 #   bash start-all.sh stop      # stop everything started by this script
 #   bash start-all.sh status    # check ports + pids
+#   bash start-all.sh restart-gemma  # (re)start only the gemma llama.cpp instance
+#   bash start-all.sh restart-qwen   # (re)start only the qwen llama.cpp instance
 #
 # Env overrides: COMFY_HOST, COMFY_PORT_A, COMFY_PORT_B, COMFY_GPU_A,
-#                COMFY_GPU_B, QWEN_PORT, QWEN_GPU, QWEN_MAX_LEN,
-#                GEMMA_PORT, GEMMA_GPU, GEMMA_MAX_LEN, GEMMA_KV_DTYPE,
-#                GEMMA_GPU_MEM_UTIL, GEMMA_CPU_OFFLOAD_GB
+#                COMFY_GPU_B, QWEN_PORT, QWEN_GPU, QWEN_LLAMA_CTX,
+#                GEMMA_PORT, GEMMA_GPU, GEMMA_LLAMA_CTX,
+#                QWEN_LLAMA_REASONING, QWEN_LLAMA_REASONING_FORMAT,
+#                QWEN_LLAMA_REASONING_BUDGET, GEMMA_LLAMA_REASONING,
+#                GEMMA_LLAMA_REASONING_FORMAT, GEMMA_LLAMA_REASONING_BUDGET
 #
-# NOTE: davidau-gemma-4-ortenzya-31b- is served as INT4 AutoRound (~18 GB),
-# which fits fully on one 32 GB B70 with no CPU offload.
+# NOTE: the gemma slot serves Gemma4 26B-A4B ( Balanced, Q4_K_P GGUF)
+# via llama.cpp SYCL on GPU 3, launched by start-gemma-llama.sh. It won a blind
+# prose A/B over the 31B QAT (4/5) and decodes ~2.5-3x faster. 256K context
+# (model native max) fits on one 32 GB B70 with a small CPU KV spill.
+# The vLLM 31B (llmfan46-gemma-4-31b-qat-int4) remains a manual fallback for
+# >256K context or MTP speculative decoding.
 #
-# KV cache: fp8 is the ONLY working kv-cache-dtype for Gemma4 on this vLLM/XPU
-# build. turboquant_* and int4_per_token_head both crash at engine init (Gemma4
-# is multimodal with mismatched head_dims across its attention groups). At
-# --gpu-memory-utilization 0.92 the KV pool is ~52.7K tokens, so a single
-# request can use up to ~52K context. Default GEMMA_MAX_LEN is 32K (1.6x
-# headroom); raise it toward 48K for max single-request context if you do not
-# need concurrent requests.
+# NOTE: the qwen slot switched from vLLM (-ara int4, 128K cap) to
+# llama.cpp on 2026-08-25 (256K fully on-GPU vs vLLM's 128K cap on one card).
+# Served names are version-agnostic ("qwen", "gemma") so model swaps don't
+# touch WebUI/clients. Current qwen model:  Qwen3.6-35B-A3B
+# Aggressive (MoE, Q4_K_P) - chosen for MoE decode throughput over the dense
+# Qwen3.8-27B. Launched by start-qwen-llama.sh (model pinned there).
+# The vLLM -ara instance remains a manual fallback (start-qwen.sh) for
+# prefix caching / tool-call parsing / multi-user concurrency.
 # =============================================================================
 set -uo pipefail
 
 COMFY_DIR="$HOME/comfyui"
 VENV="$HOME/electric-sheep/vllm/.venv"
 MODELS_DIR="$HOME/electric-sheep/models"
-LOG_DIR="$HOME/electric-sheep/vllm/launch/logs"
+LOG_DIR="$HOME/electric-sheep/serve/logs"
 PIDS_FILE="$LOG_DIR/start-all.pids"
 mkdir -p "$LOG_DIR"
 
@@ -47,20 +56,21 @@ COMFY_PORT_B="${COMFY_PORT_B:-8189}"
 COMFY_GPU_A="${COMFY_GPU_A:-0}"
 COMFY_GPU_B="${COMFY_GPU_B:-1}"
 
+# Qwen slot serves the current Qwen model ( Qwen3.6-35B-A3B
+# Aggressive) via llama.cpp SYCL, launched by start-qwen-llama.sh (model
+# pinned there; served name is the version-agnostic "qwen").
 QWEN_PORT="${QWEN_PORT:-8088}"
 QWEN_GPU="${QWEN_GPU:-2}"
-QWEN_MODEL="$MODELS_DIR/devan-carlin-Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
-QWEN_NAME="qwen-256k"
-QWEN_MAX_LEN="${QWEN_MAX_LEN:-262144}"
+QWEN_NAME="qwen"
+QWEN_LLAMA_LAUNCHER="$HOME/electric-sheep/serve/start-qwen-llama.sh"
 
+# Gemma slot serves the 26B-A4B ( Balanced) via llama.cpp SYCL,
+# launched by start-gemma-llama.sh (locked in 2026-08-25 after a blind A/B).
+# The vLLM 31B (llmfan46-gemma-4-31b-qat-int4) remains a manual fallback.
 GEMMA_PORT="${GEMMA_PORT:-8089}"
 GEMMA_GPU="${GEMMA_GPU:-3}"
-GEMMA_MODEL="$MODELS_DIR/davidau-gemma-4-ortenzya-31b--int4-AutoRound/gemma-4-ortenzya-31b--w4g128"
-GEMMA_NAME="gemma-31b"
-GEMMA_MAX_LEN="${GEMMA_MAX_LEN:-32768}"
-GEMMA_KV_DTYPE="${GEMMA_KV_DTYPE:-fp8}"
-GEMMA_GPU_MEM_UTIL="${GEMMA_GPU_MEM_UTIL:-0.92}"
-GEMMA_CPU_OFFLOAD_GB="${GEMMA_CPU_OFFLOAD_GB:-0}"
+GEMMA_NAME="gemma"
+GEMMA_LLAMA_LAUNCHER="$HOME/electric-sheep/serve/start-gemma-llama.sh"
 
 # --- Helpers -----------------------------------------------------------------
 record_pid() { echo "$1" >> "$PIDS_FILE"; }
@@ -86,9 +96,15 @@ stop_all() {
     done < "$PIDS_FILE"
     rm -f "$PIDS_FILE"
   fi
-  # stragglers: comfyui main.py + vllm api_server
-  pkill -f "comfyui/venv/bin/python main.py" 2>/dev/null && killed=1
+  # stragglers: comfyui main.py + vllm api_server + llama-server (qwen/gemma slots)
+  # NOTE: comfyui is launched as `./venv/bin/python main.py` (relative, after cd),
+  # so the pattern must NOT include the `comfyui/` prefix - it never matched and
+  # old instances survived restarts (port-conflict bug, fixed 2026-08-25).
+  pkill -f "venv/bin/python main.py.*--port ${COMFY_PORT_A}" 2>/dev/null && killed=1
+  pkill -f "venv/bin/python main.py.*--port ${COMFY_PORT_B}" 2>/dev/null && killed=1
   pkill -f "vllm.entrypoints.openai.api_server" 2>/dev/null && killed=1
+  pkill -f "llama-server.*--port ${QWEN_PORT}" 2>/dev/null && killed=1
+  pkill -f "llama-server.*--port ${GEMMA_PORT}" 2>/dev/null && killed=1
   [[ "$killed" == "1" ]] && echo "all stopped" || echo "nothing was running"
 }
 
@@ -117,10 +133,24 @@ kill_comfyui() {
     done < "$COMFY_DIR/logs/pids"
     rm -f "$COMFY_DIR/logs/pids"
   fi
-  if pkill -f "comfyui/venv/bin/python main.py" 2>/dev/null; then
-    echo "  killed stray comfyui main.py processes"; killed=1
+  # Run BOTH pkills unconditionally: `pkill A || pkill B` short-circuits when A
+  # succeeds, silently skipping B (left the 8189 instance alive on 2026-08-25).
+  pkill -f "venv/bin/python main.py.*--port ${COMFY_PORT_A}" 2>/dev/null && killed=1
+  pkill -f "venv/bin/python main.py.*--port ${COMFY_PORT_B}" 2>/dev/null && killed=1
+  # Wait for the processes to actually exit (ComfyUI shutdown can take a while;
+  # starting a replacement before the port is released -> "port in use" death).
+  if [[ "$killed" == "1" ]]; then
+    local i=0
+    while (( i < 60 )) && pgrep -f "venv/bin/python main.py" >/dev/null; do
+      sleep 2; (( i += 2 ))
+    done
+    if pgrep -f "venv/bin/python main.py" >/dev/null; then
+      echo "  comfyui still alive after 120s, force-killing"
+      pkill -9 -f "venv/bin/python main.py.*--port ${COMFY_PORT_A}" 2>/dev/null
+      pkill -9 -f "venv/bin/python main.py.*--port ${COMFY_PORT_B}" 2>/dev/null
+      sleep 2
+    fi
   fi
-  [[ "$killed" == "1" ]] && sleep 3
   echo "existing comfyui processes: ${killed:+cleared}${killed:-none found}"
 }
 
@@ -187,10 +217,16 @@ start_vllm() { # start_vllm <name> <gpu> <port> <model> <served> <max_len> <offl
     --max-num-seqs 8
   )
   [[ "$offload" != "0" ]] && cmd+=(--cpu-offload-gb "$offload")
-  # Qwen3.8-specific parsers (harmless to add only for the qwen model)
-  case "$model" in *Qwen*)
-    cmd+=(--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder --generation-config vllm)
-    ;;
+  # Model-specific parsers / tool-calling support
+  case "$model" in
+    *Qwen*)
+      cmd+=(--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder --generation-config vllm)
+      ;;
+    *gemma*)
+      # Gemma4 needs a tool parser so clients (e.g. Open WebUI) can send
+      # tools + tool_choice:"auto" without a 400.
+      cmd+=(--enable-auto-tool-choice --tool-call-parser gemma4)
+      ;;
   esac
   (
     vllm_env "$gpu"
@@ -204,6 +240,27 @@ start_vllm() { # start_vllm <name> <gpu> <port> <model> <served> <max_len> <offl
   echo "  [${name}] GPU ${gpu}  port ${port}  pid ${pid}  ctx=${max_len}  kv=${kv_dtype}  util=${mem_util}  offload=${offload}GB  (log: logs/vllm_${port}.log)"
 }
 
+# --- Restart a single instance ------------------------------------------------
+restart_gemma_only() {
+  echo "=== restarting gemma (llama.cpp) on port ${GEMMA_PORT} ==="
+  GEMMA_LLAMA_GPU="$GEMMA_GPU" GEMMA_LLAMA_PORT="$GEMMA_PORT" \
+    GEMMA_LLAMA_REASONING="${GEMMA_LLAMA_REASONING:-}" \
+    GEMMA_LLAMA_REASONING_FORMAT="${GEMMA_LLAMA_REASONING_FORMAT:-}" \
+    GEMMA_LLAMA_REASONING_BUDGET="${GEMMA_LLAMA_REASONING_BUDGET:-}" \
+    bash "$GEMMA_LLAMA_LAUNCHER" start
+  wait_ready "gemma" "$GEMMA_PORT" 900
+}
+
+restart_qwen_only() {
+  echo "=== restarting qwen (llama.cpp) on port ${QWEN_PORT} ==="
+  QWEN_LLAMA_GPU="$QWEN_GPU" QWEN_LLAMA_PORT="$QWEN_PORT" \
+    QWEN_LLAMA_REASONING="${QWEN_LLAMA_REASONING:-}" \
+    QWEN_LLAMA_REASONING_FORMAT="${QWEN_LLAMA_REASONING_FORMAT:-}" \
+    QWEN_LLAMA_REASONING_BUDGET="${QWEN_LLAMA_REASONING_BUDGET:-}" \
+    bash "$QWEN_LLAMA_LAUNCHER" start
+  wait_ready "qwen" "$QWEN_PORT" 900
+}
+
 # --- Commands ------------------------------------------------------------------
 case "${1:-start}" in
   stop)
@@ -211,6 +268,12 @@ case "${1:-start}" in
     ;;
   status)
     status
+    ;;
+  restart-gemma)
+    restart_gemma_only
+    ;;
+  restart-qwen)
+    restart_qwen_only
     ;;
   start|*)
     echo "=== killing existing comfyui ==="
@@ -220,13 +283,21 @@ case "${1:-start}" in
     : > "$PIDS_FILE"
     start_comfyui "A" "$COMFY_GPU_A" "$COMFY_PORT_A" "$COMFY_DIR/user"   "$COMFY_DIR/output" "$COMFY_DIR/temp"
     start_comfyui "B" "$COMFY_GPU_B" "$COMFY_PORT_B" "$COMFY_DIR/user2"  "$COMFY_DIR/output2" "$COMFY_DIR/temp2"
-    start_vllm "qwen-256k"  "$QWEN_GPU"  "$QWEN_PORT"  "$QWEN_MODEL"  "$QWEN_NAME"  "$QWEN_MAX_LEN"  0  "fp8"  "0.85"
-    start_vllm "gemma-31b"  "$GEMMA_GPU" "$GEMMA_PORT" "$GEMMA_MODEL" "$GEMMA_NAME" "$GEMMA_MAX_LEN" "$GEMMA_CPU_OFFLOAD_GB" "$GEMMA_KV_DTYPE" "$GEMMA_GPU_MEM_UTIL"
+    QWEN_LLAMA_GPU="$QWEN_GPU" QWEN_LLAMA_PORT="$QWEN_PORT" \
+      QWEN_LLAMA_REASONING="${QWEN_LLAMA_REASONING:-}" \
+      QWEN_LLAMA_REASONING_FORMAT="${QWEN_LLAMA_REASONING_FORMAT:-}" \
+      QWEN_LLAMA_REASONING_BUDGET="${QWEN_LLAMA_REASONING_BUDGET:-}" \
+      bash "$QWEN_LLAMA_LAUNCHER" start
+    GEMMA_LLAMA_GPU="$GEMMA_GPU" GEMMA_LLAMA_PORT="$GEMMA_PORT" \
+      GEMMA_LLAMA_REASONING="${GEMMA_LLAMA_REASONING:-}" \
+      GEMMA_LLAMA_REASONING_FORMAT="${GEMMA_LLAMA_REASONING_FORMAT:-}" \
+      GEMMA_LLAMA_REASONING_BUDGET="${GEMMA_LLAMA_REASONING_BUDGET:-}" \
+      bash "$GEMMA_LLAMA_LAUNCHER" start
 
     echo
-    echo "=== waiting for vLLM servers (first load can take minutes) ==="
-    wait_ready "qwen-256k" "$QWEN_PORT" 900
-    wait_ready "gemma-31b" "$GEMMA_PORT" 900
+    echo "=== waiting for llama.cpp servers (first load can take minutes) ==="
+    wait_ready "qwen" "$QWEN_PORT" 900
+    wait_ready "gemma" "$GEMMA_PORT" 900
 
     echo
     echo "  comfyui A:  http://${COMFY_HOST}:${COMFY_PORT_A}   (GPU ${COMFY_GPU_A})"
