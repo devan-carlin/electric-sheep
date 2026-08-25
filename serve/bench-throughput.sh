@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 # =============================================================================
 # bench-throughput.sh — Online serving throughput benchmark for the start-all
-# vLLM instances (qwen-256k @ 8088, gemma-31b @ 8089).
+# llama.cpp instances (qwen @ 8088, gemma @ 8089).
 #
 # Three workloads, each swept over concurrency 2 and 4 (a single B70 saturates
 # well before 8, so higher concurrency is pointless):
-#   1. qwen  thinking OFF  (chat_template_kwargs enable_thinking=false)
-#   2. qwen  thinking ON   (default)
-#   3. gemma (no reasoning-parser set; runs as plain generate)
+#   1. qwen  thinking OFF  (per-request chat_template_kwargs enable_thinking=false;
+#                           the server default is ON)
+#   2. qwen  thinking ON   (server default)
+#   3. gemma thinking ON   (server default)
 #
 # Per workload: random 1024-token input, 4096-token output, ignore-eos,
 # temperature 0, seed 42, 8 prompts. Qwen and Gemma run on separate GPUs, so
 # the 'all' target runs them as parallel streams to halve wall-clock time.
+# Note: with thinking ON, output tokens include the reasoning trace (capped at
+# the server's --reasoning-budget), so 'on' runs are not directly comparable
+# to 'off' runs.
 #
 # Usage:
 #   bash bench-throughput.sh            # run all three (qwen+gemma in parallel)
@@ -20,20 +24,22 @@
 #   bash bench-throughput.sh gemma
 #
 # Results: bench_results/<name>_c<conc>.json  (+ per-run .log, stream_*.log)
+# The vLLM venv is only used for the `vllm bench serve` CLI; the requests go
+# to the llama.cpp servers.
 # =============================================================================
 set -uo pipefail
 
 VENV="$HOME/electric-sheep/vllm/.venv"
-MODELS_DIR="$HOME/electric-sheep/models"
 LOG_DIR="$HOME/electric-sheep/serve/bench_results"
 mkdir -p "$LOG_DIR"
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
 
-# Local tokenizer dirs (bench serve needs a tokenizer to build random prompts
-# client-side; the served names are not HF repos, so point at the model dirs).
-QWEN_TOK="$MODELS_DIR/devan-carlin-Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128"
-GEMMA_TOK="$MODELS_DIR/davidau-gemma-4-ortenzya-31b--int4-AutoRound/gemma-4-ortenzya-31b--w4g128"
+# Tokenizer for client-side random prompt generation. The served models are
+# GGUFs (the  repos ship no tokenizer files), so point at the base HF
+# repos - only the small tokenizer files are fetched and cached.
+QWEN_TOK="Qwen/Qwen3.6-35B-A3B"
+GEMMA_TOK="google/gemma-4-26B-A4B-it"
 
 # Workload: 4K output for a valid decode-throughput measurement.
 # Concurrency is swept over CONC (single B70 saturates well before 8).
@@ -63,9 +69,9 @@ run_one() {
   done
 }
 
-run_qwen_off() { run_one qwen_off 8088 qwen-256k "$QWEN_TOK" '{"chat_template_kwargs":{"enable_thinking":false}}'; }
-run_qwen_on()  { run_one qwen_on  8088 qwen-256k "$QWEN_TOK" ""; }
-run_gemma()    { run_one gemma    8089 gemma-31b "$GEMMA_TOK" ""; }
+run_qwen_off() { run_one qwen_off 8088 qwen "$QWEN_TOK" '{"chat_template_kwargs":{"enable_thinking":false}}'; }
+run_qwen_on()  { run_one qwen_on  8088 qwen "$QWEN_TOK" ""; }
+run_gemma()    { run_one gemma    8089 gemma "$GEMMA_TOK" ""; }
 
 case "${1:-all}" in
   qwen-off) run_qwen_off ;;
