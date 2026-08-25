@@ -172,12 +172,16 @@ See `configs/vllm/model-configs.md` for launch commands and VRAM budgets.
 
 ## Runtime Configs
 
-Launchers live in `vllm/launch/`, XPU environment configs in `vllm/env/`, and
+Launchers live in `serve/` (live stack: `start-all.sh` + `start-*-llama.sh`; vLLM
+fallbacks in `serve/fallback/`), XPU environment configs in `vllm/env/`, and
 reference configs in `configs/`:
 
 ```bash
-# Start vLLM (per-model launcher; sources the matching env config)
-bash ~/electric-sheep/vllm/launch/start-qwen3.8-27b-int4.sh
+# Start the full 4-GPU stack (2x ComfyUI + 2x llama.cpp)
+bash ~/electric-sheep/serve/start-all.sh
+
+# Or run a vLLM fallback launcher (sources the matching env config)
+bash ~/electric-sheep/serve/fallback/start-qwen3.8-27b-int4.sh
 
 # Or source the env config manually and serve any model
 source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh

@@ -14,9 +14,9 @@
 - **Windows scripts:** `~/electric-sheep/scripts/windows/` (PowerShell)
 - **Runtime configs:** `~/electric-sheep/configs/` (vllm/, llama/deepseek/)
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
-- **vLLM project root:** `~/electric-sheep/vllm/`
+- **Server launchers (all 4 GPUs):** `~/electric-sheep/serve/` (`start-all.sh` + per-slot `start-*-llama.sh`; vLLM fallbacks in `serve/fallback/`)
+- **vLLM project root:** `~/electric-sheep/vllm/` (venv, source, quant, env configs - no launchers)
 - **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12)
-- **vLLM launchers:** `~/electric-sheep/vllm/launch/` (per-model `start-*.sh` + interactive `vllm-launch.sh` / `start-qwen.sh`)
 - **vLLM quantization:** `~/electric-sheep/vllm/quantize/` (AutoRound INT4 scripts)
 - **vLLM environment config:** `~/electric-sheep/vllm/env/set-env-*.sh`
 - **vLLM experimental:** `~/electric-sheep/vllm/experimental/` (one-off reap/slice/test/fix scripts)
@@ -25,8 +25,19 @@
 - **llama.cpp source:** `~/electric-sheep/llama/llama.cpp/` (cloned repo, build in `build/`)
 - **llama.cpp environment config:** `~/electric-sheep/llama/set-env.sh`
 - **llama.cpp DeepSeek configs:** `~/electric-sheep/configs/llama/deepseek/`
-- **Model storage:** `~/electric-sheep/models/` (shared by vLLM and llama.cpp)
+- **Model storage:** `~/electric-sheep/models/` (shared by vLLM and llama.cpp). This is a **symlink to `/mnt/data/models`** (fast NVMe) — both paths are identical.
 - **Do NOT** reference legacy paths (`~/.venv-b70-minimax`, `/mnt/fast-ai/`, `/home/dc/intel-vllm-01/`, `~/llama.cpp/`, `~/ubuntu-b70/`, `~/windows-5090/`, `~/code-8-7-26/`) in new documents.
+
+## Model Directory Naming Standard
+
+- **Format:** `<hf-username>-<hf-repo-name>` — the HuggingFace repo path with `/` replaced by `-`.
+- **Drop redundant author prefix:** if the repo name already starts with the author's name, omit the author (e.g. `huihui-ai/Huihui--...` → `Huihui--...`).
+- **GGUF repos:** drop the trailing `-GGUF` suffix from the directory name (keep it on the files).
+- **Preserve case** exactly as the HF repo name (e.g. `Qwen3.8-27B`, `gemma-4-31b`).
+- **Examples:**
+  - `Intel/gemma-4-26B-A4B-it-int4-AutoRound` → `Intel-gemma-4-26B-A4B-it-int4-AutoRound`
+  - `devan-carlin/Qwen3.8-27B--ara-int4-AutoRound` → `devan-carlin-Qwen3.8-27B--ara-int4-AutoRound`
+  - `huihui-ai/Huihui-gemma-4-26B-A4B-it-qat-q4_0-unquantized--GGUF` → `Huihui-gemma-4-26B-A4B-it-qat-q4_0-unquantized-`
 
 ## Hardware Context
 

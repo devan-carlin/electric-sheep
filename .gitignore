@@ -65,6 +65,10 @@ models/
 # vLLM source builds (re-cloned by 03-build-vllm-xpu.sh)
 vllm/vllm-src/
 
+# serve/ runtime artifacts (logs, benchmark outputs)
+serve/logs/
+serve/bench_results/
+
 # Personal / local-only (never commit)
 BACKLOG.md
 
