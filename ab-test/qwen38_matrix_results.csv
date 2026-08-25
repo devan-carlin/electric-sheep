@@ -1,0 +1,9 @@
+label,decode_tps,draft_acc,reasoning_len,content_len,status
+q4_0_mtp0,39.45,,0,0,ALIVE
+q4_0_mtp1,23.27,0.88636,0,1709,ALIVE
+q4_0_mtp2,24.83,0.76396,0,1372,ALIVE
+q4_0_mtp3,22.83,0.60225,0,1798,ALIVE
+q4k_q5v_mtp1,20.37,0.72664,0,1675,ALIVE
+q5k_q4v_mtp1,21.96,0.87925,0,1459,ALIVE
+q5_0_mtp1,20.29,0.64463,0,696,ALIVE
+q4_0_mtp1_nomm,20.88,0.70548,0,1878,ALIVE

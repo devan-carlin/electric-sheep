@@ -1,0 +1,7 @@
+ANSWER KEY - do not read until picks are in
+
+Prompt 1 (Fiction scene): A = 31b, B = 26b
+Prompt 2 (Explainer): A = 26b, B = 31b
+Prompt 3 (Argument): A = 31b, B = 26b
+Prompt 4 (Dialogue): A = 26b, B = 31b
+Prompt 5 (Essay): A = 31b, B = 26b
