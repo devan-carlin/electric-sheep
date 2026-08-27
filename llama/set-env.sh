@@ -23,8 +23,10 @@ export GGML_SYCL_ENABLE_OPT=1
 export GGML_SYCL_ENABLE_DNN=1
 export GGML_SYCL_ENABLE_MKL_FA=1
 
-# Long-context stability (prevents watchdog resets)
-export GGML_SYCL_FA_ONEDNN_MAX_KV=24576
+# Long-context stability (prevents watchdog resets).
+# 65536: oneDNN flash-attention fast path stays active up to 64K KV length
+# (above this the backend falls back to the slower path).
+export GGML_SYCL_FA_ONEDNN_MAX_KV=65536
 
 # Allow large allocations
 export UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1
