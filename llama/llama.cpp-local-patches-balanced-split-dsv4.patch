@@ -1,0 +1,262 @@
+diff --git a/common/arg.cpp b/common/arg.cpp
+index c37d5cd0a..c5fde1231 100644
+--- a/common/arg.cpp
++++ b/common/arg.cpp
+@@ -2704,7 +2704,8 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
+         "- none: use one GPU only\n"
+         "- layer (default): split layers and KV across GPUs (pipelined)\n"
+         "- row: split weight across GPUs by rows (parallelized)\n"
+-        "- tensor: split weights and KV across GPUs (parallelized, EXPERIMENTAL)",
++        "- tensor: split weights and KV across GPUs (parallelized, EXPERIMENTAL)\n"
++        "- balanced: split layers across GPUs, balanced by estimated layer size (MoE-aware)",
+         [](common_params & params, const std::string & value) {
+             if (value == "none") {
+                 params.split_mode = LLAMA_SPLIT_MODE_NONE;
+@@ -2714,6 +2715,8 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
+                 params.split_mode = LLAMA_SPLIT_MODE_ROW;
+             } else if (value == "tensor") {
+                 params.split_mode = LLAMA_SPLIT_MODE_TENSOR;
++            } else if (value == "balanced") {
++                params.split_mode = LLAMA_SPLIT_MODE_BALANCED;
+             } else {
+                 throw std::invalid_argument("invalid value");
+             }
+diff --git a/common/fit.cpp b/common/fit.cpp
+index dd1f3ef76..880839b15 100644
+--- a/common/fit.cpp
++++ b/common/fit.cpp
+@@ -182,6 +182,9 @@ static void common_params_fit_impl(
+     if (mparams->split_mode == LLAMA_SPLIT_MODE_TENSOR) {
+         throw common_params_fit_exception("llama_params_fit is not implemented for SPLIT_MODE_TENSOR, abort");
+     }
++    if (mparams->split_mode == LLAMA_SPLIT_MODE_BALANCED) {
++        throw common_params_fit_exception("llama_params_fit is not implemented for SPLIT_MODE_BALANCED, skipping fit check");
++    }
+     constexpr int64_t MiB = 1024*1024;
+     typedef std::vector<llama_device_memory_data> dmds_t;
+     const llama_model_params default_mparams = llama_model_default_params();
+diff --git a/conversion/deepseek.py b/conversion/deepseek.py
+index 1846ca401..57f4cd60e 100644
+--- a/conversion/deepseek.py
++++ b/conversion/deepseek.py
+@@ -740,8 +740,8 @@ class DeepseekV4Model(TextModel):
+         consumed: list[str] = []
+ 
+         for eid in range(n_experts):
+-            weight_name = f"layers.{bid}.ffn.experts.{eid}.{proj}.weight"
+-            scale_name = f"layers.{bid}.ffn.experts.{eid}.{proj}.scale"
++            weight_name = f"model.layers.{bid}.mlp.experts.{eid}.{proj}.weight"
++            scale_name = f"model.layers.{bid}.mlp.experts.{eid}.{proj}.scale"
+             if weight_name not in self.model_tensors or scale_name not in self.model_tensors:
+                 raise KeyError(f"Missing routed expert tensors for {weight_name}")
+ 
+@@ -765,7 +765,7 @@ class DeepseekV4Model(TextModel):
+         consumed: list[str] = []
+ 
+         for bid in range(self.hparams["num_hash_layers"]):
+-            name = f"layers.{bid}.ffn.gate.tid2eid"
++            name = f"model.layers.{bid}.ffn.gate.tid2eid"
+             if name not in self.model_tensors:
+                 raise KeyError(f"Missing hash routing tensor {name}")
+ 
+@@ -788,7 +788,7 @@ class DeepseekV4Model(TextModel):
+             consumed.extend(self._write_hash_routing_tensors())
+         elif self.hparams["num_hash_layers"] > 0:
+             for bid in range(self.hparams["num_hash_layers"]):
+-                name = f"layers.{bid}.ffn.gate.tid2eid"
++                name = f"model.layers.{bid}.ffn.gate.tid2eid"
+                 if name in self.model_tensors:
+                     consumed.extend(self._write_hash_routing_tensors())
+                     break
+@@ -825,16 +825,22 @@ class DeepseekV4Model(TextModel):
+     def _map_dsv4_tensor_name(self, name: str, bid: int | None) -> tuple[gguf.MODEL_TENSOR, str]:
+         root_map: dict[str, tuple[gguf.MODEL_TENSOR, str]] = {
+             "embed.weight": (gguf.MODEL_TENSOR.TOKEN_EMBD, ".weight"),
++            "model.embed_tokens.weight": (gguf.MODEL_TENSOR.TOKEN_EMBD, ".weight"),
+             "norm.weight": (gguf.MODEL_TENSOR.OUTPUT_NORM, ".weight"),
++            "model.norm.weight": (gguf.MODEL_TENSOR.OUTPUT_NORM, ".weight"),
+             "head.weight": (gguf.MODEL_TENSOR.OUTPUT, ".weight"),
++            "lm_head.weight": (gguf.MODEL_TENSOR.OUTPUT, ".weight"),
+             "hc_head_fn": (gguf.MODEL_TENSOR.HC_HEAD_FN, ".weight"),
++            "model.hc_head.hc_fn": (gguf.MODEL_TENSOR.HC_HEAD_FN, ".weight"),
+             "hc_head_base": (gguf.MODEL_TENSOR.HC_HEAD_BASE, ".weight"),
++            "model.hc_head.hc_base": (gguf.MODEL_TENSOR.HC_HEAD_BASE, ".weight"),
+             "hc_head_scale": (gguf.MODEL_TENSOR.HC_HEAD_SCALE, ".weight"),
++            "model.hc_head.hc_scale": (gguf.MODEL_TENSOR.HC_HEAD_SCALE, ".weight"),
+         }
+         if name in root_map:
+             return root_map[name]
+ 
+-        match = re.match(r"layers\.(\d+)\.(.+)$", name)
++        match = re.match(r"(?:model\.)?layers\.(\d+)\.(.+)$", name)
+         if match is None:
+             raise ValueError(f"Unsupported DeepSeek-V4 tensor {name!r}")
+ 
+@@ -843,6 +849,7 @@ class DeepseekV4Model(TextModel):
+             raise ValueError(f"Tensor {name!r} parsed bid {bid} but layer name has {layer}")
+ 
+         layer_map: dict[str, tuple[gguf.MODEL_TENSOR, str]] = {
++            # Original llama.cpp naming
+             "hc_attn_fn": (gguf.MODEL_TENSOR.HC_ATTN_FN, ".weight"),
+             "hc_attn_base": (gguf.MODEL_TENSOR.HC_ATTN_BASE, ".weight"),
+             "hc_attn_scale": (gguf.MODEL_TENSOR.HC_ATTN_SCALE, ".weight"),
+@@ -875,25 +882,73 @@ class DeepseekV4Model(TextModel):
+             "ffn.shared_experts.w1.weight": (gguf.MODEL_TENSOR.FFN_GATE_SHEXP, ".weight"),
+             "ffn.shared_experts.w2.weight": (gguf.MODEL_TENSOR.FFN_DOWN_SHEXP, ".weight"),
+             "ffn.shared_experts.w3.weight": (gguf.MODEL_TENSOR.FFN_UP_SHEXP, ".weight"),
++            # HF-standard shared expert naming
++            "mlp.shared_experts.gate_proj.weight": (gguf.MODEL_TENSOR.FFN_GATE_SHEXP, ".weight"),
++            "mlp.shared_experts.gate_proj.scale": (gguf.MODEL_TENSOR.FFN_GATE_SHEXP, ".scale"),
++            "mlp.shared_experts.down_proj.weight": (gguf.MODEL_TENSOR.FFN_DOWN_SHEXP, ".weight"),
++            "mlp.shared_experts.down_proj.scale": (gguf.MODEL_TENSOR.FFN_DOWN_SHEXP, ".scale"),
++            "mlp.shared_experts.up_proj.weight": (gguf.MODEL_TENSOR.FFN_UP_SHEXP, ".weight"),
++            "mlp.shared_experts.up_proj.scale": (gguf.MODEL_TENSOR.FFN_UP_SHEXP, ".scale"),
+             "nextn.eh_proj.weight": (gguf.MODEL_TENSOR.NEXTN_EH_PROJ, ".weight"),
+             "nextn.enorm.weight": (gguf.MODEL_TENSOR.NEXTN_ENORM, ".weight"),
+             "nextn.hnorm.weight": (gguf.MODEL_TENSOR.NEXTN_HNORM, ".weight"),
+             "nextn.shared_head_norm.weight": (gguf.MODEL_TENSOR.NEXTN_SHARED_HEAD_NORM, ".weight"),
+             "nextn.embed_tokens.weight": (gguf.MODEL_TENSOR.NEXTN_EMBED_TOKENS, ".weight"),
+             "nextn.shared_head_head.weight": (gguf.MODEL_TENSOR.NEXTN_SHARED_HEAD_HEAD, ".weight"),
++            # HF-standard naming (REAP model uses these)
++            "attn_hc.fn": (gguf.MODEL_TENSOR.HC_ATTN_FN, ".weight"),
++            "attn_hc.base": (gguf.MODEL_TENSOR.HC_ATTN_BASE, ".weight"),
++            "attn_hc.scale": (gguf.MODEL_TENSOR.HC_ATTN_SCALE, ".weight"),
++            "ffn_hc.fn": (gguf.MODEL_TENSOR.HC_FFN_FN, ".weight"),
++            "ffn_hc.base": (gguf.MODEL_TENSOR.HC_FFN_BASE, ".weight"),
++            "ffn_hc.scale": (gguf.MODEL_TENSOR.HC_FFN_SCALE, ".weight"),
++            "self_attn.sinks": (gguf.MODEL_TENSOR.ATTN_SINKS, ".weight"),
++            "self_attn.q_a_proj.weight": (gguf.MODEL_TENSOR.ATTN_Q_A, ".weight"),
++            "self_attn.q_a_proj.scale": (gguf.MODEL_TENSOR.ATTN_Q_A, ".scale"),
++            "self_attn.q_b_proj.weight": (gguf.MODEL_TENSOR.ATTN_Q_B, ".weight"),
++            "self_attn.q_b_proj.scale": (gguf.MODEL_TENSOR.ATTN_Q_B, ".scale"),
++            "self_attn.q_a_norm.weight": (gguf.MODEL_TENSOR.ATTN_Q_A_NORM, ".weight"),
++            "self_attn.kv_proj.weight": (gguf.MODEL_TENSOR.ATTN_KV, ".weight"),
++            "self_attn.kv_proj.scale": (gguf.MODEL_TENSOR.ATTN_KV, ".scale"),
++            "self_attn.kv_norm.weight": (gguf.MODEL_TENSOR.ATTN_KV_NORM, ".weight"),
++            "self_attn.o_a_proj.weight": (gguf.MODEL_TENSOR.ATTN_OUT_A, ".weight"),
++            "self_attn.o_a_proj.scale": (gguf.MODEL_TENSOR.ATTN_OUT_A, ".scale"),
++            "self_attn.o_b_proj.weight": (gguf.MODEL_TENSOR.ATTN_OUT_B, ".weight"),
++            "self_attn.o_b_proj.scale": (gguf.MODEL_TENSOR.ATTN_OUT_B, ".scale"),
++            "input_layernorm.weight": (gguf.MODEL_TENSOR.ATTN_NORM, ".weight"),
++            "post_attention_layernorm.weight": (gguf.MODEL_TENSOR.FFN_NORM, ".weight"),
++            # HF-standard compressor naming
++            "self_attn.compressor.position_bias": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_APE, ".weight"),
++            "self_attn.compressor.kv_proj.weight": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_WKV, ".weight"),
++            "self_attn.compressor.kv_proj.scale": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_WKV, ".scale"),
++            "self_attn.compressor.gate_proj.weight": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_WGATE, ".weight"),
++            "self_attn.compressor.gate_proj.scale": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_WGATE, ".scale"),
++            "self_attn.compressor.kv_norm.weight": (gguf.MODEL_TENSOR.ATTN_COMPRESSOR_NORM, ".weight"),
++            # HF-standard indexer naming
++            "self_attn.compressor.indexer.position_bias": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_APE, ".weight"),
++            "self_attn.compressor.indexer.q_b_proj.weight": (gguf.MODEL_TENSOR.INDEXER_ATTN_Q_B, ".weight"),
++            "self_attn.compressor.indexer.q_b_proj.scale": (gguf.MODEL_TENSOR.INDEXER_ATTN_Q_B, ".scale"),
++            "self_attn.compressor.indexer.kv_proj.weight": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_WKV, ".weight"),
++            "self_attn.compressor.indexer.kv_proj.scale": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_WKV, ".scale"),
++            "self_attn.compressor.indexer.gate_proj.weight": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_WGATE, ".weight"),
++            "self_attn.compressor.indexer.gate_proj.scale": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_WGATE, ".scale"),
++            "self_attn.compressor.indexer.kv_norm.weight": (gguf.MODEL_TENSOR.INDEXER_COMPRESSOR_NORM, ".weight"),
++            "self_attn.compressor.indexer.scorer.weights_proj.weight": (gguf.MODEL_TENSOR.INDEXER_PROJ, ".weight"),
++            # e_score_correction.bias - maps to FFN_EXP_PROBS_B
++            "ffn.gate.e_score_correction.bias": (gguf.MODEL_TENSOR.FFN_EXP_PROBS_B, ".bias"),
+         }
+ 
+         tensor_name = match.group(2)
+         if tensor_name in layer_map:
+             return layer_map[tensor_name]
+ 
+-        if re.match(r"ffn\.experts\.\d+\.w[123]\.(weight|scale)$", tensor_name):
++        if re.match(r"(?:ffn|mlp)\.experts\.\d+\.w[123]\.(weight|scale)$", tensor_name):
+             return gguf.MODEL_TENSOR.FFN_GATE_EXP, ".weight"
+ 
+         raise ValueError(f"Unsupported DeepSeek-V4 tensor {name!r}")
+ 
+     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
+-        if re.match(r"layers\.\d+\.ffn\.experts\.\d+\.w[123]\.(weight|scale)$", name):
++        if re.match(r"(?:model\.)?layers\.\d+\.(?:ffn|mlp)\.experts\.\d+\.w[123]\.(weight|scale)$", name):
+             return []
+ 
+         tensor_key, suffix = self._map_dsv4_tensor_name(name, bid)
+diff --git a/include/llama.h b/include/llama.h
+index c14eb6f50..6b88a16fc 100644
+--- a/include/llama.h
++++ b/include/llama.h
+@@ -200,6 +200,7 @@ extern "C" {
+         LLAMA_SPLIT_MODE_LAYER  = 1, // split layers and KV across GPUs
+         LLAMA_SPLIT_MODE_ROW    = 2, // split layers and KV across GPUs, use tensor parallelism if supported
+         LLAMA_SPLIT_MODE_TENSOR = 3,
++        LLAMA_SPLIT_MODE_BALANCED = 4, // split layers across GPUs, balanced by estimated layer size
+     };
+ 
+     enum llama_load_mode {
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 3bf3a22f2..6ae61ffe5 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -1323,13 +1323,66 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+ 
+     const int i_gpu_start = std::max(n_layer_all + 1 - n_gpu_layers, 0);
+     const int act_gpu_layers = devices.empty() ? 0 : std::min(n_gpu_layers, n_layer_all + 1);
++    // balanced assignment: estimate per-layer size and assign greedily to balance memory
++    // this is useful for MoE models where expert layers dominate and sequential assignment is lopsided
++    std::vector<int> layer_to_gpu(n_layer_all + 1, -1); // +1 for output layer
++    if (split_mode == LLAMA_SPLIT_MODE_BALANCED && n_devices() > 1) {
++        // estimate relative layer size by summing tensor sizes from GGUF metadata
++        // this accounts for per-layer quantization depth (MXFP4 vs IQ2_XXS, etc.)
++        std::vector<double> layer_weight(n_layer_all + 1, 1.0);
++        for (int il = 0; il < n_layer_all; ++il) {
++            double layer_size = 0.0;
++            // iterate over all tensors in the model loader and sum sizes for this layer
++            std::string layer_prefix = "blk." + std::to_string(il) + ".";
++            for (auto & kv : ml.weights_map) {
++                // check if tensor name starts with the layer prefix
++                if (kv.first.compare(0, layer_prefix.size(), layer_prefix) == 0) {
++                    // use tensor's nbytes for size estimation
++                    layer_size += (double)ggml_nbytes(kv.second.tensor);
++                }
++            }
++            layer_weight[il] = (layer_size > 0) ? layer_size : 1.0;
++        }
++        // output layer (embedding + lm head): moderate size
++        layer_weight[n_layer_all] = 1.0;
++
++        // greedy balanced assignment: assign each layer to the GPU with least total weight
++        std::vector<double> gpu_weight(n_devices(), 0.0);
++        for (int il = 0; il <= n_layer_all; ++il) {
++            if (il < i_gpu_start || (il - i_gpu_start) >= act_gpu_layers) {
++                layer_to_gpu[il] = -1; // CPU
++                continue;
++            }
++            // find GPU with minimum accumulated weight
++            int min_gpu = 0;
++            for (size_t g = 1; g < n_devices(); ++g) {
++                if (gpu_weight[g] < gpu_weight[min_gpu]) {
++                    min_gpu = (int)g;
++                }
++            }
++            layer_to_gpu[il] = min_gpu;
++            gpu_weight[min_gpu] += layer_weight[il];
++        }
++
++        LLAMA_LOG_INFO("%s: balanced layer assignment (MoE-aware, quantization-aware)\n", __func__);
++        for (size_t g = 0; g < n_devices(); ++g) {
++            LLAMA_LOG_INFO("%s:   device %zu: estimated size %.2f MiB\n",
++                __func__, g, gpu_weight[g] / (1024.0 * 1024.0));
++        }
++    }
++
+     auto get_layer_buft_list = [&](int il) -> llama_model::impl::layer_dev {
+         const bool is_swa = il < n_layer_all && hparams.is_swa(il);
+         if (il < i_gpu_start || (il - i_gpu_start) >= act_gpu_layers) {
+             LLAMA_LOG_DEBUG("load_tensors: layer %3d assigned to device %s, is_swa = %d\n", il, ggml_backend_dev_name(cpu_dev), is_swa);
+             return {cpu_dev, &pimpl->cpu_buft_list};
+         }
+-        const int layer_gpu = std::upper_bound(splits.begin(), splits.begin() + n_devices(), float(il - i_gpu_start)/act_gpu_layers) - splits.begin();
++        int layer_gpu;
++        if (split_mode == LLAMA_SPLIT_MODE_BALANCED && layer_to_gpu[il] >= 0) {
++            layer_gpu = layer_to_gpu[il];
++        } else {
++            layer_gpu = std::upper_bound(splits.begin(), splits.begin() + n_devices(), float(il - i_gpu_start)/act_gpu_layers) - splits.begin();
++        }
+         auto * dev = devices.at(layer_gpu).dev;
+         LLAMA_LOG_DEBUG("load_tensors: layer %3d assigned to device %s, is_swa = %d\n", il, ggml_backend_dev_name(dev), is_swa);
+         return {dev, &pimpl->gpu_buft_list.at(dev)};
