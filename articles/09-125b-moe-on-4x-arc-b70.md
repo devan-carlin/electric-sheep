@@ -96,8 +96,9 @@ The model was validated by having it generate a one-shot Flappy Bird clone succe
 
 ## Links
 
-- Model + recipe (W4A16, XPU): [HuggingFace repo](TODO-hf-link)
-- Intel B70 report (the XPU gaps, upstreamable items): [link](TODO-intel-link)
-- Operations guide (clean rebuild, bug log, launch): [link](TODO-ops-link)
+- Model + recipe (W4A16, XPU): [HuggingFace repo](https://huggingface.co/devan-carlin/Qwen3.8-Flash-Next-W4A16)
+- Patched vLLM (installable fork branch): [`devan-carlin/vllm` @ `xpu-qwen4exp`](https://github.com/devan-carlin/vllm/tree/xpu-qwen4exp)
+- XPU gaps + upstreamable items (public issue): [intel/llm-scaler#649](https://github.com/intel/llm-scaler/issues/649)
+- Operations guide (clean rebuild, bug log, launch): [qwen4exp-vllm-operations.md](https://github.com/devan-carlin/electric-sheep/blob/main/docs/qwen4exp-vllm-operations.md)
 
 *Backlog: the vision tower. This serving recipe is text-only. Multimodality is next.*

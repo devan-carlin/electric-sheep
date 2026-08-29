@@ -57,11 +57,18 @@ Memory is split across two pools for different purposes:
 
 Stock vLLM is not compatible. This model requires a patched vLLM with the `qwen4_exp` model port and XPU W4A16 / GDN kernels:
 
-- vLLM `0.26.1rc1.dev500+gc39076fef`
+- vLLM base: `vllm-project/vllm` @ `c39076fef`
 - torch `2.13.0+xpu`
 - vllm-xpu-kernels `0.1.12` (pinned; `0.1.13.2` is broken)
 
-Port and kernel patches are provided as diffs (see companion operations doc / PR).
+The port is a 16-file patch, published and verified:
+
+- **Fork branch (installable):** [`devan-carlin/vllm` @ `xpu-qwen4exp`](https://github.com/devan-carlin/vllm/tree/xpu-qwen4exp) — `pip install "vllm @ git+https://github.com/devan-carlin/vllm.git@xpu-qwen4exp"` (or run the one-shot installer below)
+- **One-shot installer:** [`setup-vllm-xpu.sh`](https://github.com/devan-carlin/electric-sheep/blob/main/vllm/setup-vllm-xpu.sh) — rustup + venv + torch + kernel pin + build, in one command
+- **Patch file:** [`qwen4exp-xpu-port.patch`](https://github.com/devan-carlin/electric-sheep/blob/main/vllm/patches/qwen4exp-xpu-port.patch) — git-apply diff vs the clean base
+- **Operations guide** (clean rebuild, bug log, launch config): [`qwen4exp-vllm-operations.md`](https://github.com/devan-carlin/electric-sheep/blob/main/docs/qwen4exp-vllm-operations.md)
+
+The patch was verified end-to-end: a fresh venv built from the clean base + patch reproduces the reference build (53.4 tok/s on 4x Arc Pro B70).
 
 ## PLE n-gram table (required, included in repo)
 
