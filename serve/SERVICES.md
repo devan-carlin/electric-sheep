@@ -1,7 +1,7 @@
 # AI Server Service Map
 
 4x Intel Arc Pro B70 (32 GB, XPU/Level Zero). One service per GPU.
-Last updated: 2026-08-25.
+Last updated: 2026-08-28.
 
 ## Active services
 
@@ -48,11 +48,32 @@ model in the launcher, never the name).
 - Two independent instances for parallel image work.
 - Managed by `start-all.sh` (kills old instances on start).
 
+### Qwen3.8-Flash-Next (4x GPU, on demand)
+
+- 125B MoE / 6B active + PLE n-gram table. Served two ways, both 4x GPU:
+  - **vLLM** `:8000` alias `qwen-256k` (W4A16). The engine with the HC + PLE
+    `1 + w` gamma fixes (2026-08-28). Runs in XPU graph mode
+    (`VLLM_XPU_ENABLE_XPU_GRAPH=1`, no `--enforce-eager`): PLE does host-side
+    n-gram hashing with GPU->CPU syncs, but vLLM's piecewise capture
+    (FULL_AND_PIECEWISE) breaks the graph only at PLE and captures the other
+    47 layers. Measured 2026-08-28: 7.0 tok/s eager vs 53.2 tok/s graph in
+    production (7.6x). Cost: ~2-4 min graph compile at startup. vLLM's
+    "XPU Graph ... single-GPU only" warning is a red herring; works at TP4.
+  - **llama.cpp** `:8090` alias `flash-next` (Q4_K_XL). PLE table in host RAM.
+- One front door: `start-qwen-next.sh` (`start|stop|restart|status|smoke|logs`).
+  It delegates to the two launchers above; env overrides pass through
+  (`QWEN256K_*` / `FLASHNEXT_*`).
+- Not in the always-on service map: it needs all 4 GPUs, so it runs on demand
+  and is stopped before the per-GPU slots (8088/8089) are used.
+
 ## Launch scripts
 
 | Script | What it does |
 |--------|--------------|
 | `start-all.sh` | Start/stop/status all 4 services. Subcommands: `start`, `stop`, `status`, `restart-gemma`, `restart-qwen` |
+| `start-qwen-next.sh` | **Front door for Qwen3.8-Flash-Next.** Delegates to the vLLM + llama launchers; adds unified `status`/`smoke`/`logs`/`restart`. `start [vllm\|llama]`, `stop [vllm\|llama\|all]`, `status`, `smoke`, `logs` |
+| `start-qwen256k-vllm.sh` | Flash-Next via vLLM, :8000, alias `qwen-256k` (W4A16, 4x GPU, 256K, fp8 KV, XPU graph mode). The engine with the HC + PLE `1 + w` gamma fixes |
+| `start-flashnext-llama.sh` | Flash-Next via llama.cpp, :8090, alias `flash-next` (Q4_K_XL, 4x GPU, q8_0 KV, PLE table in RAM) |
 | `start-gemma-llama.sh` | Gemma slot on GPU 3 :8089, alias `gemma` (start/stop/status) |
 | `start-qwen-llama.sh` | Qwen slot on GPU 2 :8088, alias `qwen` (start/stop/status). Model pinned in the script; swap via QWEN_LLAMA_MODEL_DIR/MODEL_FILE |
 | `fallback/start-qwen.sh` | vLLM Qwen -ara fallback (128K, fp8 KV) |
@@ -68,6 +89,8 @@ Env overrides: `QWEN_LLAMA_GPU/PORT/CTX/ALIAS/MODEL_DIR/MODEL_FILE/MMPROJ/REASON
 - `logs/llama_8089.log` - Gemma4 llama.cpp
 - `logs/comfyui_8188.log`, `logs/comfyui_8189.log` - ComfyUI
 - `logs/vllm_8088.log` - vLLM Qwen (when using the fallback)
+- `logs/vllm_8000.log` - Qwen3.8-Flash-Next vLLM (qwen-256k)
+- `logs/llama_8090.log` - Qwen3.8-Flash-Next llama.cpp (flash-next)
 
 ## Known gotchas
 
