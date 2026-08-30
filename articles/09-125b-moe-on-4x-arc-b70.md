@@ -101,4 +101,4 @@ The model was validated by having it generate a one-shot Flappy Bird clone succe
 - XPU gaps + upstreamable items (public issue): [intel/llm-scaler#649](https://github.com/intel/llm-scaler/issues/649)
 - Operations guide (clean rebuild, bug log, launch): [qwen4exp-vllm-operations.md](https://github.com/devan-carlin/electric-sheep/blob/main/docs/qwen4exp-vllm-operations.md)
 
-*Backlog: the vision tower. This serving recipe is text-only. Multimodality is next.*
+*The vision tower is now in: the serving recipe is multimodal (Qwen3-VL ViT reused verbatim). Images are served alongside text.*

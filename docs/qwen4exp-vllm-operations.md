@@ -64,7 +64,7 @@ setsid bash ./start-qwen256k-vllm.sh start > /tmp/vllm_baseline.log 2>&1 < /dev/
 
 ## Serving notes
 
-- **Text-only**: `Qwen4ExpForConditionalGeneration` is an empty alias in this port. The 333 `visual.*` tensors are ignored; there is no vision encoder/processor.
+- **Multimodal**: `Qwen4ExpForConditionalGeneration` is a real wrapper around the Qwen3-VL vision tower (`Qwen3_VisionTransformer`) + the `Qwen4ExpForCausalLM` text model. All 333 `visual.*` tensors load; images are served via the Qwen3-VL processor (`image_url` content parts). Text-only prompts work unchanged.
 - **Degenerate tail fix**: At greedy (temperature 0), the model may emit a foreign-language degenerate tail. Set **temperature 0.7 + reasoning "high"** in the web UI to resolve this.
 - **Open WebUI**: Use container `open-webui` (image `ghcr.io/open-webui/open-webui:main`), mapping port 3000->8080. Use a named volume `open-webui` to preserve data. Use `--add-host host.docker.internal:host-gateway` and `OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1`.
 - **VRAM Management**: After any restart, verify that no orphan `EngineCore`/`Worker` processes are holding VRAM before relaunching.

@@ -103,7 +103,7 @@ Environment: `VLLM_XPU_ENABLE_XPU_GRAPH=1`, `UR_L0_SYNC_MODE=BLOCKING`, `VLLM_WO
 
 ## Notes
 
-- **Text-only.** This recipe does not include the vision tower; use the base model for multimodal tasks.
+- **Multimodal.** The vision tower (27-block ViT, byte-identical to Qwen3-VL) is included and served via the Qwen3-VL processor. Send images as `image_url` content parts (base64 or URL); the model describes them. Text-only prompts work unchanged.
 - **Serving tip:** Greedy decoding (temp 0) may produce a degenerate foreign-language tail. Use temperature 0.7 and high reasoning effort to resolve this.
 - **MTP speculative decoding** is supported by the port but is unreliable on XPU due to GDN `causal_conv1d` kernel limitations. Keep it disabled.
 
