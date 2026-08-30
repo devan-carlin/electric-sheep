@@ -468,10 +468,10 @@ index b43aea8..0efc174 100644
  
 diff --git a/vllm/model_executor/models/qwen4_exp.py b/vllm/model_executor/models/qwen4_exp.py
 new file mode 100644
-index 0000000..1b280fe
+index 0000000..9c754c1
 --- /dev/null
 +++ b/vllm/model_executor/models/qwen4_exp.py
-@@ -0,0 +1,1435 @@
+@@ -0,0 +1,1441 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Inference-only Qwen4-Exp model (VnimanieAI Qwen3.8-Flash-Next).
@@ -1844,6 +1844,12 @@ index 0000000..1b280fe
 +        )
 +        return hidden_states
 +
++    def get_mtp_target_hidden_states(self) -> torch.Tensor | None:
++        """Wide hyper-connection residual buffer [T, hc * n_embd] for the MTP
++        draft model. The model runner looks this hook up on the *served*
++        (multimodal wrapper) model, so delegate to the inner text model."""
++        return self.language_model.get_mtp_target_hidden_states()
++
 +    def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
 +        # Load the vision tower (``model.visual.*`` -> ``visual.*``) and the
 +        # text model (``model.language_model.*`` -> ``language_model.model.*``)
@@ -2711,6 +2717,14 @@ index 675bc4b..33a403a 100644
  
          # Unifying eagle, draft model, and parallel drafting support.
          # DFlash always uses parallel drafting (all tokens in one pass),
+@@ -1378,6 +1384,7 @@ class SpecDecodeBaseProposer:
+                 "Qwen3_5MoeForConditionalGeneration",
+                 "Qwen3VLForConditionalGeneration",
+                 "Qwen3VLMoeForConditionalGeneration",
++                "Qwen4ExpForConditionalGeneration",
+                 "Gemma4ForConditionalGeneration",
+                 "Gemma4UnifiedForConditionalGeneration",
+                 "Step3p7ForConditionalGeneration",
 diff --git a/vllm/v1/worker/mamba_utils.py b/vllm/v1/worker/mamba_utils.py
 index ea0a9b8..22b7d34 100644
 --- a/vllm/v1/worker/mamba_utils.py

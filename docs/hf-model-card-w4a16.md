@@ -104,8 +104,8 @@ Environment: `VLLM_XPU_ENABLE_XPU_GRAPH=1`, `UR_L0_SYNC_MODE=BLOCKING`, `VLLM_WO
 ## Notes
 
 - **Multimodal.** The vision tower (27-block ViT, byte-identical to Qwen3-VL) is included and served via the Qwen3-VL processor. Send images as `image_url` content parts (base64 or URL); the model describes them. Text-only prompts work unchanged.
-- **Serving tip:** Greedy decoding (temp 0) may produce a degenerate foreign-language tail. Use temperature 0.7 and high reasoning effort to resolve this.
-- **MTP speculative decoding** is supported by the port but is unreliable on XPU due to GDN `causal_conv1d` kernel limitations. Keep it disabled.
+- **Serving tip:** Greedy decoding (temp 0) tends to lock into repetitive loops on this model. Use temperature 0.7 and high reasoning effort to resolve this.
+- **MTP speculative decoding** is wired into the port (`--speculative-config '{"method":"mtp","num_speculative_tokens":1}'`) and produces correct output, but on this hardware it is a net slowdown: the MTP head is a full MoE decoder layer, so the draft step costs ~60% of a target step and the ~40% acceptance rate (1 spec token) does not pay it back. Measured ~44 tok/s with MTP on vs ~51 tok/s off. Keep it disabled until the acceptance rate is higher.
 
 ## License
 
