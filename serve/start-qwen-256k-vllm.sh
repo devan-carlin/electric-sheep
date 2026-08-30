@@ -38,7 +38,10 @@ MEM_UTIL="${QWEN256K_MEM_UTIL:-0.85}"
 # Needed for FP8 (134 GB transformer > 4x30 GiB VRAM). W4A16 fits without it.
 CPU_OFFLOAD_GB="${QWEN256K_CPU_OFFLOAD_GB:-0}"
 LOG="$HOME/electric-sheep/serve/logs/vllm_${PORT}.log"
-VENV="$HOME/electric-sheep/vllm/.venv"
+# Verified production venv: clean upstream main @ c39076fef + the qwen4exp
+# port (incl. the multimodal wrapper), built from scratch. The older
+# ~/electric-sheep/vllm/.venv (0.26.1rc1) is kept only as a fallback.
+VENV="${QWEN256K_VENV:-$HOME/vllm-fresh-venv}"
 
 stop() {
   pkill -f "vllm.entrypoints.openai.api_server.*--port $PORT" 2>/dev/null && sleep 5

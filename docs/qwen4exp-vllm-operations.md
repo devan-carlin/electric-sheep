@@ -11,7 +11,7 @@ Serves `Qwen3.8-Flash-Next` (125B MoE / 6B active, W4A16) on 4x Intel Arc Pro B7
 **Performance (Measured 2026-08-29, single stream, 512 tokens, greedy):**
 
 - **53.4 tok/s decode** (median of 3 runs; TTFT ~0.11s).
-- **llama.cpp baseline**: ~29 tok/s (~1.8x slower).
+- **llama.cpp baseline**: ~27 tok/s (~2x slower).
 - **MTP speculative decoding**: Correct and lossless with 34% draft acceptance, but **unreliable on XPU** (see bug log). Do not use as the default.
 
 ## Hardware
@@ -22,12 +22,22 @@ Serves `Qwen3.8-Flash-Next` (125B MoE / 6B active, W4A16) on 4x Intel Arc Pro B7
 
 ## The stack (exact versions)
 
-- vLLM `0.26.1rc1.dev500+gc39076fef` (venv `electric-sheep/vllm/.venv`).
+- vLLM built from upstream main @ `c39076fef` (production venv `~/vllm-fresh-venv/`, reports `0.1.dev1+gc39076fef`).
 - torch `2.13.0+xpu`.
 - vllm-xpu-kernels `0.1.12` (pinned; `0.1.13.2` is broken).
 - Python 3.12.
 
-The venv is a **non-editable patched copy** of a clean upstream checkout (`vllm/vllm-src`, commit `c39076feff`). Local XPU patches are located in `site-packages/vllm`. Do **NOT** re-sync from `vllm-src` or you will overwrite the patches. Python edits in `site-packages` take effect upon the next server restart.
+Two venvs exist; both carry the full port (model + MTP + multimodal wrapper):
+
+- **`~/vllm-fresh-venv/`** — the verified production venv. Built from a clean
+  upstream checkout (`c39076fef`) + the 16-file `qwen4exp-xpu-port.patch`,
+  reproduced end-to-end (53.4 tok/s). This is what both `start-qwen-256k*.sh`
+  launchers use.
+- **`~/electric-sheep/vllm/.venv`** — the original dev venv (reports
+  `0.26.1rc1.dev500+gc39076fef`), a non-editable patched copy of
+  `vllm/vllm-src` with local XPU patches applied in `site-packages/vllm`.
+  Kept as a fallback. Do **NOT** re-sync it from `vllm-src` (would clobber the
+  patches); Python edits in `site-packages` take effect on the next restart.
 
 ## Clean rebuild (from a fresh machine)
 
@@ -85,7 +95,6 @@ MTP-on (eager drafter) achieves 44.2 tok/s, compared to the baseline of ~53 tok/
 
 ## Backlog
 
-- **Multimodality**: Port the vision tower (Qwen3.5-vision-lineage encoder + image processor + MRoPE wiring).
 - **QSA sparse indexer**: Implement a true backend (current version uses dense attention on the 12 QSA layers).
-- **W8A16 variant**: `int8_gemm_w8a16` is not yet registered in 0.1.12.
-- **Upstreaming**: Port `qwen4_exp`, XPU kernel work, and the GDN spec-decode fix.
+- **W8A16 variant**: `int8_gemm_w8a16` is not yet registered in 0.1.12 (Python PR blocked on vllm-xpu-kernels #531).
+- **Upstreaming**: `qwen4_exp` port + XPU kernel work shipped as a fork branch; SGLang XPU marlin fix PR opened (sgl-project/sglang#37080); status posted to intel/llm-scaler#649. Remaining: GDN spec-decode kernel fix, mamba XPU ptr fix, MoE TopK 16/32/64.

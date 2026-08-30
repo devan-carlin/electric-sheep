@@ -2,10 +2,10 @@
 
 Goal: serve `VnimanieAI/Qwen3.8-Flash-Next-W4A16` (125B MoE, W4A16) via vLLM
 on 4x Arc Pro B70 as `qwen-256k` (port 8000, 256K ctx, fp8 KV).
-Baseline to beat: llama.cpp port 8090 (~29 t/s, single stream).
+Baseline to beat: llama.cpp port 8090 (~27 t/s, single stream).
 vLLM value prop: prefix caching, concurrency, xgrammar — not raw speed.
 
-Status: IN PROGRESS (model definition port).
+Status: COMPLETE (serving on 4x B70; see qwen4exp-vllm-operations.md).
 Companion issue: intel/llm-scaler#649.
 
 ## Why vLLM (and why it was blocked)
@@ -69,7 +69,7 @@ Text model (`Qwen4ExpForConditionalGeneration`, text_config model_type `qwen4_ex
   gather on CPU, ship result to GPU.
 - MTP head (1 layer, BF16, fused gate_up_proj [512, 1280, 2560]):
   speculative-decoding only. SKIP in v1 (llama.cpp also runs no_mtp).
-- Vision tower (27 blocks): SKIP in v1 (text-only serving).
+- Vision tower (27 blocks): added after v1 — the Qwen3-VL ViT is reused verbatim; the serving recipe is now multimodal.
 
 ## v1 scope decisions
 
@@ -157,3 +157,9 @@ Reference / version control:
 - 2026-08-27: Phase 0 complete (W4A16 dense + MoE grouped verified on B70;
   root cause = broken 0.1.13.2 wheel, fixed by pinned 0.1.12). Issue #649
   updated. Port started: config + model skeleton (Phase A).
+- 2026-08-30: Port complete and serving on 4x B70 (53.4 tok/s). Vision tower
+  added (Qwen3-VL ViT reused verbatim) — recipe is now multimodal. MTP drafter
+  wired (correct/lossless, 34% acceptance; kept off by default on XPU). Shipped:
+  16-file patch, fork branch `devan-carlin/vllm @ xpu-qwen4exp`, HF model card,
+  status posted to intel/llm-scaler#649. -2 () variant
+  quantized + served + verified (refusal 0/66).

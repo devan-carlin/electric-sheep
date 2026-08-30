@@ -5,6 +5,12 @@
 **Python:** 3.12 (deadsnakes PPA)  
 **Project Root:** `~/electric-sheep/vllm/`
 
+> **Note (2026-08-30):** This guide builds the original dev venv
+> (`~/electric-sheep/vllm/.venv`). The **verified production venv** is now
+> `~/vllm-fresh-venv/` — a clean build from upstream main @ `c39076fef` + the
+> `qwen4exp-xpu-port.patch`. Both `start-qwen-256k*.sh` launchers use the fresh
+> venv. See `docs/qwen4exp-vllm-operations.md` for the current stack.
+
 ---
 
 ## Phase 1: System Preparation

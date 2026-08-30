@@ -1,7 +1,7 @@
 # AI Server Service Map
 
 4x Intel Arc Pro B70 (32 GB, XPU/Level Zero). One service per GPU.
-Last updated: 2026-08-28.
+Last updated: 2026-08-30.
 
 ## Active services
 
@@ -12,9 +12,11 @@ Last updated: 2026-08-28.
 | 8088 | 2 | llama.cpp | Qwen3.6-35B-A3B Aggressive ( Q4_K_P, MoE) | 256K | Book writing, long-context prose |
 | 8089 | 3 | llama.cpp | Gemma4 26B-A4B ( Balanced Q4_K_P) | 256K | VN writing, daily chat |
 
-Open WebUI (Docker) points at `host.docker.internal:8089` and `:8088`.
-Model IDs in WebUI: `gemma`, `qwen` (version-agnostic on purpose - swap the
-model in the launcher, never the name).
+Open WebUI (Docker) points at the active endpoint: default
+`host.docker.internal:8089` + `:8088` (the always-on llama.cpp slots), or
+`:8000` when the 4-GPU `qwen-256k` vLLM server is up.
+Model IDs in WebUI: `gemma`, `qwen`, `qwen-256k` (version-agnostic on purpose -
+swap the model in the launcher, never the name).
 
 ## Why these choices
 

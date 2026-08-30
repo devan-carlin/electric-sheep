@@ -20,9 +20,9 @@ Test parameters: Single stream, 512 tokens, greedy decoding, median of 3 runs:
 | Time to first token | ~0.11s |
 | Context | 256K |
 | KV cache | fp8 |
-| Baseline (llama.cpp, same box) | ~29 tok/s |
+| Baseline (llama.cpp, same box) | ~27 tok/s |
 
-vLLM provides ~1.8x the throughput of the llama.cpp baseline on identical hardware.
+vLLM provides ~2x the throughput of the llama.cpp baseline on identical hardware.
 
 ## The hardware
 
@@ -34,7 +34,7 @@ Host RAM capacity is critical. See the memory distribution below.
 
 ## The stack
 
-- vLLM `0.26.1rc1.dev500+gc39076fef` (patched)
+- vLLM built from upstream main @ `c39076fef` (patched)
 - torch `2.13.0+xpu`
 - vllm-xpu-kernels `0.1.12` (pinned — version 0.1.13.2 is broken)
 - Python 3.12

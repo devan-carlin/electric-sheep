@@ -4,14 +4,14 @@ Report for the Intel B70 inference team.
 
 ## Summary
 
-A frontier 125B MoE model (Qwen3.8-Flash-Next, 6B active) achieves **53.4 tok/s decode** on **4x Intel Arc Pro B70 (128GB total VRAM)** using a patched vLLM. This performance matches or exceeds single high-end NVIDIA GPU performance for this model class and is ~1.8x the llama.cpp baseline (~29 tok/s) on the same hardware.
+A frontier 125B MoE model (Qwen3.8-Flash-Next, 6B active) achieves **53.4 tok/s decode** on **4x Intel Arc Pro B70 (128GB total VRAM)** using a patched vLLM. This performance matches or exceeds single high-end NVIDIA GPU performance for this model class and is ~2x the llama.cpp baseline (~27 tok/s) on the same hardware.
 
 This implementation required significant XPU-side development. This report details the implementation requirements and the remaining XPU gaps for upstreaming.
 
 ## Result
 
 - Model: Qwen3.8-Flash-Next, 125B MoE / 6B active, W4A16 (int4 group-128)
-- Stack: vLLM 0.26.1rc1.dev500+gc39076fef, torch 2.13.0+xpu, vllm-xpu-kernels 0.1.12, oneAPI Level-Zero 20.2.0
+- Stack: vLLM built from upstream main @ c39076fef, torch 2.13.0+xpu, vllm-xpu-kernels 0.1.12, oneAPI Level-Zero 20.2.0
 - Config: TP4 + expert parallel, fp8 KV, 256K context, XPU graph mode
 - **53.4 tok/s decode** (single stream, 512 tokens, greedy, median of 3)
 - TTFT ~0.11s
