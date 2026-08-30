@@ -24,7 +24,7 @@
 #   bash start-qwen-256k-vllm.sh status   # check
 #
 # Env overrides: QWEN256K_PORT, QWEN256K_ALIAS, QWEN256K_GPUS, QWEN256K_MODEL,
-#                QWEN256K_CTX, QWEN256K_MEM_UTIL, PLE_TABLE_PATH
+#                QWEN256K_CTX, QWEN256K_MEM_UTIL, QWEN256K_TEMP, PLE_TABLE_PATH
 # =============================================================================
 set -uo pipefail
 
@@ -34,6 +34,10 @@ GPUS="${QWEN256K_GPUS:-0,1,2,3}"
 MODEL="${QWEN256K_MODEL:-/mnt/data/models/devancarlin-Qwen3.8-Flash-Next-W4A16-BF16src}"
 CTX="${QWEN256K_CTX:-262144}"
 MEM_UTIL="${QWEN256K_MEM_UTIL:-0.85}"
+# Sampling temperature. The model's generation_config.json ships 1.0, which
+# degrades fast on this model (repetition / incoherent tails). Pin 0.7.
+# Overridden onto the model config via --override-generation-config.
+TEMP="${QWEN256K_TEMP:-0.7}"
 # Per-GPU GiB of weights to UVA-offload to pinned host RAM (0 = none).
 # Needed for FP8 (134 GB transformer > 4x30 GiB VRAM). W4A16 fits without it.
 CPU_OFFLOAD_GB="${QWEN256K_CPU_OFFLOAD_GB:-0}"
@@ -105,6 +109,7 @@ case "${1:-start}" in
       --enable-auto-tool-choice
       --tool-call-parser qwen3_xml
       --generation-config vllm
+      --override-generation-config "{\"temperature\": $TEMP}"
     )
     if [ "$CPU_OFFLOAD_GB" != "0" ]; then
       CMD+=(--cpu-offload-gb "$CPU_OFFLOAD_GB")
