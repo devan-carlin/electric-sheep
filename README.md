@@ -51,9 +51,6 @@ electric-sheep/
 │   ├── ubuntu/          # AI Server setup (numbered, sequential)
 │   ├── windows/         # Workstation setup (PowerShell)
 │   └── common/          # Shared utilities (both platforms)
-├── configs/
-│   ├── vllm/            # vLLM runtime configs (model + server)
-│   └── llama/           # llama.cpp runtime configs
 ├── docs/
 │   ├── architecture.md  # Hardware specs + project layout
 │   ├── guides/          # Deployment + technique guides
@@ -176,7 +173,7 @@ See `configs/vllm/model-configs.md` for launch commands and VRAM budgets.
 
 Launchers live in `serve/` (live stack: `start-all.sh` + `start-*-llama.sh`; vLLM
 fallbacks in `serve/fallback/`), XPU environment configs in `vllm/env/`, and
-reference configs in `configs/`:
+reference config docs in `docs/vllm/`:
 
 ```bash
 # Start the full 4-GPU stack (2x ComfyUI + 2x llama.cpp)
@@ -190,7 +187,7 @@ source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
 vllm serve <model-path> --tensor-parallel-size 4 --kv-cache-dtype fp8
 
 # Start llama.cpp DeepSeek
-bash ~/electric-sheep/configs/llama/deepseek/start-deepseek-v4-flash.sh
+bash ~/electric-sheep/serve/fallback/start-deepseek-v4-flash.sh
 ```
 
 ---

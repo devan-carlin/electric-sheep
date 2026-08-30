@@ -56,7 +56,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 
 #### Qwen 3.6 35B-A3B (MoE — requires patch)
 
-> **Prerequisite:** Run `bash ~/electric-sheep/scripts/ubuntu/03.1-patch-vllm-moe-qzeros.sh` before first launch.
+> **Prerequisite:** Run `bash ~/electric-sheep/build/ubuntu/03.1-patch-vllm-moe-qzeros.sh` before first launch.
 
 ```bash
 source ~/electric-sheep/vllm/.venv/bin/activate

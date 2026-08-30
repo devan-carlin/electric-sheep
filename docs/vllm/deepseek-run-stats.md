@@ -173,7 +173,7 @@ hf download unsloth/DeepSeek-V4-Flash-0731-GGUF \
 
 ### Start server
 ```bash
-cd ~/electric-sheep/configs/llama/deepseek
+cd ~/electric-sheep/docs/vllm
 ./start-deepseek-v4-flash.sh
 ```
 

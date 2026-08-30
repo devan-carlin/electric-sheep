@@ -156,7 +156,7 @@ check_status() {
     # llama-server binary?
     if [ ! -f "$LLAMA_SERVER" ]; then
         echo "  ✗ llama-server not found: $LLAMA_SERVER"
-        echo "  Fix: run ~/electric-sheep/scripts/ubuntu/05-build-llama-cpp.sh"
+        echo "  Fix: run ~/electric-sheep/build/ubuntu/05-build-llama-cpp.sh"
         errors=$((errors + 1))
     else
         echo "  ✓ llama-server found"
