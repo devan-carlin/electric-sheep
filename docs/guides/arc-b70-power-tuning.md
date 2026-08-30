@@ -5,7 +5,7 @@
 This guide covers reducing power consumption and heat output on 4× Intel Arc
 Pro B70 GPUs (32 GB each, `xe` driver) using sysfs power caps and frequency
 limits, with persistence via systemd. The companion script is
-`scripts/common/setup-gpu-power-limits.sh`.
+`build/common/setup-gpu-power-limits.sh`.
 
 Unlike the RTX 5090 (Windows, MSI Afterburner), the B70 exposes its power and
 frequency controls through Linux sysfs — no GUI tool needed.
@@ -49,22 +49,22 @@ limits, CPU governor, and systemd persistence in one shot:
 
 ```bash
 # Apply defaults (160W cap, 1100 MHz max, 1200 MHz boost, persistent)
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh
 
 # Custom power cap
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh --watts 140
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh --watts 140
 
 # Custom frequency limits
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh --watts 160 --gt-max 1000 --gt-boost 1100
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh --watts 160 --gt-max 1000 --gt-boost 1100
 
 # Apply without persistence (current session only)
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh --no-persist
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh --no-persist
 
 # Check current state
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh --status
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh --status
 
 # Remove all limits, restore stock
-sudo bash ~/electric-sheep/scripts/common/setup-gpu-power-limits.sh --reset
+sudo bash ~/electric-sheep/build/common/setup-gpu-power-limits.sh --reset
 ```
 
 ### What it does

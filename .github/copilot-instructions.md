@@ -9,9 +9,9 @@
 
 ## Project Structure Conventions
 
-- **Setup scripts:** `~/electric-sheep/scripts/ubuntu/` (numbered: `01-`, `02-`, `03-`, ...)
-- **Common utilities:** `~/electric-sheep/scripts/common/` (platform-agnostic)
-- **Windows scripts:** `~/electric-sheep/scripts/windows/` (PowerShell)
+- **Setup scripts:** `~/electric-sheep/build/ubuntu/` (numbered: `01-`, `02-`, `03-`, ...)
+- **Common utilities:** `~/electric-sheep/build/common/` (platform-agnostic)
+- **Windows scripts:** `~/electric-sheep/build/windows/` (PowerShell)
 - **Runtime configs:** `~/electric-sheep/configs/` (vllm/, llama/deepseek/)
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **Server launchers (all 4 GPUs):** `~/electric-sheep/serve/` (`start-all.sh` + per-slot `start-*-llama.sh`; vLLM fallbacks in `serve/fallback/`)

@@ -18,7 +18,6 @@ __pycache__/
 *.egg-info/
 *.egg-info
 dist/
-build/
 *.egg
 *.whl
 *.dist-info/

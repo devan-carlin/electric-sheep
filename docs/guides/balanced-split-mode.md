@@ -212,7 +212,7 @@ Check that:
 - Model: `apetersson/DeepSeek-V4-Flash-0731--DS4-Quality128` (102.8 GB GGUF)
 - Hardware: Threadripper PRO 3945WX, 4× Arc Pro B70 (32 GB each)
 - llama.cpp: commit `dd1ea5243` (latest master, 2026-08-10) with SYCL/XPU backend
-- Patch script: `/electric-sheep/scripts/common/apply-balanced-split-mode.sh`
+- Patch script: `/electric-sheep/build/common/apply-balanced-split-mode.sh`
 - PR documentation: `/electric-sheep/docs/guides/pr-balanced-split-mode.md`
 
 ## Clean Build Verification (2026-08-10)

@@ -68,7 +68,7 @@ If you don't have Visual Studio 2022:
 ### Quick Build (One Command)
 
 ```powershell
-cd ~/electric-sheep/scripts/windows
+cd ~/electric-sheep/build/windows
 .\02-build-llama-cpp.ps1
 ```
 

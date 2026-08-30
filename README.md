@@ -47,7 +47,7 @@ CUDA is the safe choice. If you need reliability and broad framework support, NV
 
 ```
 electric-sheep/
-├── scripts/
+├── build/
 │   ├── ubuntu/          # AI Server setup (numbered, sequential)
 │   ├── windows/         # Workstation setup (PowerShell)
 │   └── common/          # Shared utilities (both platforms)
@@ -80,43 +80,43 @@ electric-sheep/
 
 ```bash
 # Option A: Interactive (asks what to build)
-bash ~/electric-sheep/scripts/common/build-all.sh
+bash ~/electric-sheep/build/common/build-all.sh
 
 # Option B: Build everything at once
-bash ~/electric-sheep/scripts/common/build-all.sh --all
+bash ~/electric-sheep/build/common/build-all.sh --all
 ```
 
 **Step-by-step:**
 
 ```bash
 # 1. System packages, Python 3.12, oneAPI
-bash ~/electric-sheep/scripts/ubuntu/01-install-prerequisites.sh
+bash ~/electric-sheep/build/ubuntu/01-install-prerequisites.sh
 
 # 2. Create vLLM project directory + virtual environment
-bash ~/electric-sheep/scripts/ubuntu/02-setup-project-directory.sh
+bash ~/electric-sheep/build/ubuntu/02-setup-project-directory.sh
 
 # 3. Build vLLM with XPU support
-bash ~/electric-sheep/scripts/ubuntu/03-build-vllm-xpu.sh
+bash ~/electric-sheep/build/ubuntu/03-build-vllm-xpu.sh
 
 # 4. Patch MoE models (required for Intel 35B-A3B)
-bash ~/electric-sheep/scripts/ubuntu/03.1-patch-vllm-moe-qzeros.sh
+bash ~/electric-sheep/build/ubuntu/03.1-patch-vllm-moe-qzeros.sh
 
 # 5. Set up llama.cpp
-bash ~/electric-sheep/scripts/ubuntu/04-setup-llama.sh
-bash ~/electric-sheep/scripts/ubuntu/05-build-llama-cpp.sh
+bash ~/electric-sheep/build/ubuntu/04-setup-llama.sh
+bash ~/electric-sheep/build/ubuntu/05-build-llama-cpp.sh
 
 # 6. Download models
-bash ~/electric-sheep/scripts/ubuntu/06-download-models.sh
+bash ~/electric-sheep/build/ubuntu/06-download-models.sh
 ```
 
 **Convert a model to INT4:**
 
 ```bash
 # Max quality (slower, ~12-16 hours for 30B+ models)
-bash ~/electric-sheep/scripts/common/convert-int4-autoround.sh <huggingface-repo>
+bash ~/electric-sheep/build/common/convert-int4-autoround.sh <huggingface-repo>
 
 # Parallel mode (faster, ~2-4 hours, uses all 4 GPUs)
-bash ~/electric-sheep/scripts/common/convert-int4-autoround-parallel.sh <huggingface-repo> --parallel --batch-size 4
+bash ~/electric-sheep/build/common/convert-int4-autoround-parallel.sh <huggingface-repo> --parallel --batch-size 4
 ```
 
 ### On the Workstation (Windows + RTX 5090)
@@ -124,7 +124,7 @@ bash ~/electric-sheep/scripts/common/convert-int4-autoround-parallel.sh <hugging
 **Build llama.cpp with CUDA:**
 
 ```powershell
-cd ~/electric-sheep/scripts/windows
+cd ~/electric-sheep/build/windows
 .\01-install-prerequisites.ps1
 .\02-build-llama-cpp.ps1
 ```
@@ -141,11 +141,11 @@ See `04-llama-cpp-deployment-guide.md` and `05-ollama-deployment-guide.md` for r
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/common/build-all.sh` | Orchestrate full build pipeline |
-| `scripts/common/convert-int4-autoround.sh` | Quantize models to INT4 (single GPU) |
-| `scripts/common/convert-int4-autoround-parallel.sh` | Quantize models to INT4 (multi-GPU) |
-| `scripts/common/setup-gpu-power-limits.sh` | GPU power tuning |
-| `scripts/common/tailscale-setup.md` | Mesh network between machines |
+| `build/common/build-all.sh` | Orchestrate full build pipeline |
+| `build/common/convert-int4-autoround.sh` | Quantize models to INT4 (single GPU) |
+| `build/common/convert-int4-autoround-parallel.sh` | Quantize models to INT4 (multi-GPU) |
+| `build/common/setup-gpu-power-limits.sh` | GPU power tuning |
+| `build/common/tailscale-setup.md` | Mesh network between machines |
 
 ---
 

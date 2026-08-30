@@ -36,7 +36,7 @@ Ollama runs as a system tray process on Windows. After install, it starts automa
 ### Run Setup Script
 
 ```powershell
-cd ~/electric-sheep/scripts/windows
+cd ~/electric-sheep/build/windows
 .\01-setup-ollama.ps1
 ```
 

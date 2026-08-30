@@ -146,7 +146,7 @@ print_header "INT4 AutoRound Multi-Process — Pre-flight"
 # Check venv
 if [ ! -d "$VENV_DIR" ]; then
     fail "vLLM virtual environment not found at $VENV_DIR"
-    echo "  Run: bash ~/electric-sheep/scripts/ubuntu/02-setup-project-directory.sh"
+    echo "  Run: bash ~/electric-sheep/build/ubuntu/02-setup-project-directory.sh"
 fi
 print_ok "Virtual environment found"
 

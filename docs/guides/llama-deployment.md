@@ -22,10 +22,10 @@ End-to-end guide for building and running llama.cpp with SYCL backend on Ubuntu 
 
 ```bash
 # Setup (clone source, create structure)
-bash ~/electric-sheep/scripts/ubuntu/04-setup-llama.sh
+bash ~/electric-sheep/build/ubuntu/04-setup-llama.sh
 
 # Build (SYCL + FP16)
-bash ~/electric-sheep/scripts/ubuntu/05-build-llama-cpp.sh
+bash ~/electric-sheep/build/ubuntu/05-build-llama-cpp.sh
 
 # Download a GGUF model
 hf download <repo> --local-dir ~/electric-sheep/models/
@@ -76,7 +76,7 @@ source ~/electric-sheep/llama/set-env.sh 0      # GPU 0 only
 ### Quick Build (One Command)
 
 ```bash
-bash ~/electric-sheep/scripts/ubuntu/05-build-llama-cpp.sh
+bash ~/electric-sheep/build/ubuntu/05-build-llama-cpp.sh
 ```
 
 This script performs:

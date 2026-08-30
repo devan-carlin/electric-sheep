@@ -97,7 +97,7 @@ check_patch() {
     if [[ $errors -gt 0 ]]; then
         error ""
         error "  $errors patch(es) missing. Apply the patch:"
-        error "  cd ~/llama.cpp && bash ~/electric-sheep/scripts/common/apply-balanced-split-mode.sh"
+        error "  cd ~/llama.cpp && bash ~/electric-sheep/build/common/apply-balanced-split-mode.sh"
         return 1
     fi
 

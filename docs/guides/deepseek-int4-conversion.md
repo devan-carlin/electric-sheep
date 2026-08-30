@@ -72,7 +72,7 @@ The INT4 AutoRound format enables:
 
 ```bash
 # Run the conversion script (max quality settings)
-cd ~/electric-sheep/scripts/common
+cd ~/electric-sheep/build/common
 ./04-convert-int4-autoround.sh apetersson/DeepSeek-V4-Flash-0731--FP8
 ```
 

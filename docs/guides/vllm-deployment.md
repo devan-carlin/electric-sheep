@@ -39,7 +39,7 @@ sudo apt-get install -y intel-oneapi-toolkit
 Run the setup script to create the project structure, virtual environment, environment configs, and download all 4 models.
 
 ```bash
-bash ~/electric-sheep/scripts/ubuntu/02-setup-project-directory.sh
+bash ~/electric-sheep/build/ubuntu/02-setup-project-directory.sh
 ```
 
 **What this creates:**
@@ -126,7 +126,7 @@ for i in range(torch.xpu.device_count()):
 If you plan to run the Qwen 35B-A3B MoE model, apply the guarded `qzeros` copy fix:
 
 ```bash
-bash ~/electric-sheep/scripts/ubuntu/03.1-patch-vllm-moe-qzeros.sh
+bash ~/electric-sheep/build/ubuntu/03.1-patch-vllm-moe-qzeros.sh
 ```
 
 ---
