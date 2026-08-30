@@ -1,4 +1,6 @@
-# Draft comment for intel/llm-scaler#649 — REVIEW BEFORE POSTING
+# Draft comment for intel/llm-scaler#649 — POSTED 2026-08-30
+
+Posted as: https://github.com/intel/llm-scaler/issues/649#issuecomment-5466155888
 
 Status update: the `qwen4_exp` port is complete and running on 4x Arc Pro B70.
 
@@ -14,12 +16,12 @@ Status update: the `qwen4_exp` port is complete and running on 4x Arc Pro B70.
 
 - 53.4 tok/s decode (single stream, 512 tokens, greedy, median of 3)
 - ~0.11s TTFT, 256K context, fp8 KV cache
-- ~1.8x the llama.cpp baseline on the same box (~29 tok/s)
-- Stack: vLLM 0.26.1rc1 (base c39076fef), torch 2.13.0+xpu, vllm-xpu-kernels 0.1.12, oneAPI Level-Zero 20.2.0
+- ~2x the llama.cpp baseline on the same box (~27 tok/s)
+- Stack: vLLM built from upstream main @ c39076fef, torch 2.13.0+xpu, vllm-xpu-kernels 0.1.12, oneAPI Level-Zero 20.2.0
 
 ## Where the code is
 
-- Upstream-based port (vllm-project/vllm @ c39076fef + a 16-file patch): https://github.com/devan-carlin/vllm/tree/xpu-qwen4exp (branch `xpu-qwen4exp`, one commit, 16 files; verified byte-identical to a working build and reproduced in a fresh venv)
+- Upstream-based port (vllm-project/vllm @ c39076fef + a 16-file patch): https://github.com/devan-carlin/vllm/tree/xpu-qwen4exp (branch `xpu-qwen4exp`, 2 commits: model port + XPU kernel fixes, then the multimodal wrapper; verified byte-identical to a working build and reproduced in a fresh venv)
 - Model + recipe (W4A16 weights, PLE table, model card with hardware expectations): https://huggingface.co/devan-carlin/Qwen3.8-Flash-Next-W4A16
 - Operations guide (clean rebuild, bug log, launch config): https://github.com/devan-carlin/electric-sheep/blob/main/docs/qwen4exp-vllm-operations.md
 - One-shot installer: https://github.com/devan-carlin/electric-sheep/blob/main/vllm/setup-vllm-xpu.sh
