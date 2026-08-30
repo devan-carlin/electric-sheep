@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# start-qwen3.8-vllm-256k.sh - serve Qwen3.8-Flash-Next (W4A16) via vLLM on 4 GPUs
+# start-qwen-256k-vllm.sh - serve Qwen3.8-Flash-Next (W4A16) via vLLM on 4 GPUs
 #
 # Port 8000, alias qwen-256k. 256K context, fp8 KV, TP4 + expert parallel.
 # PLE n-gram table (102 GB) is memory-mapped from host RAM (shared page
@@ -19,9 +19,9 @@
 # vs 43.0 tok/s graph (correct output, 'Paris' first token).
 #
 # Usage:
-#   bash start-qwen3.8-vllm-256k.sh          # start (kills any existing :8000 first)
-#   bash start-qwen3.8-vllm-256k.sh stop     # stop
-#   bash start-qwen3.8-vllm-256k.sh status   # check
+#   bash start-qwen-256k-vllm.sh          # start (kills any existing :8000 first)
+#   bash start-qwen-256k-vllm.sh stop     # stop
+#   bash start-qwen-256k-vllm.sh status   # check
 #
 # Env overrides: QWEN256K_PORT, QWEN256K_ALIAS, QWEN256K_GPUS, QWEN256K_MODEL,
 #                QWEN256K_CTX, QWEN256K_MEM_UTIL, PLE_TABLE_PATH

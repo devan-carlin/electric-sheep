@@ -16,7 +16,7 @@
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **Server launchers (all 4 GPUs):** `~/electric-sheep/serve/` (`start-all.sh` + per-slot `start-*-llama.sh`; vLLM fallbacks in `serve/fallback/`)
 - **vLLM project root:** `~/electric-sheep/vllm/` (venv, source, quant, env configs - no launchers)
-- **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12)
+- **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12). The **verified production venv** is `~/vllm-fresh-venv/` (fresh gate build `0.1.dev1+gc39076fef.d20260829.xpu` with the qwen4exp patch applied) — use this one for serving Qwen3.8-Flash-Next.
 - **vLLM quantization:** `~/electric-sheep/vllm/quantize/` (AutoRound INT4 scripts)
 - **vLLM environment config:** `~/electric-sheep/vllm/env/set-env-*.sh`
 - **vLLM experimental:** `~/electric-sheep/vllm/experimental/` (one-off reap/slice/test/fix scripts)
@@ -38,6 +38,14 @@
   - `Intel/gemma-4-26B-A4B-it-int4-AutoRound` → `Intel-gemma-4-26B-A4B-it-int4-AutoRound`
   - `devan-carlin/Qwen3.8-27B--ara-int4-AutoRound` → `devan-carlin-Qwen3.8-27B--ara-int4-AutoRound`
   - `huihui-ai/Huihui-gemma-4-26B-A4B-it-qat-q4_0-unquantized--GGUF` → `Huihui-gemma-4-26B-A4B-it-qat-q4_0-unquantized-`
+- **Quantized-from-source suffix:** when a checkpoint is quantized from a local source, append the source dtype: `-W4A16-BF16src` (quantized from BF16) or `-W4A16-FP8src` (quantized from FP8). E.g. `devan-carlin-Qwen3.8-Flash-Next-W4A16-BF16src`, `devan-carlin-Qwen3.8-Flash-Next--2-W4A16-BF16src`.
+
+## Launcher Script & Alias Naming
+
+- **Script format:** `start-<alias>[-<variant>]-<engine>.sh` in `serve/` (e.g. `start-qwen-256k-vllm.sh`, `start-qwen-256k--vllm.sh`). Front-door scripts that dispatch to multiple engines drop the engine suffix (`start-qwen-256k.sh`).
+- **Common alias rule:** any 256k-context model served via vLLM on `:8000` is served under the alias **`qwen-256k`** — that is the name used in other apps (Open WebUI etc.). The variant (e.g. ``) goes in the script name, not the alias. Whichever 256k model is up on `:8000` is what other apps see as `qwen-256k`.
+- **Logs:** launchers `exec` the server with output to `serve/logs/vllm_${PORT}.log` (e.g. `vllm_8000.log`). Do not leave a `LOG=` variable unused — the redirect must actually target `$LOG`.
+- **Refusal benchmark results:** `results-<variant>.json` in `~/neon-demon/refusal-benchmark/` (e.g. `results--2.json`, `results-base.json`).
 
 ## Hardware Context
 

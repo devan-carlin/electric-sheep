@@ -46,10 +46,10 @@ The venv is a **non-editable patched copy** of a clean upstream checkout (`vllm/
 
 ```
 cd ~/electric-sheep/serve
-setsid bash ./start-qwen3.8-vllm-256k.sh start > /tmp/vllm_baseline.log 2>&1 < /dev/null & disown
+setsid bash ./start-qwen-256k-vllm.sh start > /tmp/vllm_baseline.log 2>&1 < /dev/null & disown
 ```
 
-**Key flags (in `start-qwen3.8-vllm-256k.sh`):**
+**Key flags (in `start-qwen-256k-vllm.sh`):**
 `--tensor-parallel-size 4 --enable-expert-parallel --dtype bfloat16 --max-model-len 262144 --max-num-seqs 4 --gpu-memory-utilization 0.85 --kv-cache-dtype fp8 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml --generation-config vllm`.
 
 **Environment variables:**
