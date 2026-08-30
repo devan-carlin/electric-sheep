@@ -60,7 +60,7 @@ model in the launcher, never the name).
     production (7.6x). Cost: ~2-4 min graph compile at startup. vLLM's
     "XPU Graph ... single-GPU only" warning is a red herring; works at TP4.
   - **llama.cpp** `:8090` alias `flash-next` (Q4_K_XL). PLE table in host RAM.
-- One front door: `start-qwen-next.sh` (`start|stop|restart|status|smoke|logs`).
+- One front door: `start-qwen3.8-next-vllm-256k.sh` (`start|stop|restart|status|smoke|logs`).
   It delegates to the two launchers above; env overrides pass through
   (`QWEN256K_*` / `FLASHNEXT_*`).
 - Not in the always-on service map: it needs all 4 GPUs, so it runs on demand
@@ -71,8 +71,9 @@ model in the launcher, never the name).
 | Script | What it does |
 |--------|--------------|
 | `start-all.sh` | Start/stop/status all 4 services. Subcommands: `start`, `stop`, `status`, `restart-gemma`, `restart-qwen` |
-| `start-qwen-next.sh` | **Front door for Qwen3.8-Flash-Next.** Delegates to the vLLM + llama launchers; adds unified `status`/`smoke`/`logs`/`restart`. `start [vllm\|llama]`, `stop [vllm\|llama\|all]`, `status`, `smoke`, `logs` |
-| `start-qwen256k-vllm.sh` | Flash-Next via vLLM, :8000, alias `qwen-256k` (W4A16, 4x GPU, 256K, fp8 KV, XPU graph mode). The engine with the HC + PLE `1 + w` gamma fixes |
+| `start-qwen3.8-next-vllm-256k.sh` | **Front door for Qwen3.8-Flash-Next.** Delegates to the vLLM + llama launchers; adds unified `status`/`smoke`/`logs`/`restart`. `start [vllm\|llama]`, `stop [vllm\|llama\|all]`, `status`, `smoke`, `logs` |
+| `start-qwen3.8-vllm-256k.sh` | Flash-Next via vLLM, :8000, alias `qwen-256k` (W4A16, 4x GPU, 256K, fp8 KV, XPU graph mode). The engine with the HC + PLE `1 + w` gamma fixes |
+| `start-qwen3.8-next--vllm-256k.sh` | Flash-Next **-2** () via vLLM, :8000, alias `qwen-` (W4A16 from BF16, 4x GPU, 256K, fp8 KV). Same flags as the base launcher; needs all 4 GPUs, so stop `qwen-256k` first |
 | `start-flashnext-llama.sh` | Flash-Next via llama.cpp, :8090, alias `flash-next` (Q4_K_XL, 4x GPU, q8_0 KV, PLE table in RAM) |
 | `start-gemma-llama.sh` | Gemma slot on GPU 3 :8089, alias `gemma` (start/stop/status) |
 | `start-qwen-llama.sh` | Qwen slot on GPU 2 :8088, alias `qwen` (start/stop/status). Model pinned in the script; swap via QWEN_LLAMA_MODEL_DIR/MODEL_FILE |

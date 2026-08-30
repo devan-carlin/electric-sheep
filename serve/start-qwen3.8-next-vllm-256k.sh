@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # =============================================================================
-# start-qwen-next.sh - one front door for Qwen3.8-Flash-Next
+# start-qwen3.8-next-vllm-256k.sh - one front door for Qwen3.8-Flash-Next
 #
 # Flash-Next can be served two ways, each with its own tuned launcher:
-#   vllm   start-qwen256k-vllm.sh   :8000  alias qwen-256k  (W4A16, 4x GPU)
+#   vllm   start-qwen3.8-vllm-256k.sh   :8000  alias qwen-256k  (W4A16, 4x GPU)
 #   llama  start-flashnext-llama.sh :8090  alias flash-next (Q4_K_XL, 4x GPU)
 #
 # This script does NOT duplicate that launch logic - it delegates to the two
 # launchers and adds a unified status / smoke / logs / restart surface.
 #
 # Usage:
-#   bash start-qwen-next.sh start [vllm|llama]     # default: vllm
-#   bash start-qwen-next.sh stop  [vllm|llama|all] # default: all
-#   bash start-qwen-next.sh restart [vllm|llama]   # default: vllm
-#   bash start-qwen-next.sh status                 # both engines
-#   bash start-qwen-next.sh smoke [vllm|llama]     # default: vllm (completion test)
-#   bash start-qwen-next.sh logs  [vllm|llama] [N] # tail N lines (default 30)
-#   bash start-qwen-next.sh help
+#   bash start-qwen3.8-next-vllm-256k.sh start [vllm|llama]     # default: vllm
+#   bash start-qwen3.8-next-vllm-256k.sh stop  [vllm|llama|all] # default: all
+#   bash start-qwen3.8-next-vllm-256k.sh restart [vllm|llama]   # default: vllm
+#   bash start-qwen3.8-next-vllm-256k.sh status                 # both engines
+#   bash start-qwen3.8-next-vllm-256k.sh smoke [vllm|llama]     # default: vllm (completion test)
+#   bash start-qwen3.8-next-vllm-256k.sh logs  [vllm|llama] [N] # tail N lines (default 30)
+#   bash start-qwen3.8-next-vllm-256k.sh help
 #
 # Env overrides pass straight through to the underlying launcher
 # (QWEN256K_* for vllm, FLASHNEXT_* for llama).
@@ -24,7 +24,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VLLM_SH="$HERE/start-qwen256k-vllm.sh"
+VLLM_SH="$HERE/start-qwen3.8-vllm-256k.sh"
 LLAMA_SH="$HERE/start-flashnext-llama.sh"
 
 # engine -> port / alias / log
