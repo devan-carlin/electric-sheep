@@ -12,7 +12,8 @@
 - **Setup scripts:** `~/electric-sheep/build/ubuntu/` (numbered: `01-`, `02-`, `03-`, ...)
 - **Common utilities:** `~/electric-sheep/build/common/` (platform-agnostic)
 - **Windows scripts:** `~/electric-sheep/build/windows/` (PowerShell)
-- **Runtime configs:** `~/electric-sheep/configs/` (vllm/, llama/deepseek/)
+- **Runtime config docs:** `~/electric-sheep/docs/vllm/` (model-configs.md, server-config-baseline.md, deepseek-run-stats.md)
+- **Benchmarks (all evaluation):** `~/electric-sheep/bench/` (throughput suite at root, `stress/` 53-prompt quality suite, `ab/` blind A/B tests, `vllm-128k/` long-context matrix)
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **Server launchers (all 4 GPUs):** `~/electric-sheep/serve/` (`start-all.sh` + per-slot `start-*-llama.sh`; vLLM fallbacks in `serve/fallback/`)
 - **vLLM project root:** `~/electric-sheep/vllm/` (venv, source, quant, env configs - no launchers)
@@ -20,11 +21,12 @@
 - **vLLM quantization:** `~/electric-sheep/vllm/quantize/` (AutoRound INT4 scripts)
 - **vLLM environment config:** `~/electric-sheep/vllm/env/set-env-*.sh`
 - **vLLM experimental:** `~/electric-sheep/vllm/experimental/` (one-off reap/slice/test/fix scripts)
+- **vLLM port tests:** `~/electric-sheep/vllm/tests/` (phase0..phase_d dev-test/diagnostic scripts for the qwen4exp port)
 - **vLLM patch reference:** `~/electric-sheep/docs/vllm/` (INT4-QUANTIZATION-PATCHES.md, PATCHES-DIFF.md)
 - **llama.cpp project root:** `~/electric-sheep/llama/`
 - **llama.cpp source:** `~/electric-sheep/llama/llama.cpp/` (cloned repo, build in `build/`)
 - **llama.cpp environment config:** `~/electric-sheep/llama/set-env.sh`
-- **llama.cpp DeepSeek configs:** `~/electric-sheep/configs/llama/deepseek/`
+- **llama.cpp DeepSeek launcher:** `~/electric-sheep/serve/fallback/start-deepseek-v4-flash.sh`
 - **Model storage:** `~/electric-sheep/models/` (shared by vLLM and llama.cpp). This is a **symlink to `/mnt/data/models`** (fast NVMe) — both paths are identical.
 - **Do NOT** reference legacy paths (`~/.venv-b70-minimax`, `/mnt/fast-ai/`, `/home/dc/intel-vllm-01/`, `~/llama.cpp/`, `~/ubuntu-b70/`, `~/windows-5090/`, `~/code-8-7-26/`) in new documents.
 
@@ -87,9 +89,9 @@
 
 5. **DeepSeek V4-Flash UD-IQ3_XXS** (`unsloth/DeepSeek-V4-Flash-0731-GGUF`) — ~98 GB, 4 shards, 96K context, ~13 t/s decode
 
-See `configs/vllm/model-configs.md` for vLLM launch commands and VRAM budgets.
+See `docs/vllm/model-configs.md` for vLLM launch commands and VRAM budgets.
 See `docs/guides/llama-deployment.md` for llama.cpp deployment.
-See `configs/llama/deepseek/run-stats.md` for DeepSeek performance benchmarks.
+See `docs/vllm/deepseek-run-stats.md` for DeepSeek performance benchmarks.
 
 ## CLI Tools
 
