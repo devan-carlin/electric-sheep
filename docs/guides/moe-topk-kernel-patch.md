@@ -150,6 +150,10 @@ Added three `CASE_TOPK` invocations before the `default` case:
 
 ### Build Process
 
+> Note (2026-08-30): `vllm/vllm-src/` and `vllm/.venv` were deleted. To redo
+> this kernel build, re-clone the vLLM source (`build/ubuntu/03-build-vllm-xpu.sh`)
+> and use `~/vllm-fresh-venv/` as the venv.
+
 ```bash
 # 1. Navigate to kernel source
 cd /home/dc/electric-sheep/vllm/vllm-src/vllm-xpu-kernels
@@ -159,7 +163,7 @@ rm -rf build/temp build/lib* .deps/*-subbuild
 
 # 3. Set GPU environment and activate venv
 source /home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh
-source /home/dc/electric-sheep/vllm/.venv/bin/activate
+source /home/dc/vllm-fresh-venv/bin/activate
 
 # 4. Build and install (editable mode)
 pip install -e . --no-build-isolation

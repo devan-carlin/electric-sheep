@@ -17,7 +17,7 @@
 - **Documentation:** `~/electric-sheep/docs/` (architecture.md, guides/)
 - **Server launchers (all 4 GPUs):** `~/electric-sheep/serve/` (`start-all.sh` + per-slot `start-*-llama.sh`; vLLM fallbacks in `serve/fallback/`)
 - **vLLM project root:** `~/electric-sheep/vllm/` (venv, source, quant, env configs - no launchers)
-- **vLLM virtual environment:** `~/electric-sheep/vllm/.venv/` (Python 3.12). The **verified production venv** is `~/vllm-fresh-venv/` (fresh gate build `0.1.dev1+gc39076fef.d20260829.xpu` with the qwen4exp patch applied) — use this one for serving Qwen3.8-Flash-Next.
+- **vLLM virtual environment:** `~/vllm-fresh-venv/` (Python 3.12) — the **only** venv and the verified production build (`0.1.dev1+gc39076fef.d20260829.xpu` with the qwen4exp patch applied). Use it for serving Qwen3.8-Flash-Next. The original `~/electric-sheep/vllm/.venv` was deleted 2026-08-30.
 - **vLLM quantization:** `~/electric-sheep/vllm/quantize/` (AutoRound INT4 scripts)
 - **vLLM environment config:** `~/electric-sheep/vllm/env/set-env-*.sh`
 - **vLLM experimental:** `~/electric-sheep/vllm/experimental/` (one-off reap/slice/test/fix scripts)

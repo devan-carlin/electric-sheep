@@ -28,10 +28,6 @@ dist/
 venv/
 .venv-*/
 output/
-autoround-test/
-# INT8 W8A16 test venv + source tree (build artifacts, ~17G)
-vllm/.venv-int8-test/
-vllm/vllm-src-int8-test/
 **/lib/python*/site-packages/
 **/lib/python*/ensurepip/
 

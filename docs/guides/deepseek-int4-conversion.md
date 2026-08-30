@@ -57,7 +57,7 @@ The INT4 AutoRound format enables:
 | Component | Version | Install |
 |-----------|---------|---------|
 | **Python** | 3.12 | `sudo apt install python3.12` |
-| **vLLM venv** | `~/electric-sheep/vllm/.venv/` | Built via `03-build-vllm-xpu.sh` |
+| **vLLM venv** | `~/vllm-fresh-venv/` | Production venv (original `vllm/.venv` deleted 2026-08-30; rebuild via `03-build-vllm-xpu.sh` if needed) |
 | **PyTorch XPU** | 2.x | Installed in vLLM venv |
 | **auto-round** | Latest | Auto-installed by script |
 | **optimum** | Latest | Auto-installed by script |
@@ -177,8 +177,8 @@ ls -lh ~/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8-int4-AutoRound/
 ### Start Server
 
 ```bash
-# Activate vLLM environment
-source ~/electric-sheep/vllm/.venv/bin/activate
+# Activate vLLM environment (production venv; original vllm/.venv deleted 2026-08-30)
+source ~/vllm-fresh-venv/bin/activate
 
 # Start vLLM server with INT4 model
 vllm serve ~/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8-int4-AutoRound \

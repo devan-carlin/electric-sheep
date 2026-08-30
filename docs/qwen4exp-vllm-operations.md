@@ -27,17 +27,12 @@ Serves `Qwen3.8-Flash-Next` (125B MoE / 6B active, W4A16) on 4x Intel Arc Pro B7
 - vllm-xpu-kernels `0.1.12` (pinned; `0.1.13.2` is broken).
 - Python 3.12.
 
-Two venvs exist; both carry the full port (model + MTP + multimodal wrapper):
-
-- **`~/vllm-fresh-venv/`** — the verified production venv. Built from a clean
-  upstream checkout (`c39076fef`) + the 16-file `qwen4exp-xpu-port.patch`,
-  reproduced end-to-end (53.4 tok/s). This is what both `start-qwen-256k*.sh`
-  launchers use.
-- **`~/electric-sheep/vllm/.venv`** — the original dev venv (reports
-  `0.26.1rc1.dev500+gc39076fef`), a non-editable patched copy of
-  `vllm/vllm-src` with local XPU patches applied in `site-packages/vllm`.
-  Kept as a fallback. Do **NOT** re-sync it from `vllm-src` (would clobber the
-  patches); Python edits in `site-packages` take effect on the next restart.
+**Venv:** `~/vllm-fresh-venv/` is the only venv (the original dev venv
+`~/electric-sheep/vllm/.venv` was deleted 2026-08-30). It is a clean build
+from upstream `c39076fef` + the 16-file `qwen4exp-xpu-port.patch`, reproduced
+end-to-end (53.4 tok/s). Both `start-qwen-256k*.sh` launchers use it. To
+rebuild from scratch on a fresh machine, follow
+`docs/guides/vllm-deployment.md`.
 
 ## Clean rebuild (from a fresh machine)
 

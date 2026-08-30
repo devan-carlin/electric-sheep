@@ -55,7 +55,7 @@ electric-sheep/
 │   ├── architecture.md  # Hardware specs + project layout
 │   ├── guides/          # Deployment + technique guides
 │   └── vllm/            # vLLM patch reference (INT4 quant, patch diffs)
-├── vllm/                # vLLM engine dev (venv + vllm-src created by setup scripts)
+├── vllm/                # vLLM engine dev (venv at ~/vllm-fresh-venv)
 │   ├── setup-vllm-xpu.sh # one-shot installer
 │   ├── patches/         # XPU port patches (qwen4exp, int8, moe-topk)
 │   ├── quantize/        # AutoRound INT4 quantization scripts

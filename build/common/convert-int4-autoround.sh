@@ -15,7 +15,7 @@
 #   ./04-convert-int4-autoround.sh meta-llama/Llama-3.3-70B-Instruct
 #
 # Requirements:
-#   - vLLM virtual environment (~/electric-sheep/vllm/.venv)
+#   - vLLM virtual environment (~/vllm-fresh-venv)
 #   - Sufficient VRAM/RAM for the source model
 #   - auto-round package (auto-installed if missing)
 #
@@ -28,7 +28,7 @@ set -e
 # ============================================
 # Configuration
 # ============================================
-VENV_DIR="$HOME/electric-sheep/vllm/.venv"
+VENV_DIR="$HOME/vllm-fresh-venv"
 MODELS_DIR="$HOME/electric-sheep/models"
 CALIBRATION_DATASET="timdettmers/openassistant-guanaco"
 CALIBRATION_SAMPLES=128

@@ -47,7 +47,7 @@ set -euo pipefail
 # ============================================
 # Configuration
 # ============================================
-VENV_DIR="$HOME/electric-sheep/vllm/.venv"
+VENV_DIR="$HOME/vllm-fresh-venv"
 MODELS_DIR="$HOME/electric-sheep/models"
 
 # Quantization defaults — BENCHMARK (speed-optimized)

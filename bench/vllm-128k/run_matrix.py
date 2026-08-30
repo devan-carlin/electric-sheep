@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-VENV = "/home/dc/electric-sheep/vllm/.venv"
+VENV = "/home/dc/vllm-fresh-venv"
 PY = f"{VENV}/bin/python"
 MODEL = ("/home/dc/electric-sheep/models/"
          "Qwen3.8-27B--ara-int4-AutoRound/"

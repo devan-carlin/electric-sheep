@@ -353,7 +353,7 @@ Give it a few days and re-check:
 | `~/electric-sheep/llama/llama.cpp` | pr-27742 tree (do not checkout master) |
 | `~/electric-sheep/llama/llama.cpp-local-patches-balanced-split-dsv4.patch` | stashed local patches |
 | `~/electric-sheep/models/Qwen3.8-Flash-Next-GGUF/UD-Q4_K_XL/` | model shards |
-| `~/docs/server-services.md` | service inventory (flash-next section) |
+| `~/electric-sheep/serve/SERVICES.md` | service inventory (canonical; `~/docs/server-services.md` deleted 2026-08-30) |
 | `~/electric-sheep/docs/guides/llama-deployment.md` | general llama.cpp SYCL guide |
 | `~/electric-sheep/BACKLOG.md` | personal cross-repo backlog (pointer added) |
 

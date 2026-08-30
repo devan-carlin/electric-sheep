@@ -8,7 +8,7 @@
 #
 # Usage:
 #   ./compare-venvs.sh <venv1> <venv2>
-#   ./compare-venvs.sh ~/electric-sheep/vllm/.venv ~/other-venv
+#   ./compare-venvs.sh ~/vllm-fresh-venv ~/other-venv
 # ============================================
 
 set -e
@@ -17,7 +17,7 @@ if [ $# -lt 2 ]; then
     echo "Usage: $0 <venv1> <venv2>"
     echo ""
     echo "Example:"
-    echo "  $0 ~/electric-sheep/vllm/.venv ~/optimized-venv"
+    echo "  $0 ~/vllm-fresh-venv ~/optimized-venv"
     exit 1
 fi
 

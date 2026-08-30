@@ -14,7 +14,7 @@
 set -euo pipefail
 
 # Activate venv with vLLM
-VENV_DIR="/home/dc/electric-sheep/vllm/.venv"
+VENV_DIR="/home/dc/vllm-fresh-venv"
 if [ -f "$VENV_DIR/bin/activate" ]; then
     source "$VENV_DIR/bin/activate"
 fi

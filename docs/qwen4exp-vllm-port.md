@@ -118,19 +118,18 @@ decoding, vision tower, W8A16 variant (int8_gemm_w8a16 not registered in
 
 ## Key files
 
-Edit location (running, patched copy — edits take effect immediately):
-- Model: `vllm/.venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen4_exp.py` (new)
-- Config: `vllm/.venv/lib/python3.12/site-packages/vllm/transformers_utils/configs/qwen4_exp.py` (new)
-- Registry: `vllm/.venv/lib/python3.12/site-packages/vllm/model_executor/models/registry.py`
-- Configs `__init__`: `vllm/.venv/lib/python3.12/site-packages/vllm/transformers_utils/configs/__init__.py`
+Edit location (running, patched copy — edits take effect on next server start):
+- Model: `~/vllm-fresh-venv/lib/python3.12/site-packages/vllm/model_executor/models/qwen4_exp.py`
+- Config: `~/vllm-fresh-venv/lib/python3.12/site-packages/vllm/transformers_utils/configs/qwen4_exp.py`
+- Registry: `~/vllm-fresh-venv/lib/python3.12/site-packages/vllm/model_executor/models/registry.py`
+- Configs `__init__`: `~/vllm-fresh-venv/lib/python3.12/site-packages/vllm/transformers_utils/configs/__init__.py`
 
 Reference / version control:
-- `vllm/vllm-src/vllm/` is a CLEAN upstream checkout (commit c39076feff).
-  The installed site-packages copy carries local XPU patches on top
-  (e.g. `XPUw8a16IntLinearKernel` in `kernels/linear/mixed_precision/xpu.py`).
-  Develop in site-packages; at each component milestone export a diff patch
-  vs the clean tree and save it under `vllm/patches/` (repo-tracked), matching
-  the existing `patches/*.patch` convention.
+- The venv is a clean build from upstream `c39076fef` + the 16-file
+  `vllm/patches/qwen4exp-xpu-port.patch`. The patch is the source of truth;
+  re-apply it (or rebuild via `vllm/setup-vllm-xpu.sh`) rather than editing
+  site-packages by hand. `vllm/vllm-src/` (clean checkout) was deleted
+  2026-08-30 — re-clone if a clean tree is needed for diffing.
 - Base refs: `qwen3_next.py` (MoE block, attention, model shell),
   `qwen3_5.py` (GDN wiring + multimodal wrapper pattern),
   `qwen_gdn_linear_attn.py` (GDN layer, XPU forward)
@@ -140,12 +139,12 @@ Reference / version control:
 
 ## Environment notes
 
-- venv: `vllm/.venv` (vLLM 0.26.1rc1.dev500+gc39076fef, torch 2.13.0+xpu,
-  vllm-xpu-kernels 0.1.12 installed).
-- Non-editable install: site-packages/vllm is a patched COPY of vllm-src,
-  not a symlink. Python edits in site-packages take effect on next server
-  start (no reinstall). Do NOT re-sync from vllm-src (would clobber the
-  local XPU patches).
+- venv: `~/vllm-fresh-venv/` (vLLM `0.1.dev1+gc39076fef`, torch 2.13.0+xpu,
+  vllm-xpu-kernels 0.1.12 installed). The original `vllm/.venv` (0.26.1rc1)
+  was deleted 2026-08-30.
+- Install: clean build from upstream `c39076fef` + `qwen4exp-xpu-port.patch`
+  (see `vllm/setup-vllm-xpu.sh`). Python edits in site-packages take effect on
+  the next server start (no reinstall).
 - XPU env: ZE_AFFINITY_MASK + ONEAPI_DEVICE_SELECTOR (filtered space),
   UR_L0_SYNC_MODE=BLOCKING, VLLM_WORKER_MULTIPROC_METHOD=spawn,
   VLLM_XPU_ENABLE_XPU_GRAPH=1 (see serve/fallback/start-qwen.sh).
