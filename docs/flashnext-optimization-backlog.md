@@ -244,9 +244,10 @@ model, P2P, overlap, fusion) are the real targets.
 
 ### Tier 3 — PR / upstream dependent (nothing to do locally yet)
 
-- **T3.1 — MTP head wiring.** The 4B MTP head is in the model; the PR sets
-  `no_mtp=True`. If upstream wires it, self-speculative decoding (no
-  separate draft model) is the cleanest version of T1.1. Watch PR #27742.
+- **T3.1 — MTP head wiring. UNBLOCKED 2026-08-28.** PR #27742 merged
+  (qwen4exp MTP wiring); local tree is on `pr-27742` with a build. The 4B
+  MTP head is in the model. Self-speculative decoding (no separate draft
+  model) is now the cleanest version of T1.1 — promote to Tier 1 and run.
 - **T3.2 — mmproj / vision.** Vision tower (Qwen3-VL ViT) is in the PR; no
   projector file published yet. Feature, not speed.
 - **T3.3 — Upstream qwen4exp fixes.** Any graph-builder simplification or

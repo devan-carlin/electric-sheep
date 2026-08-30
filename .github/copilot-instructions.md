@@ -125,3 +125,4 @@ See `docs/vllm/deepseek-run-stats.md` for DeepSeek performance benchmarks.
 - Keep reference/historical documents until deployment is validated end-to-end.
 - Use clear, actionable commands with explanations for each step.
 - Include verification gates after critical steps (e.g., XPU device count check).
+- **Public-facing text (model cards, articles, PR/issue descriptions): describe failure modes in neutral, technical terms.** If a technically accurate phrasing names a group of people or languages (e.g. "degenerate foreign-language tail"), reword it to the underlying behavior instead (e.g. "repetitive loops", "incoherent output"). Readers will misread group-referencing phrasing as targeting that group; the technical point is fully preserved by describing the symptom, not the category it falls into.
