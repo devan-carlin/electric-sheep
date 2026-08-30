@@ -10,7 +10,7 @@ import random
 import urllib.request
 import concurrent.futures
 
-OUT_DIR = "/home/dc/electric-sheep/ab-test"
+OUT_DIR = "/home/dc/electric-sheep/bench/ab"
 BLIND = os.path.join(OUT_DIR, "round1_blind.md")
 KEY = os.path.join(OUT_DIR, "round1_key.txt")
 

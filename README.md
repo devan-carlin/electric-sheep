@@ -65,8 +65,8 @@ electric-sheep/
 │   └── experimental/    # one-off scripts (reap/slice, test, fix)
 ├── llama/               # llama.cpp runtime (created by setup scripts)
 ├── models/              # Shared model storage (symlink -> /mnt/data/models)
-├── benchmarking/        # Throughput + model-comparison benchmark suite
-├── llm-stress-tests/    # 53-prompt quality evaluation suite
+├── bench/             # all evaluation: throughput suite, stress tests, A/B, 128k matrix
+├── models/              # Shared model storage (symlink -> /mnt/data/models)
 └── articles/            # Draft articles (issues, optimizations, experiments)
 ```
 
@@ -209,7 +209,7 @@ bash ~/electric-sheep/configs/llama/deepseek/start-deepseek-v4-flash.sh
 
 ## Model Evaluation
 
-The `llm-stress-tests/` directory contains 53 prompts across 13 categories for evaluating model output quality:
+The `bench/stress/` directory contains 53 prompts across 13 categories for evaluating model output quality:
 
 - **Game prompts** (12) — single-file HTML apps (Tetris, Minesweeper, Snake, Sudoku, etc.)
 - **Compliance** (4) — strict JSON output, agentic planning, technical writing, API docs
@@ -222,7 +222,7 @@ The `llm-stress-tests/` directory contains 53 prompts across 13 categories for e
 - **Reasoning & math** (4) — multi-step math, logic puzzles, algorithm design, scheduling
 - **System design** (3) — URL shortener, rate limiter, event processing pipeline
 
-See `llm-stress-tests/README.md` for the full test index and helper scripts.
+See `bench/stress/README.md` for the full test index and helper scripts.
 
 Use these to compare output quality between models, quantization levels, or platforms.
 

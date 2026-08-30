@@ -70,7 +70,7 @@ This benchmark required three upstream patches:
 
 All patches + full benchmark suite: [github.com/devan-carlin/electric-sheep](https://github.com/devan-carlin/electric-sheep)
 
-Full technical analysis with per-prompt data, kernel diffs, and quality scoring methodology: [benchmark-analysis.md](https://github.com/devan-carlin/electric-sheep/blob/main/benchmarking/ANALYSIS.md)
+Full technical analysis with per-prompt data, kernel diffs, and quality scoring methodology: [benchmark-analysis.md](https://github.com/devan-carlin/electric-sheep/blob/main/bench/results/SUMMARY.md)
 
 ---
 

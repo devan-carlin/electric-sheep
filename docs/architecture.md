@@ -98,9 +98,11 @@ electric-sheep/
 │           └── run-stats.md
 #
 # [EXPERIMENT] self-contained tests & benchmarks; results live in-dir
-├── ab-test/                       # blind A/B prose tests + llama.cpp matrices
-├── benchmarking/                  # throughput + model-comparison benchmark suite
-├── llm-stress-tests/              # 53-prompt quality evaluation suite
+├── bench/                         # all evaluation in one place
+│   ├── prompts/ scripts/ results/ # throughput + model-comparison suite
+│   ├── stress/                    # 53-prompt quality evaluation suite
+│   ├── ab/                        # blind A/B prose tests + llama.cpp matrices
+│   └── vllm-128k/                 # 128k long-context matrix runner
 #
 # [DATA]
 ├── models/                        # shared model storage (symlink -> /mnt/data/models)

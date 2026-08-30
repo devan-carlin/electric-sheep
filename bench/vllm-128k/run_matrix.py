@@ -19,7 +19,7 @@ PY = f"{VENV}/bin/python"
 MODEL = ("/home/dc/electric-sheep/models/"
          "Qwen3.8-27B--ara-int4-AutoRound/"
          "Qwen3.8-27B--ara-w4g128")
-CLIENT = "/home/dc/electric-sheep/vllm/bench-128k/client.py"
+CLIENT = "/home/dc/electric-sheep/bench/vllm-128k/client.py"
 PORT = 8000
 MAX_LEN = 131072   # 128k context window (as requested)
 PROMPT = 4096      # long enough for a stable prefill-throughput number, not a full 128k

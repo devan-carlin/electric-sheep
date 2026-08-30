@@ -318,5 +318,5 @@ The expectation was that activating more experts per token would provide richer,
 
 - vllm-xpu-kernels repo: `https://github.com/vllm-project/vllm-xpu-kernels`
 - Related PRs: #273 (TopK=10), #373 (TopK=7), #472 (FP8 per-tensor)
-- Benchmark results: `/home/dc/electric-sheep/benchmarking/results/SUMMARY.md`
+- Benchmark results: `/home/dc/electric-sheep/bench/results/SUMMARY.md`
 - Benchmark logs: `/tmp/benchmark-run-v6.log`

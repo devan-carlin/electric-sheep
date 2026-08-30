@@ -6,7 +6,7 @@
 #
 # Chosen over the 31B QAT MTP after a blind prose A/B (2026-08-25):
 #   26B-A4B won 4/5 prompts AND decodes ~2.5-3x faster (64 vs 24 t/s).
-#   See /home/dc/electric-sheep/ab-test/ for the test artifacts.
+#   See /home/dc/electric-sheep/bench/ab/ for the test artifacts.
 #
 # Config:
 #   - Q4_K_P weights + f16 mmproj ( Balanced, )

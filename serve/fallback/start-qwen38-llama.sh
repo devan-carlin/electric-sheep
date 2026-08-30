@@ -10,7 +10,7 @@
 #   - Single-user (np=1) is llama.cpp's sweet spot. Lost vs vLLM: prefix
 #     caching, tool-call parsers, concurrency.
 #
-# Config (from the 8-run matrix, /home/dc/electric-sheep/ab-test/):
+# Config (from the 8-run matrix, /home/dc/electric-sheep/bench/ab/):
 #   - Q4_K_P weights + BF16 mmproj ( Aggressive, )
 #   - q4_0 KV cache: fastest + most stable (q5_0 costs ~12-15%)
 #   - built-in MTP depth 1 (~1.35x: 23.3 vs 17.2 t/s). The model has a single

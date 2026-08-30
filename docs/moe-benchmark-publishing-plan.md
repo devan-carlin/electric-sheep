@@ -27,7 +27,7 @@ git commit -m "docs: add comprehensive MoE TopK kernel patch guide with benchmar
 ```
 
 ### 1.2 Create a benchmarking README
-Create `/home/dc/electric-sheep/benchmarking/README.md` with:
+Create `/home/dc/electric-sheep/bench/README.md` with:
 - Hardware setup (4× Arc B70, TP=4)
 - Model info (Huihui-, Qwen3.5 MoE)
 - Quick summary table (performance + quality)

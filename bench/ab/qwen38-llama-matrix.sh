@@ -22,7 +22,7 @@ MM="$D/mmproj-Qwen3.8-27B---Aggressive-BF16.gguf"
 TPL="$HOME/electric-sheep/models/devan-carlin-Qwen3.8-27B--ara-int4-AutoRound/Qwen3.8-27B--ara-w4g128/chat_template.jinja"
 PORT=8091
 LOG="$HOME/electric-sheep/serve/logs/llama_${PORT}.log"
-RESULTS="$HOME/electric-sheep/ab-test/qwen38_matrix_results.csv"
+RESULTS="$HOME/electric-sheep/bench/ab/qwen38_matrix_results.csv"
 CTX=262144
 
 # Chat template: embedded in GGUF, or fall back to the vLLM-dir jinja.

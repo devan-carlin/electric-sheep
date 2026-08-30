@@ -90,7 +90,7 @@ HETERO multi-GPU gives zero gain over 1 GPU for both int4 and int8.
 
 ## Artifacts
 
-- vLLM matrix: /tmp/vllm-128k-matrix.json (runner: /home/dc/electric-sheep/vllm/bench-128k/run_matrix.py)
+- vLLM matrix: /tmp/vllm-128k-matrix.json (runner: /home/dc/electric-sheep/bench/vllm-128k/run_matrix.py)
 - SGLang matrix: /tmp/sglang-128k-matrix.json (runner: /home/dc/sglang/bench-128k/run_matrix.py)
 - OpenVINO matrix: /tmp/ov-bench-matrix.json
 - SGLang server logs: /tmp/sglang-128k-tp{2,4}.log

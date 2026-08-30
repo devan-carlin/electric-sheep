@@ -259,9 +259,9 @@ Prompts 04-security-audit and 05-debugging returned HTTP 400 Bad Request on both
 ## Raw Data Location
 
 - Benchmark log: `/tmp/benchmark-run-v3.log`
-- Per-variant logs: `/home/dc/electric-sheep/benchmarking/results/vllm-top{8,16}.log`
-- Output files: `/home/dc/electric-sheep/benchmarking/results/top{8,16}/`
-- Config variants: `/home/dc/electric-sheep/benchmarking/configs/top{8,16,32,64}/`
+- Per-variant logs: `/home/dc/electric-sheep/bench/results/vllm-top{8,16}.log`
+- Output files: `/home/dc/electric-sheep/bench/results/top{8,16}/`
+- Config variants: `/home/dc/electric-sheep/bench/configs/top{8,16,32,64}/`
 
 ---
 
