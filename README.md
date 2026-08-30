@@ -58,14 +58,16 @@ electric-sheep/
 │   ├── architecture.md  # Hardware specs + project layout
 │   ├── guides/          # Deployment + technique guides
 │   └── vllm/            # vLLM patch reference (INT4 quant, patch diffs)
-├── vllm/                # vLLM runtime (created by setup scripts)
-│   ├── launch/          # start-*.sh launchers (per model) + interactive launchers
+├── vllm/                # vLLM engine dev (venv + vllm-src created by setup scripts)
+│   ├── setup-vllm-xpu.sh # one-shot installer
+│   ├── patches/         # XPU port patches (qwen4exp, int8, moe-topk)
 │   ├── quantize/        # AutoRound INT4 quantization scripts
 │   ├── env/             # set-env-*.sh XPU environment configs
+│   ├── int8-w8a16/      # INT8 W8A16 kernel work (build, quantize, verify)
+│   ├── tests/           # port dev-test/diagnostic scripts (phase0..phase_d)
 │   └── experimental/    # one-off scripts (reap/slice, test, fix)
 ├── llama/               # llama.cpp runtime (created by setup scripts)
-├── models/              # Shared model storage (symlink -> /mnt/data/models)
-├── bench/             # all evaluation: throughput suite, stress tests, A/B, 128k matrix
+├── bench/               # all evaluation: throughput suite, stress tests, A/B, 128k matrix
 ├── models/              # Shared model storage (symlink -> /mnt/data/models)
 └── articles/            # Draft articles (issues, optimizations, experiments)
 ```

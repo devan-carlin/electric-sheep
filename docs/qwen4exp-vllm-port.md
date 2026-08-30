@@ -136,7 +136,7 @@ Reference / version control:
   `qwen_gdn_linear_attn.py` (GDN layer, XPU forward)
 - Op map ground truth: `llama/llama.cpp/src/models/qwen4exp.cpp`
 - Checkpoint: `models/VnimanieAI-Qwen3.8-Flash-Next-W4A16/`
-- Phase 0 tests: `vllm/phase0_w4a16_test.py`, `vllm/phase0_w4a16_moe_test2.py`
+- Phase 0 tests: `vllm/tests/phase0_w4a16_test.py`, `vllm/tests/phase0_w4a16_moe_test2.py`
 
 ## Environment notes
 
