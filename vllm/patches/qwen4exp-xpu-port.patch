@@ -468,10 +468,10 @@ index b43aea8..0efc174 100644
  
 diff --git a/vllm/model_executor/models/qwen4_exp.py b/vllm/model_executor/models/qwen4_exp.py
 new file mode 100644
-index 0000000..38d5e54
+index 0000000..1b280fe
 --- /dev/null
 +++ b/vllm/model_executor/models/qwen4_exp.py
-@@ -0,0 +1,1217 @@
+@@ -0,0 +1,1435 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Inference-only Qwen4-Exp model (VnimanieAI Qwen3.8-Flash-Next).
@@ -556,6 +556,16 @@ index 0000000..38d5e54
 +    extract_layer_index,
 +    make_layers,
 +    maybe_prefix,
++)
++from vllm.multimodal import MULTIMODAL_REGISTRY
++from vllm.tokenizers.registry import cached_tokenizer_from_config
++
++from .qwen3_vl import (
++    Qwen3_VisionTransformer,
++    Qwen3VLDummyInputsBuilder,
++    Qwen3VLForConditionalGeneration,
++    Qwen3VLMultiModalProcessor,
++    Qwen3VLProcessingInfo,
 +)
 +
 +logger = init_logger(__name__)
@@ -1671,22 +1681,230 @@ index 0000000..38d5e54
 +        return loader.load_weights(weights, mapper=self.hf_to_vllm_mapper)
 +
 +
-+class Qwen4ExpForConditionalGeneration(Qwen4ExpForCausalLM):
-+    """Text-only alias for the checkpoint's ``...ForConditionalGeneration``.
++class Qwen4ExpProcessingInfo(Qwen3VLProcessingInfo):
++    """Multimodal processing info for Qwen4-Exp.
 +
-+    The v1 port ignores the vision tower; this class exists so the
-+    checkpoint's ``architectures`` entry resolves to a registered model.
++    Reuses the Qwen3-VL processor (``Qwen3VLProcessor``) and only overrides
++    the HF config class so the processor resolves the ``qwen4_exp`` config.
 +    """
 +
-+    pass
++    def get_hf_config(self):
++        return self.ctx.get_hf_config(Qwen4ExpConfig)
++
++
++class Qwen4ExpMoeMixtureOfExperts(MixtureOfExperts):
++    """MoE metadata mixin for the Qwen4-Exp multimodal wrapper.
++
++    Mirrors :class:`Qwen4ExpMixtureOfExperts` but resolves the decoder layers
++    through ``self.language_model.model`` (the wrapper layout, where the text
++    model is nested under ``language_model``).
++    """
++
++    def update_physical_experts_metadata(
++        self,
++        num_physical_experts: int,
++        num_local_physical_experts: int,
++    ) -> None:
++        assert self.num_local_physical_experts == num_local_physical_experts
++        self.num_physical_experts = num_physical_experts
++        self.num_local_physical_experts = num_local_physical_experts
++        self.num_redundant_experts = num_physical_experts - self.num_logical_experts
++        for layer in self.language_model.model.layers:
++            if isinstance(layer.mlp, Qwen3NextSparseMoeBlock):
++                moe = layer.mlp
++                moe.n_local_physical_experts = num_local_physical_experts
++                moe.n_physical_experts = num_physical_experts
++                moe.n_redundant_experts = self.num_redundant_experts
++                moe.experts.update_expert_map()
++
++    def set_moe_parameters(self):
++        self.moe_layers = []
++        example_moe = None
++        for layer in self.language_model.model.layers:
++            if isinstance(layer, Qwen4ExpDecoderLayer) and isinstance(
++                layer.mlp, Qwen3NextSparseMoeBlock
++            ):
++                example_moe = layer.mlp
++                self.moe_layers.append(layer.mlp.experts)
++
++        if example_moe is None:
++            raise RuntimeError(
++                "No Qwen4Exp layer found in the language_model.model.layers."
++            )
++
++        self.num_moe_layers = len(self.moe_layers)
++        self.num_expert_groups = 1
++        self.num_shared_experts = 0
++        self.num_logical_experts = example_moe.n_logical_experts
++        self.num_physical_experts = example_moe.n_physical_experts
++        self.num_local_physical_experts = example_moe.n_local_physical_experts
++        self.num_routed_experts = example_moe.n_routed_experts
++        self.num_redundant_experts = example_moe.n_redundant_experts
++
++
++@MULTIMODAL_REGISTRY.register_processor(
++    Qwen3VLMultiModalProcessor,
++    info=Qwen4ExpProcessingInfo,
++    dummy_inputs=Qwen3VLDummyInputsBuilder,
++)
++class Qwen4ExpForConditionalGeneration(
++    Qwen3VLForConditionalGeneration,
++    IsHybrid,
++    Qwen4ExpMoeMixtureOfExperts,
++):
++    """Multimodal (vision + text) wrapper for Qwen4-Exp.
++
++    Wraps the Qwen3-VL vision tower (``Qwen3_VisionTransformer``) around the
++    :class:`Qwen4ExpForCausalLM` text model. The checkpoint's vision config is
++    byte-identical to the Qwen3-VL ViT (27 blocks, hidden 1152, patch 16,
++    spatial-merge 2, out 2560, no deepstack), so the Qwen3-VL vision tower,
++    processor, and MRoPE wiring are reused verbatim.
++    """
++
++    supports_multimodal_pruning = True
++    is_3d_moe_weight: bool = True
++
++    packed_modules_mapping = (
++        Qwen3VLForConditionalGeneration.packed_modules_mapping
++        | {
++            "in_proj_qkvz": ["in_proj_qkv", "in_proj_z"],
++            "in_proj_ba": ["in_proj_b", "in_proj_a"],
++        }
++    )
++
++    def __init__(self, *, vllm_config: VllmConfig, prefix: str = "model"):
++        # protocols have no __init__, so use nn.Module.__init__ directly.
++        nn.Module.__init__(self)
++        config: Qwen4ExpConfig = vllm_config.model_config.hf_config
++        quant_config = vllm_config.quant_config
++        multimodal_config = vllm_config.model_config.multimodal_config
++
++        self.config = config
++        self.model_config = vllm_config.model_config
++        self.multimodal_config = multimodal_config
++        self.use_data_parallel = multimodal_config.mm_encoder_tp_mode == "data"
++        self._init_video_pruning(multimodal_config)
++        self._tokenizer = cached_tokenizer_from_config(vllm_config.model_config)
++
++        # Deepstack is unused by this checkpoint (``deepstack_visual_indexes``
++        # is empty); guard on a non-empty list so the deepstack code paths are
++        # skipped.
++        self.use_deepstack = (
++            hasattr(config.vision_config, "deepstack_visual_indexes")
++            and len(config.vision_config.deepstack_visual_indexes) > 0
++        )
++        self.deepstack_num_level = (
++            len(config.vision_config.deepstack_visual_indexes)
++            if self.use_deepstack
++            else 0
++        )
++        self.visual_dim = config.vision_config.out_hidden_size
++        self.multiscale_dim = self.visual_dim * self.deepstack_num_level
++
++        with self._mark_tower_model(vllm_config, {"image", "video"}):
++            self.visual = Qwen3_VisionTransformer(
++                config.vision_config,
++                norm_eps=getattr(config, "rms_norm_eps", 1e-6),
++                quant_config=quant_config,
++                prefix=maybe_prefix(prefix, "visual"),
++            )
++
++        with self._mark_language_model(vllm_config):
++            self.language_model = Qwen4ExpForCausalLM(
++                vllm_config=vllm_config,
++                prefix=maybe_prefix(prefix, "language_model"),
++            )
++
++        self.make_empty_intermediate_tensors = (
++            self.language_model.make_empty_intermediate_tensors
++        )
++
++        # Set MoE hyperparameters (expert parallelism / EPLB).
++        self.set_moe_parameters()
++
++    def forward(
++        self,
++        input_ids: torch.Tensor | None,
++        positions: torch.Tensor,
++        intermediate_tensors: IntermediateTensors | None = None,
++        inputs_embeds: torch.Tensor | None = None,
++        **kwargs: object,
++    ) -> torch.Tensor | IntermediateTensors:
++        # Override the base forward: the Qwen4-Exp text model's forward does
++        # not accept ``deepstack_input_embeds`` (this checkpoint has no
++        # deepstack), so drop that kwarg.
++        if intermediate_tensors is not None:
++            inputs_embeds = None
++
++        hidden_states = self.language_model.model(
++            input_ids=input_ids,
++            positions=positions,
++            intermediate_tensors=intermediate_tensors,
++            inputs_embeds=inputs_embeds,
++        )
++        return hidden_states
++
++    def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
++        # Load the vision tower (``model.visual.*`` -> ``visual.*``) and the
++        # text model (``model.language_model.*`` -> ``language_model.model.*``)
++        # via the inherited Qwen3-VL weight mapper. Skip the MTP drafter head
++        # (``mtp.*``) and the host-RAM PLE n-gram table shards + QSA indexer
++        # (handled outside the param loader, like the text-only model).
++        loader = AutoWeightsLoader(
++            self,
++            skip_prefixes=["mtp."],
++            skip_substrs=[".ngram_embedding.", ".indexer."],
++        )
++        return loader.load_weights(weights, mapper=self.hf_to_vllm_mapper)
++
++    @classmethod
++    def get_mamba_state_dtype_from_config(
++        cls,
++        vllm_config: "VllmConfig",
++    ) -> tuple[torch.dtype, torch.dtype]:
++        return MambaStateDtypeCalculator.gated_delta_net_state_dtype(
++            vllm_config.model_config.dtype,
++            vllm_config.cache_config.mamba_cache_dtype,
++            vllm_config.cache_config.mamba_ssm_cache_dtype,
++        )
++
++    @classmethod
++    def get_mamba_state_shape_from_config(
++        cls, vllm_config: "VllmConfig"
++    ) -> tuple[tuple[int, int], tuple[int, int]]:
++        parallel_config = vllm_config.parallel_config
++        hf_config = vllm_config.model_config.hf_text_config
++        tp_size = parallel_config.tensor_parallel_size
++        num_spec = (
++            vllm_config.speculative_config.num_speculative_tokens
++            if vllm_config.speculative_config
++            else 0
++        )
++        return MambaStateShapeCalculator.gated_delta_net_state_shape(
++            tp_size,
++            hf_config.linear_num_key_heads,
++            hf_config.linear_num_value_heads,
++            hf_config.linear_key_head_dim,
++            hf_config.linear_value_head_dim,
++            hf_config.linear_conv_kernel_dim,
++            num_spec,
++        )
++
++    @classmethod
++    def get_mamba_state_copy_func(
++        cls,
++    ) -> tuple[MambaStateCopyFunc, MambaStateCopyFunc]:
++        return MambaStateCopyFuncCalculator.gated_delta_net_state_copy_func()
 +
 +
 +__all__ = [
 +    "HyperConnection",
 +    "Qwen4ExpDecoderLayer",
 +    "Qwen4ExpMixtureOfExperts",
++    "Qwen4ExpMoeMixtureOfExperts",
 +    "Qwen4ExpModel",
 +    "Qwen4ExpForCausalLM",
++    "Qwen4ExpProcessingInfo",
 +    "Qwen4ExpForConditionalGeneration",
 +]
 \ No newline at end of file
