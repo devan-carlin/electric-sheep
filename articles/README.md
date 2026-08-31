@@ -29,6 +29,7 @@ hook) before posting.
 | 1 | `01-xpu-mtp-int64-overflow.md` | A 27B model crashes on Intel Arc because a GPU pointer is too big for a 64-bit integer. |
 | 2 | `02-mtp-slower-on-xpu.md` | We fixed the crash — and found the "speedup" feature made the model 33% slower. |
 | 4 | `04-256k-context-on-two-gpus.md` | Fitting a 256K context window on two 32 GB GPUs, and the concurrency math that comes with it. |
+| 10 | `10-arc-b70-power-tuning.md` | Capping four Arc B70s at 160W saves ~160W for a 5-10% throughput hit, via plain sysfs files. |
 
 ## Planned (outline + key facts, needs expansion)
 
