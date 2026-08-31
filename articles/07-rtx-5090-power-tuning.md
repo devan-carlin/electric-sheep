@@ -3,15 +3,15 @@
 *LLM inference is memory-bandwidth-bound, not compute-bound. That one fact
 changes the whole power-tuning calculus.*
 
-> **Status: outline.** Real measurements; needs a final pass (cleaner table, a
-> photo of the Afterburner slider) before posting.
+> **Status: draft.** Real measurements; needs a final pass (a photo of the
+> Afterburner slider) before posting.
 
 ---
 
 ## The hook
 
 An RTX 5090 draws 450–500W at stock. For a home AI box that's a lot of heat,
-a lot of fan noise, and a lot of electricity — for a workload that, it turns
+a lot of fan noise, and a lot of electricity, for a workload that, it turns
 out, barely needs the power.
 
 The reason is a single, counterintuitive fact: **LLM inference is
@@ -52,11 +52,30 @@ MSI Afterburner → **Power Limit** slider → 70%. Optionally:
 
 - **Temp Limit** to 80–85°C (a safety ceiling if the power cap isn't enough).
 - **Core Clock** offset of −100 to −200 MHz (caps boost independently).
-- **Memory Clock** offset — leave at stock unless you've measured a benefit;
+- **Memory Clock** offset: leave at stock unless you've measured a benefit;
   this is the side that hurts.
 
 Use the **NVIDIA Studio driver**, not Game Ready, for stability over long
 inference runs.
+
+## Verification
+
+```powershell
+# Poll power, clocks, and temperature every 2 seconds
+nvidia-smi --query-gpu=power.draw,power.limit,temperature.gpu,clocks.gr,clocks.mem --format=csv -l 2
+```
+
+You should see `power.draw` holding under the cap, `power.limit` at your
+target wattage, and `temperature.gpu` a few degrees below stock. Run the same
+inference workload before and after, and compare tok/s.
+
+## Links
+
+- Power-tuning guide (full Afterburner walkthrough, voltage curve, `nvidia-smi`
+  reference):
+  [rtx-5090-power-tuning.md](https://github.com/devan-carlin/electric-sheep/blob/main/docs/guides/rtx-5090-power-tuning.md)
+- The Intel Arc side of the same story (sysfs caps, no GUI):
+  [10-arc-b70-power-tuning.md](https://github.com/devan-carlin/electric-sheep/blob/main/articles/10-arc-b70-power-tuning.md)
 
 ## Takeaway
 

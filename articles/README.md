@@ -1,4 +1,4 @@
-# Electric Sheep — Article Library
+# Electric Sheep: Article Library
 
 Draft articles for publishing (Medium, etc.) drawn from the issues, optimizations,
 and experiments in this project. Each is a working draft: the technical core is
@@ -18,7 +18,7 @@ hook) before posting.
 - **AI server:** 4× Intel Arc Pro B70 (Battlemage, ~32 GB each, `xe` driver),
   AMD Threadripper PRO 3945WX, 247 GiB RAM, Ubuntu 26.04.
 - **Workstation:** NVIDIA RTX 5090 (32 GB, Blackwell), Windows.
-- **The model at the center of most of these:** Qwen 3.8 27B — a 3:1
+- **The model at the center of most of these:** Qwen 3.8 27B, a 3:1
   Gated-DeltaNet (linear attention) / full-attention hybrid, 256K native context,
   one MTP (multi-token prediction) layer.
 
@@ -27,9 +27,10 @@ hook) before posting.
 | # | File | The hook |
 |---|------|----------|
 | 1 | `01-xpu-mtp-int64-overflow.md` | A 27B model crashes on Intel Arc because a GPU pointer is too big for a 64-bit integer. |
-| 2 | `02-mtp-slower-on-xpu.md` | We fixed the crash — and found the "speedup" feature made the model 33% slower. |
+| 2 | `02-mtp-slower-on-xpu.md` | We fixed the crash, and found the "speedup" feature made the model 33% slower. |
 | 4 | `04-256k-context-on-two-gpus.md` | Fitting a 256K context window on two 32 GB GPUs, and the concurrency math that comes with it. |
 | 10 | `10-arc-b70-power-tuning.md` | Capping four Arc B70s at 160W saves ~160W for a 5-10% throughput hit, via plain sysfs files. |
+| 7 | `07-rtx-5090-power-tuning.md` | What a 70% power cap does to an RTX 5090's real throughput. |
 
 ## Planned (outline + key facts, needs expansion)
 
@@ -37,7 +38,6 @@ hook) before posting.
 |---|------|----------|
 | 5 | `05-autoround-int4-on-xpu.md` | Quantizing a 27B hybrid model to 4-bit on Intel Arc, and the layers you must not touch. |
 | 6 | `06-moe-topk-kernel-patch.md` | Patching vLLM's MoE kernel so a 35B-A3B model actually runs on XPU. |
-| 7 | `07-rtx-5090-power-tuning.md` | What a 70% power cap does to an RTX 5090's real throughput. |
 | 8 | `08-pen-tester-ai.md` | Designing a RAG + LoRA + Kali agent that pentests like a senior red-teamer. |
 
 ## Cross-references
