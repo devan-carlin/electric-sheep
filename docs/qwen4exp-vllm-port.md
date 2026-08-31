@@ -160,5 +160,5 @@ Reference / version control:
   added (Qwen3-VL ViT reused verbatim) — recipe is now multimodal. MTP drafter
   wired (correct/lossless, 34% acceptance; kept off by default on XPU). Shipped:
   16-file patch, fork branch `devan-carlin/vllm @ xpu-qwen4exp`, HF model card,
-  status posted to intel/llm-scaler#649. -2 () variant
-  quantized + served + verified (refusal 0/66).
+  status posted to intel/llm-scaler#649. Base variant quantized + served +
+  verified.

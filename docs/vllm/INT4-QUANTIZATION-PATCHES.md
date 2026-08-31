@@ -1,7 +1,7 @@
 # INT4 AutoRound Quantization Patches for DeepSeek-V4-Flash on Intel Arc B70 XPU
 
 **Date:** 2026-08-11  
-**Model:** `apetersson/DeepSeek-V4-Flash-0731--FP8` (284B params, 43 layers)  
+**Model:** `apetersson/DeepSeek-V4-Flash-0731-FP8` (284B params, 43 layers)  
 **Hardware:** 4× Intel Arc Pro B70 (32GB each), Threadripper PRO 3945WX, 247GB RAM  
 **Status:** ✅ WORKING - All 10 patches applied, quantization running successfully
 
@@ -421,7 +421,7 @@ The patches must be applied in this specific order:
 | File | Location | Type |
 |------|----------|------|
 | `test-autoround-xpu-patched.py` | `/home/dc/electric-sheep/vllm/` | Script with all patches |
-| `config.json` | `/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8/` | Model config |
+| `config.json` | `/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731-FP8/` | Model config |
 | `grouped.py` | `~/.cache/huggingface/hub/kernels--kernels-community--finegrained-fp8/.../build/torch-xpu/` | Kernel source |
 
 ---
@@ -461,6 +461,6 @@ The patches must be applied in this specific order:
 ## References
 
 - Script: `/home/dc/electric-sheep/vllm/experimental/test-autoround-xpu-patched.py`
-- Model: `/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731--FP8`
-- Output: `/mnt/data/models/DeepSeek-V4-Flash-0731--INT4-xpu`
+- Model: `/home/dc/electric-sheep/models/DeepSeek-V4-Flash-0731-FP8`
+- Output: `/mnt/data/models/DeepSeek-V4-Flash-0731-INT4-xpu`
 - Kernel: `~/.cache/huggingface/hub/kernels--kernels-community--finegrained-fp8/snapshots/7cdb05d472d6c954c7d03182ed836ebfd4610df0/build/torch-xpu/grouped.py`

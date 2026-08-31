@@ -28,7 +28,6 @@ hook) before posting.
 |---|------|----------|
 | 1 | `01-xpu-mtp-int64-overflow.md` | A 27B model crashes on Intel Arc because a GPU pointer is too big for a 64-bit integer. |
 | 2 | `02-mtp-slower-on-xpu.md` | We fixed the crash — and found the "speedup" feature made the model 33% slower. |
-| 3 | `03---on-xpu.md` | Removing a model's refusals without fine-tuning, on consumer Intel GPUs. |
 | 4 | `04-256k-context-on-two-gpus.md` | Fitting a 256K context window on two 32 GB GPUs, and the concurrency math that comes with it. |
 
 ## Planned (outline + key facts, needs expansion)
@@ -42,7 +41,6 @@ hook) before posting.
 
 ## Cross-references
 
-- The  process is documented in `~/neon-demon/-PROCESS.md`.
 - The pen-tester concept is designed in `~/neon-demon/PENTEST-AI-CONCEPT.md`.
 - Quantization patch details live in `../docs/vllm/INT4-QUANTIZATION-PATCHES.md`.
 - MoE patch details live in `../docs/guides/moe-topk-kernel-patch.md`.

@@ -172,8 +172,8 @@ System: 247GB RAM + 128GB VRAM = 375GB total → **FP16 load OOMs without `low_g
 ### References
 
 - Patch script: `build/common/apply-balanced-split-mode.sh`
-- User guide: `docs/guides/balanced-split-mode.md`
-- PR docs: `docs/guides/pr-balanced-split-mode.md`
+- User guide: `~/neon-demon/docs/guides/balanced-split-mode.md`
+- PR docs: `~/neon-demon/docs/guides/pr-balanced-split-mode.md`
 
 ---
 

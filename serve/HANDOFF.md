@@ -20,8 +20,8 @@ image-generation (ComfyUI) instances.
 
 | Port | GPU | Model ID | Model (weights) | Context | Use for |
 |------|-----|----------|-----------------|---------|---------|
-| 8088 | 2 | `qwen`  | Qwen3.6-35B-A3B Aggressive (, Q4_K_P, MoE 35B/3B-active) | 256K | Book writing, long-context prose, fast bulk generation |
-| 8089 | 3 | `gemma` | Gemma4 26B-A4B ( Balanced, Q4_K_P) | 256K | VN writing, daily chat, general prose |
+| 8088 | 2 | `qwen`  | Qwen3.6-35B-A3B Aggressive (Q4_K_P, MoE 35B/3B-active) | 256K | Book writing, long-context prose, fast bulk generation |
+| 8089 | 3 | `gemma` | Gemma4 26B-A4B (Balanced, Q4_K_P) | 256K | VN writing, daily chat, general prose |
 
 Both are OpenAI-compatible. Both are multimodal (accept images via `mmproj`).
 Both run with thinking/reasoning ON (`--reasoning on --reasoning-format
@@ -94,7 +94,7 @@ are independent of the LLM endpoints.
 
 ## Managing the services
 
-All launch scripts live in `/home/dc/electric-sheep/serve/`.
+The 4-GPU stack launchers (`start-all.sh`, `start-qwen-llama.sh`, `start-gemma-llama.sh`) live in `/home/dc/neon-demon/serve/`. Flash-Next and vLLM fallback launchers live in `/home/dc/electric-sheep/serve/`.
 
 | Script | What it does |
 |--------|--------------|
@@ -105,11 +105,11 @@ All launch scripts live in `/home/dc/electric-sheep/serve/`.
 
 Common operations:
 ```
-bash /home/dc/electric-sheep/serve/start-all.sh status        # are they up?
-bash /home/dc/electric-sheep/serve/start-all.sh restart-qwen  # restart qwen only
-bash /home/dc/electric-sheep/serve/start-all.sh restart-gemma # restart gemma only
-bash /home/dc/electric-sheep/serve/start-all.sh stop          # stop everything
-bash /home/dc/electric-sheep/serve/start-all.sh start         # start all 4
+bash /home/dc/neon-demon/serve/start-all.sh status        # are they up?
+bash /home/dc/neon-demon/serve/start-all.sh restart-qwen  # restart qwen only
+bash /home/dc/neon-demon/serve/start-all.sh restart-gemma # restart gemma only
+bash /home/dc/neon-demon/serve/start-all.sh stop          # stop everything
+bash /home/dc/neon-demon/serve/start-all.sh start         # start all 4
 ```
 
 ### Swapping the model behind `qwen` or `gemma`
@@ -118,7 +118,7 @@ The weights are pinned inside the launcher. To point `qwen` at a different GGUF:
 QWEN_LLAMA_MODEL_DIR=/path/to/model-dir \
 QWEN_LLAMA_MODEL_FILE=/path/to/model.gguf \
 QWEN_LLAMA_MMPROJ=/path/to/mmproj.gguf \
-bash /home/dc/electric-sheep/serve/start-qwen-llama.sh start
+bash /home/dc/neon-demon/serve/start-qwen-llama.sh start
 ```
 The name stays `qwen`. Same pattern with `GEMMA_LLAMA_*` for the gemma slot.
 Other overrides: `QWEN_LLAMA_GPU`, `QWEN_LLAMA_PORT`, `QWEN_LLAMA_CTX`,
@@ -140,8 +140,8 @@ Decode speed and draft stats appear in the llama logs as `print_timing` lines
 ## Models on disk
 
 Root: `/home/dc/electric-sheep/models/` (a symlink to `/mnt/data/models`).
-- `-Qwen3.6-35B-A3B---Aggressive/` - the live `qwen` weights (Q4_K_P + f16 mmproj)
-- `-Gemma4-26B-A4B---Balanced/` - the live `gemma` weights (Q4_K_P + f16 mmproj)
+- the live `qwen` weights (Q4_K_P + f16 mmproj)
+- the live `gemma` weights (Q4_K_P + f16 mmproj)
 - Other dirs are fallbacks / experiments (vLLM safetensors, other quants).
 
 ## Gotchas (read before debugging)

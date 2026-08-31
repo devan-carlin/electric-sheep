@@ -1084,5 +1084,5 @@ The patches must be applied in the order they appear in the test script:
 
 ---
 
-*Generated for DeepSeek-V4-Flash-0731--FP8 → INT4 AutoRound quantization on Intel XPU*
+*Generated for DeepSeek-V4-Flash-0731-FP8 → INT4 AutoRound quantization on Intel XPU*
 *Test script: `/home/dc/electric-sheep/vllm/experimental/test-autoround-xpu-patched.py`*

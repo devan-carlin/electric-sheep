@@ -9,8 +9,8 @@ Last updated: 2026-08-30.
 |------|-----|---------|-------|---------|---------|
 | 8188 | 0 | ComfyUI A | (image models) | - | Image generation, workflow A |
 | 8189 | 1 | ComfyUI B | (image models) | - | Image generation, workflow B |
-| 8088 | 2 | llama.cpp | Qwen3.6-35B-A3B Aggressive ( Q4_K_P, MoE) | 256K | Book writing, long-context prose |
-| 8089 | 3 | llama.cpp | Gemma4 26B-A4B ( Balanced Q4_K_P) | 256K | VN writing, daily chat |
+| 8088 | 2 | llama.cpp | Qwen3.6-35B-A3B Aggressive (Q4_K_P, MoE) | 256K | Book writing, long-context prose |
+| 8089 | 3 | llama.cpp | Gemma4 26B-A4B (Balanced Q4_K_P) | 256K | VN writing, daily chat |
 
 Open WebUI (Docker) points at the active endpoint: default
 `host.docker.internal:8089` + `:8088` (the always-on llama.cpp slots), or
@@ -23,20 +23,20 @@ swap the model in the launcher, never the name).
 ### 8088 - Qwen (llama.cpp, was vLLM)
 
 - Served name `qwen` (version-agnostic). Current model: **Qwen3.6-35B-A3B
-  Aggressive** ( Q4_K_P, MoE 35B total / 3B active) - swapped in from
+  Aggressive** (Q4_K_P, MoE 35B total / 3B active) - swapped in from
   Qwen3.8-27B dense on 2026-08-25 for MoE decode throughput.
-- Switched from vLLM -ara (2026-08-25). vLLM capped at 128K on one
+- Switched from vLLM (2026-08-25). vLLM capped at 128K on one
   card; llama.cpp runs the full 256K on-GPU (q4_0 KV ~4.8 GiB, ~5 GB spare).
 - Config: q4_0 KV, 256K ctx, np=1, thinking ON (`--reasoning on
   --reasoning-format deepseek --reasoning-budget 2048`). Thoughts ->
   `reasoning_content`, answer -> `content`.
 - Trade-off vs vLLM: no prefix caching, no tool-call parsers, no concurrency.
-  vLLM fallback: `fallback/start-qwen.sh` (-ara int4, 128K, fp8 KV).
+  vLLM fallback: `fallback/start-qwen.sh` (int4, 128K, fp8 KV).
 
 ### 8089 - Gemma (llama.cpp)
 
 - Served name `gemma` (version-agnostic). Current model: **Gemma4 26B-A4B**
-  ( Balanced Q4_K_P).
+  (Balanced Q4_K_P).
 - Won a blind prose A/B over the 31B QAT MTP (4/5 prompts) and decodes
   ~2.5-3x faster. Locked in 2026-08-25.
 - Config: q4_0 KV, 256K ctx, np=1. KV ~16.9 GiB - top of the on-GPU budget,
@@ -70,17 +70,19 @@ swap the model in the launcher, never the name).
 
 ## Launch scripts
 
+The 4-GPU stack orchestrator (`start-all.sh`) and the per-slot `start-*-llama.sh`
+launchers now live in `~/neon-demon/serve/`. The Flash-Next launchers and vLLM
+fallbacks below stay in `serve/`.
+
 | Script | What it does |
 |--------|--------------|
 | `start-all.sh` | Start/stop/status all 4 services. Subcommands: `start`, `stop`, `status`, `restart-gemma`, `restart-qwen` |
 | `start-qwen-256k.sh` | **Front door for Qwen3.8-Flash-Next.** Delegates to the vLLM + llama launchers; adds unified `status`/`smoke`/`logs`/`restart`. `start [vllm\|llama]`, `stop [vllm\|llama\|all]`, `status`, `smoke`, `logs` |
 | `start-qwen-256k-vllm.sh` | Flash-Next via vLLM, :8000, alias `qwen-256k` (W4A16, 4x GPU, 256K, fp8 KV, XPU graph mode). The engine with the HC + PLE `1 + w` gamma fixes |
-| `start-qwen-256k--vllm.sh` | Flash-Next **-2** () via vLLM, :8000, alias `qwen-256k` (W4A16 from BF16, 4x GPU, 256K, fp8 KV). Same flags as the base launcher; needs all 4 GPUs, so stop `qwen-256k` first |
 | `start-flashnext-llama.sh` | Flash-Next via llama.cpp, :8090, alias `flash-next` (Q4_K_XL, 4x GPU, q8_0 KV, PLE table in RAM) |
 | `start-gemma-llama.sh` | Gemma slot on GPU 3 :8089, alias `gemma` (start/stop/status) |
 | `start-qwen-llama.sh` | Qwen slot on GPU 2 :8088, alias `qwen` (start/stop/status). Model pinned in the script; swap via QWEN_LLAMA_MODEL_DIR/MODEL_FILE |
-| `fallback/start-qwen.sh` | vLLM Qwen -ara fallback (128K, fp8 KV) |
-| `bench-throughput.sh` | Throughput benchmarks (GEMMA_TOK path may be stale) |
+| `fallback/start-qwen.sh` | vLLM Qwen fallback (128K, fp8 KV) |
 
 Env overrides: `QWEN_LLAMA_GPU/PORT/CTX/ALIAS/MODEL_DIR/MODEL_FILE/MMPROJ/REASONING/REASONING_FORMAT/REASONING_BUDGET`,
 `GEMMA_LLAMA_GPU/PORT/CTX/ALIAS/REASONING/REASONING_FORMAT/REASONING_BUDGET`, `QWEN_PORT/GPU`, `GEMMA_PORT/GPU`,

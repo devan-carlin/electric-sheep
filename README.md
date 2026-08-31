@@ -112,10 +112,10 @@ bash ~/electric-sheep/build/ubuntu/06-download-models.sh
 
 ```bash
 # Max quality (slower, ~12-16 hours for 30B+ models)
-bash ~/electric-sheep/build/common/convert-int4-autoround.sh <huggingface-repo>
+bash ~/neon-demon/build/common/convert-int4-autoround.sh <huggingface-repo>
 
 # Parallel mode (faster, ~2-4 hours, uses all 4 GPUs)
-bash ~/electric-sheep/build/common/convert-int4-autoround-parallel.sh <huggingface-repo> --parallel --batch-size 4
+bash ~/neon-demon/build/common/convert-int4-autoround-parallel.sh <huggingface-repo> --parallel --batch-size 4
 ```
 
 ### On the Workstation (Windows + RTX 5090)
@@ -134,15 +134,15 @@ cd ~/electric-sheep/build/windows
 .\03-setup-ollama.ps1
 ```
 
-See `04-llama-cpp-deployment-guide.md` and `05-ollama-deployment-guide.md` for runtime configuration.
+See `04-llama-cpp-deployment-guide.md` for runtime configuration.
 
 ### Common Utilities
 
 | Script | Purpose |
 |--------|---------|
 | `build/common/build-all.sh` | Orchestrate full build pipeline |
-| `build/common/convert-int4-autoround.sh` | Quantize models to INT4 (single GPU) |
-| `build/common/convert-int4-autoround-parallel.sh` | Quantize models to INT4 (multi-GPU) |
+| `~/neon-demon/build/common/convert-int4-autoround.sh` | Quantize models to INT4 (single GPU) |
+| `~/neon-demon/build/common/convert-int4-autoround-parallel.sh` | Quantize models to INT4 (multi-GPU) |
 | `build/common/setup-gpu-power-limits.sh` | GPU power tuning |
 | `build/common/tailscale-setup.md` | Mesh network between machines |
 
@@ -171,13 +171,14 @@ See `configs/vllm/model-configs.md` for launch commands and VRAM budgets.
 
 ## Runtime Configs
 
-Launchers live in `serve/` (live stack: `start-all.sh` + `start-*-llama.sh`; vLLM
-fallbacks in `serve/fallback/`), XPU environment configs in `vllm/env/`, and
-reference config docs in `docs/vllm/`:
+Launchers live in `~/neon-demon/serve/` (live 4-GPU stack: `start-all.sh` +
+`start-*-llama.sh`) and `serve/` (Flash-Next launchers; vLLM fallbacks in
+`serve/fallback/`), XPU environment configs in `vllm/env/`, and reference config
+docs in `docs/vllm/`:
 
 ```bash
 # Start the full 4-GPU stack (2x ComfyUI + 2x llama.cpp)
-bash ~/electric-sheep/serve/start-all.sh
+bash ~/neon-demon/serve/start-all.sh
 
 # Or run a vLLM fallback launcher (sources the matching env config)
 bash ~/electric-sheep/serve/fallback/start-qwen3.8-27b-int4.sh
@@ -199,7 +200,7 @@ bash ~/electric-sheep/serve/fallback/start-deepseek-v4-flash.sh
 | `docs/architecture.md` | Hardware specs, project layout, runtime paths |
 | `docs/guides/vllm-deployment.md` | vLLM XPU deployment on Intel Arc |
 | `docs/guides/llama-deployment.md` | llama.cpp SYCL deployment on Intel Arc |
-| `docs/guides/deepseek-int4-conversion.md` | Full INT4 quantization walkthrough |
+| `~/neon-demon/docs/guides/deepseek-int4-conversion.md` | Full INT4 quantization walkthrough |
 | `docs/guides/arc-b70-power-tuning.md` | sysfs power caps + frequency limits for Intel Arc B70 |
 | `docs/guides/rtx-5090-power-tuning.md` | MSI Afterburner power limits for RTX 5090 |
 | `docs/guides/tailscale-setup.md` | Mesh networking between machines |

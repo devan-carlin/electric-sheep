@@ -18,14 +18,14 @@ Extend `vllm-xpu-kernels` to support `num_experts_per_tok` values of TopK=16, 32
 | RAM | 247 GB |
 | vLLM | 0.26.1rc1.dev500+gc39076fef.xpu (FlashAttention v2, TP=4) |
 | Compiler | Intel oneAPI 2026.1 (icx/icpx) |
-| Model | Huihui---35B- (Qwen3.5 MoE, 256 experts, 40 layers, ~67 GB) |
+| Model | Qwen3.5 MoE (256 experts, 40 layers, ~67 GB) |
 | GPU env | `/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh` (TP_SIZE=4, GPUs 0-3) |
 
 ## Background
 
 ### The Problem
 
-When benchmarking the Huihui- MoE model, we wanted to compare different `num_experts_per_tok` variants:
+When benchmarking the Qwen3.5 MoE model, we wanted to compare different `num_experts_per_tok` variants:
 
 | Variant | Experts per Token | Status (before patch) |
 |---------|-------------------|----------------------|
