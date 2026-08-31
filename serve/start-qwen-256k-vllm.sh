@@ -34,10 +34,17 @@ GPUS="${QWEN256K_GPUS:-0,1,2,3}"
 MODEL="${QWEN256K_MODEL:-/mnt/data/models/devancarlin-Qwen3.8-Flash-Next-W4A16-BF16src}"
 CTX="${QWEN256K_CTX:-262144}"
 MEM_UTIL="${QWEN256K_MEM_UTIL:-0.85}"
-# Sampling temperature. The model's generation_config.json ships 1.0, which
-# degrades fast on this model (repetition / incoherent tails). Pin 0.7.
-# Overridden onto the model config via --override-generation-config.
+# Sampling defaults. The model's generation_config.json ships temperature 1.0,
+# which degrades fast on this model (repetition / incoherent tails). Pin the
+# vendor-recommended Instruct-mode values below; overridden onto the model
+# config via --override-generation-config. Each is env-overridable.
 TEMP="${QWEN256K_TEMP:-0.7}"
+TOP_P="${QWEN256K_TOP_P:-0.80}"
+TOP_K="${QWEN256K_TOP_K:-20}"
+MIN_P="${QWEN256K_MIN_P:-0.0}"
+PRESENCE_PENALTY="${QWEN256K_PRESENCE_PENALTY:-1.5}"
+REPETITION_PENALTY="${QWEN256K_REPETITION_PENALTY:-1.0}"
+GEN_CONFIG="{\"temperature\": $TEMP, \"top_p\": $TOP_P, \"top_k\": $TOP_K, \"min_p\": $MIN_P, \"presence_penalty\": $PRESENCE_PENALTY, \"repetition_penalty\": $REPETITION_PENALTY}"
 # Per-GPU GiB of weights to UVA-offload to pinned host RAM (0 = none).
 # Needed for FP8 (134 GB transformer > 4x30 GiB VRAM). W4A16 fits without it.
 CPU_OFFLOAD_GB="${QWEN256K_CPU_OFFLOAD_GB:-0}"
@@ -109,7 +116,7 @@ case "${1:-start}" in
       --enable-auto-tool-choice
       --tool-call-parser qwen3_xml
       --generation-config vllm
-      --override-generation-config "{\"temperature\": $TEMP}"
+      --override-generation-config "$GEN_CONFIG"
     )
     if [ "$CPU_OFFLOAD_GB" != "0" ]; then
       CMD+=(--cpu-offload-gb "$CPU_OFFLOAD_GB")

@@ -121,6 +121,20 @@ index 7beecf8..3caae88 100644
          if hf_config.model_type == "qwen3_next":
              hf_config.model_type = "qwen3_next_mtp"
          if hf_config.model_type == "qwen3_next_mtp":
+diff --git a/vllm/config/model.py b/vllm/config/model.py
+index b01e6c8..55190ee 100644
+--- a/vllm/config/model.py
++++ b/vllm/config/model.py
+@@ -1704,8 +1704,9 @@
+         available_params = [
+             "repetition_penalty",
+             "temperature",
+             "top_k",
+             "top_p",
+             "min_p",
++            "presence_penalty",
+             "max_new_tokens",
+         ]
 diff --git a/vllm/model_executor/kernels/linear/__init__.py b/vllm/model_executor/kernels/linear/__init__.py
 index 4fe7291..d696448 100644
 --- a/vllm/model_executor/kernels/linear/__init__.py
