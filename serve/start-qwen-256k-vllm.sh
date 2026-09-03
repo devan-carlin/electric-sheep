@@ -53,6 +53,11 @@ LOG="$HOME/electric-sheep/serve/logs/vllm_${PORT}.log"
 # port (incl. the multimodal wrapper), built from scratch. The older
 # ~/electric-sheep/vllm/.venv (0.26.1rc1) is kept only as a fallback.
 VENV="${QWEN256K_VENV:-$HOME/vllm-fresh-venv}"
+# Optional API key. Only passed when the key file exists, so the launcher
+# still works keyless. Same source of truth as the heretic launcher.
+API_KEY_FILE="$HOME/electric-sheep/serve/.api_key"
+API_KEY=""
+[ -f "$API_KEY_FILE" ] && API_KEY="$(cat "$API_KEY_FILE")"
 
 stop() {
   pkill -f "vllm.entrypoints.openai.api_server.*--port $PORT" 2>/dev/null && sleep 5
@@ -126,6 +131,10 @@ case "${1:-start}" in
     if [ -n "${QWEN256K_SPEC_FLAGS:-}" ]; then
       # shellcheck disable=SC2206
       CMD+=($QWEN256K_SPEC_FLAGS)
+    fi
+    # Optional API key (only when the key file is present).
+    if [ -n "$API_KEY" ]; then
+      CMD+=(--api-key "$API_KEY")
     fi
     echo "=== Launch command ==="
     printf '%q ' "${CMD[@]}"; echo
