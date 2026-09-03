@@ -75,3 +75,7 @@ BACKLOG.md
 # IDE
 .idea/
 *.sublime-*
+
+# Local vLLM API key (live + disabled); never commit secrets
+serve/.api_key
+serve/.api_key.disabled
