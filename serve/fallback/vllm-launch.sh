@@ -21,7 +21,9 @@
 # =============================================================================
 set -uo pipefail
 
-VENV="/home/dc/electric-sheep/vllm/.venv"
+# Production venv (2026-08-30 cleanup): ~/vllm-fresh-venv. The old
+# electric-sheep/vllm/.venv was deleted; rebuild recipe: build/ubuntu/03-build-vllm-xpu.sh.
+VENV="${VLLM_LAUNCH_VENV:-$HOME/vllm-fresh-venv}"
 MODELS_DIR="$HOME/electric-sheep/models"
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1

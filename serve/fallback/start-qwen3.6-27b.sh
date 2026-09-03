@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Qwen 3.6 27B INT4 - Primary model
 # Uses all 4 GPUs (TP=4), 192K context
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)

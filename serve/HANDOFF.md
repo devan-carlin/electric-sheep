@@ -147,7 +147,7 @@ Root: `/home/dc/electric-sheep/models/` (a symlink to `/mnt/data/models`).
 ## Gotchas (read before debugging)
 
 - **Per-GPU VRAM probe**: use
-  `env -u ONEAPI_DEVICE_SELECTOR /home/dc/electric-sheep/vllm/.venv/bin/python -c "import torch; f,t=torch.xpu.mem_get_info(torch.device('xpu:2')); print((t-f)/1024**3)"`
+  `env -u ONEAPI_DEVICE_SELECTOR /home/dc/vllm-fresh-venv/bin/python -c "import torch; f,t=torch.xpu.mem_get_info(torch.device('xpu:2')); print((t-f)/1024**3)"`
   You MUST `env -u ONEAPI_DEVICE_SELECTOR` or the device indices shift and you
   read the wrong card. System Eye / `zes` reports a unified pool - useless per-GPU.
 - **KV cache types** on this SYCL build: `q4_0` and `q5_0` work. `q8_0` and

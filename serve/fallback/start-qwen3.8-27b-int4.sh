@@ -2,7 +2,7 @@
 # Qwen 3.8 27B INT4 (AutoRound W4A16) - quantized model
 # Uses all 4 GPUs (TP=4), 256K context
 # Mirrors the BF16 launch (start-qwen3.8-27b) + --quantization auto-round
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)

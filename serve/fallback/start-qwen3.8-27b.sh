@@ -3,7 +3,7 @@
 # Uses all 4 GPUs (TP=4), 256K context
 # Config matches the validated long-running instance (stable for hours):
 #   fp8 KV, 0.85 util, block 32, batched 16384, 2 seqs, text-only
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)

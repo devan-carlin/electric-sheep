@@ -23,7 +23,9 @@
 # =============================================================================
 set -uo pipefail
 
-VENV="/home/dc/electric-sheep/vllm/.venv"
+# Production venv (2026-08-30 cleanup): ~/vllm-fresh-venv. The old
+# electric-sheep/vllm/.venv was deleted; rebuild recipe: build/ubuntu/03-build-vllm-xpu.sh.
+VENV="${QWEN_VENV:-$HOME/vllm-fresh-venv}"
 MODELS_DIR="$HOME/electric-sheep/models"
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
@@ -114,6 +116,32 @@ case "$QM" in
   *) echo "NOTE: unrecognized quant_method '$QM'." ;;
 esac
 
+# --- Sampling defaults (override the model's shipped generation_config) ------
+# Many checkpoints ship temperature 1.0, which degrades fast (repetition /
+# incoherent tails). Pin vendor-recommended Instruct-mode values; each knob is
+# env-overridable (QWEN_<NAME>). Applied via --override-generation-config.
+TEMP="${QWEN_TEMP:-0.7}"
+TOP_P="${QWEN_TOP_P:-0.80}"
+TOP_K="${QWEN_TOP_K:-20}"
+MIN_P="${QWEN_MIN_P:-0.0}"
+PRESENCE_PENALTY="${QWEN_PRESENCE_PENALTY:-1.5}"
+REPETITION_PENALTY="${QWEN_REPETITION_PENALTY:-1.0}"
+GEN_CONFIG="{\"temperature\": $TEMP, \"top_p\": $TOP_P, \"top_k\": $TOP_K, \"min_p\": $MIN_P, \"presence_penalty\": $PRESENCE_PENALTY, \"repetition_penalty\": $REPETITION_PENALTY}"
+# Compute dtype. All library Qwen models compute in bfloat16 (weights keep
+# their native quantized type). Override with QWEN_DTYPE if a model needs fp16.
+DTYPE="${QWEN_DTYPE:-bfloat16}"
+# Tool-call parser is model-dependent (qwen3_coder for standard Qwen3.x,
+# qwen3_xml for the Flash-Next / qwen4exp family). Default to the common one.
+TOOL_PARSER="${QWEN_TOOL_PARSER:-qwen3_coder}"
+# Expert parallelism is only valid for MoE models. Auto-detect from config.json
+# (num_experts / num_local_experts / n_routed_experts > 0 in text_config or top level).
+MOE="$(python3 -c "import json;c=json.load(open('${CFG_FILE}'));tc=c.get('text_config',c);print(1 if (tc.get('num_experts') or tc.get('num_local_experts') or tc.get('n_routed_experts')) else 0)" 2>/dev/null)"
+# Optional API key (tailscale-serve clients send Authorization: Bearer <key>).
+# Only passed when the key file exists, so the launcher still works keyless.
+API_KEY_FILE="$HOME/electric-sheep/serve/.api_key"
+API_KEY=""
+[ -f "$API_KEY_FILE" ] && API_KEY="$(cat "$API_KEY_FILE")"
+
 # --- 4. XPU environment (supersedes set-env-*.sh) ----------------------------
 # Device selection: ZE_AFFINITY_MASK picks the PHYSICAL GPUs and renumbers
 # them 0..N-1; ONEAPI_DEVICE_SELECTOR is then applied to that filtered space.
@@ -135,6 +163,8 @@ export UVICORN_KEEP_ALIVE_TIMEOUT=300
 export VLLM_XPU_ENABLE_XPU_GRAPH=1
 export VLLM_TARGET_DEVICE=xpu
 export VLLM_CACHE_ROOT="$HOME/.cache/vllm"
+export MASTER_ADDR=127.0.0.1
+export MASTER_PORT=29530
 
 # MTP-specific env (only when enabled)
 if [[ "${mtp,,}" == "y" ]]; then
@@ -155,6 +185,7 @@ CMD=(python3 -m vllm.entrypoints.openai.api_server
   --port "$PORT"
   --tensor-parallel-size "$TP_SIZE"
   --max-model-len "$MAX_LEN"
+  --dtype "$DTYPE"
   --kv-cache-dtype "$KV_DTYPE"
   "$PREFIX"
   --trust-remote-code
@@ -164,7 +195,7 @@ CMD=(python3 -m vllm.entrypoints.openai.api_server
   --max-num-seqs "$MAX_SEQS"
   --reasoning-parser qwen3
   --enable-auto-tool-choice
-  --tool-call-parser qwen3_coder
+  --tool-call-parser "$TOOL_PARSER"
   --generation-config vllm
 )
 [[ -n "$QUANT_FLAG" ]] && CMD+=($QUANT_FLAG)
@@ -172,11 +203,16 @@ CMD=(python3 -m vllm.entrypoints.openai.api_server
 if [[ "${mtp,,}" == "y" ]]; then
   CMD+=(--speculative-config '{"method":"mtp","num_speculative_tokens":1}')
 fi
+# MoE-only flag (auto-detected above); omitted for dense models.
+[[ "$MOE" == "1" ]] && CMD+=(--enable-expert-parallel)
+# Pin sampling so the model's shipped generation_config (often temp 1.0) is overridden.
+CMD+=(--override-generation-config "$GEN_CONFIG")
+[[ -n "$API_KEY" ]] && CMD+=(--api-key "$API_KEY")
 
 echo
 echo "=== Launch command ==="
 printf '%q ' "${CMD[@]}"; echo
-echo "GPUs=$GPU_SET  TP=$TP_SIZE  ctx=$MAX_LEN  served=$SERVED  kv=$KV_DTYPE  util=$GPU_UTIL  quant=${QM:-none}  mtp=${mtp:-n}  block=$BLOCK_SIZE  batched=$MAX_BATCHED  seqs=$MAX_SEQS  lm-only=${lm:-y}"
+echo "GPUs=$GPU_SET  TP=$TP_SIZE  ctx=$MAX_LEN  served=$SERVED  kv=$KV_DTYPE  dtype=$DTYPE  util=$GPU_UTIL  quant=${QM:-none}  moe=$MOE  mtp=${mtp:-n}  block=$BLOCK_SIZE  batched=$MAX_BATCHED  seqs=$MAX_SEQS  lm-only=${lm:-y}"
 echo
 
 if [[ "$DRY_RUN" == "1" ]]; then

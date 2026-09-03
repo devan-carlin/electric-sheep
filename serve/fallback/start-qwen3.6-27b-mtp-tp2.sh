@@ -2,7 +2,7 @@
 # Qwen 3.6 27B INT4 - MTP enabled with speculative decoding (TP=2)
 # Uses GPUs 0,1 (TP=2), 160K context
 # Leaves GPUs 2,3 free for another model
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-01-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)

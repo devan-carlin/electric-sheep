@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Gemma 4 26B-A4B INT4 - Mixture of Experts model
 # Uses 2 GPUs (TP=2)
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-01-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)

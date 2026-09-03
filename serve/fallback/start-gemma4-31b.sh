@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Gemma 4 31B INT4 - Standard INT4 quantized model
 # Uses all 4 GPUs (TP=4)
-source "/home/dc/electric-sheep/vllm/.venv/bin/activate"
+source "/home/dc/vllm-fresh-venv/bin/activate"
 source "/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh"
 
 # Compile cache root for warm starts (faster cold launches)
