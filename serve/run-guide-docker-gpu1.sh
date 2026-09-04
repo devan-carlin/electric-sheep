@@ -97,6 +97,9 @@ exec vllm serve /model \
   --enable-prefix-caching \
   --served-model-name $SERVED_NAME \
   --language-model-only \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder \
   $SPEC_ARG'
   echo "launched $CONTAINER on :$HOST_PORT (served as $SERVED_NAME, draft-int4=$DRAFT_INT4)"
   ;;
