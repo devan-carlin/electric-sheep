@@ -57,7 +57,7 @@ bash run-guide-docker-gpu1.sh start
 
 # WebUI (points at B)
 docker rm -f open-webui 2>/dev/null
-docker run -d --name open-webui --restart always -p 3000:8080 \
+docker run -d --name open-webui -p 3000:8080 \
   --add-host host.docker.internal:host-gateway \
   -e OPENAI_API_BASE_URL="http://host.docker.internal:8001/v1" \
   -e OPENAI_API_KEY="EMPTY" \
@@ -78,9 +78,11 @@ Guide-exact p512/g128, temp 0, concurrency 1, streaming. Reports median/mean/min
 
 ## Power management
 
-- Fleet-wide 180 W cap, applied at boot by `arc-b70-power-caps.service` (enabled).
-  It runs `serve/apply-gpu-power-caps.sh`, which matches GPUs by hwmon `name == "xe"`
-  (never index) and writes `CAP_UW` to each `power1_cap`.
+- Fleet-wide 180 W cap. Applied on demand by `serve/apply-gpu-power-caps.sh`
+  (matches GPUs by hwmon `name == "xe"`, never index; writes `CAP_UW` to each `power1_cap`).
+  The companion `arc-b70-power-caps.service` exists but is DISABLED per user preference
+  (nothing should auto-start after reboot). Re-enable only if wanted:
+  `sudo systemctl enable arc-b70-power-caps.service`.
 - Change the cap: edit `CAP_UW` in `serve/apply-gpu-power-caps.sh`, then
   `sudo /home/dc/electric-sheep/serve/apply-gpu-power-caps.sh` (passwordless).
 - Measured curve (GPU0, p512/g128): 160 W = 53.1, 180 W = 54.2, 200 W = 54.6, 230 W = 55.1 tok/s.
@@ -88,9 +90,30 @@ Guide-exact p512/g128, temp 0, concurrency 1, streaming. Reports median/mean/min
 - One-time root bootstrap (already done): `sudo bash serve/install-power-caps-service.sh`.
   It installs the sudoers drop-in `/etc/sudoers.d/dc-gpu-persist` (lets dc run the apply-script + systemctl passwordless) and enables the service.
 
-## Reboot behavior (nothing to do manually)
+## Reboot behavior (manual bring-up, per user preference)
 
-Docker is enabled at boot; both engine containers use `unless-stopped` and WebUI uses `always`, so all three come back automatically. `arc-b70-power-caps.service` reapplies 180 W. Model dir, cookbook, and both images persist on disk. After boot, allow ~5 min for each engine (weight load + torch.compile + XPU graph capture) before `/health` returns OK.
+Nothing LLM/WebUI-related auto-starts after a reboot (all containers use
+`--restart=no`; `arc-b70-power-caps.service` is disabled). After boot, to restore
+the stack:
+
+```bash
+# 1. power caps (reset to 160 W default on reboot)
+sudo /home/dc/electric-sheep/serve/apply-gpu-power-caps.sh
+
+# 2. engines (see Launching section above)
+cd ~/electric-sheep/serve
+B70_RENDER_NODE=/dev/dri/renderD130 B70_AFFINITY_MASK=0 GUIDE_HOST_PORT=8000 \
+  GUIDE_SERVED_NAME=qwen-256k GUIDE_CONTAINER_NAME=qw38speed DRAFT_INT4=0 \
+  bash run-guide-docker-gpu1.sh start
+B70_RENDER_NODE=/dev/dri/renderD131 B70_AFFINITY_MASK=1 GUIDE_HOST_PORT=8001 \
+  GUIDE_SERVED_NAME=qwen-256k-int4 GUIDE_CONTAINER_NAME=qw38speed-int4 DRAFT_INT4=1 \
+  bash run-guide-docker-gpu1.sh start
+
+# 3. webui (same docker run as in Launching section)
+```
+
+Model dir, cookbook, and both images persist on disk. Allow ~5 min per engine
+(weight load + torch.compile + XPU graph capture) before `/health` returns OK.
 
 ## Troubleshooting
 

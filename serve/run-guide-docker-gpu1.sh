@@ -56,7 +56,6 @@ start)
 
   docker run -d \
     --name "$CONTAINER" \
-    --restart unless-stopped \
     -p ${HOST_PORT}:8000 \
     --device /dev/dri:/dev/dri \
     -v /dev/dri:/dev/dri:ro \
