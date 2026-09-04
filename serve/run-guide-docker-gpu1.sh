@@ -15,6 +15,12 @@
 #   DRAFT_INT4 (default 0) 1 = add S+M1 draft-INT4 overlay (cookbook section 11)
 #   B70_RENDER_NODE (default /dev/dri/renderD131 = GPU1)
 #   B70_AFFINITY_MASK (default 1 = GPU1; use 0 for GPU0)
+#   GUIDE_MAX_MODEL_LEN (default 131072)
+#   GUIDE_MAX_NUM_SEQS (default 64)
+#   GUIDE_GPU_MEM_UTIL (default 0.88)
+#   B70_VISION (default 0 = --language-model-only; 1 = vision via --limit-mm-per-prompt)
+#   GUIDE_GEN_CONFIG (optional JSON -> --override-generation-config)
+#   GUIDE_API_KEY (optional -> --api-key)
 #   Use GUIDE_HOST_PORT=8000 GUIDE_SERVED_NAME=qwen-256k to back the WebUI.
 #
 # Prereqs (done separately):
@@ -36,6 +42,12 @@ HOST_PORT="${GUIDE_HOST_PORT:-11436}"
 SERVED_NAME="${GUIDE_SERVED_NAME:-qwen38}"
 CONTAINER="${GUIDE_CONTAINER_NAME:-qw38speed}"
 DRAFT_INT4="${DRAFT_INT4:-0}"
+MAX_MODEL_LEN="${GUIDE_MAX_MODEL_LEN:-131072}"
+MAX_NUM_SEQS="${GUIDE_MAX_NUM_SEQS:-64}"
+GPU_MEM_UTIL="${GUIDE_GPU_MEM_UTIL:-0.88}"
+VISION="${B70_VISION:-0}"
+GEN_CONFIG="${GUIDE_GEN_CONFIG:-}"
+API_KEY="${GUIDE_API_KEY:-}"
 
 cmd="${1:-start}"
 
@@ -76,6 +88,12 @@ start)
     -e SERVED_NAME="$SERVED_NAME" \
     -e DRAFT_INT4="$DRAFT_INT4" \
     -e B70_SPEC="${B70_SPEC:-1}" \
+    -e MAX_MODEL_LEN="$MAX_MODEL_LEN" \
+    -e MAX_NUM_SEQS="$MAX_NUM_SEQS" \
+    -e GPU_MEM_UTIL="$GPU_MEM_UTIL" \
+    -e VISION="$VISION" \
+    -e GEN_CONFIG="$GEN_CONFIG" \
+    -e API_KEY="$API_KEY" \
     --entrypoint bash \
     "$IMAGE" \
     -lc 'set -e
@@ -85,21 +103,26 @@ python /patch_v5.py
 if [ "$DRAFT_INT4" = "1" ]; then python /patch_s.py; python /patch_m1.py; fi
 SPEC_ARG=""
 if [ "$B70_SPEC" != "0" ]; then SPEC_ARG="--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":4}"; fi
+if [ "$VISION" = "1" ]; then MM_ARG="--limit-mm-per-prompt image=4"; else MM_ARG="--language-model-only"; fi
+if [ -n "$GEN_CONFIG" ]; then GENCFG_ARG="--override-generation-config $GEN_CONFIG"; else GENCFG_ARG=""; fi
+if [ -n "$API_KEY" ]; then APIKEY_ARG="--api-key $API_KEY"; else APIKEY_ARG=""; fi
 exec vllm serve /model \
   --quantization gptq \
   --dtype float16 \
-  --max-model-len 131072 \
-  --gpu-memory-utilization 0.88 \
+  --max-model-len $MAX_MODEL_LEN \
+  --gpu-memory-utilization $GPU_MEM_UTIL \
   --kv-cache-dtype fp8 \
   --port 8000 \
-  --max-num-seqs 64 \
+  --max-num-seqs $MAX_NUM_SEQS \
   --max-num-batched-tokens 8192 \
   --enable-prefix-caching \
   --served-model-name $SERVED_NAME \
-  --language-model-only \
+  $MM_ARG \
   --reasoning-parser qwen3 \
   --enable-auto-tool-choice \
   --tool-call-parser qwen3_coder \
+  $GENCFG_ARG \
+  $APIKEY_ARG \
   $SPEC_ARG'
   echo "launched $CONTAINER on :$HOST_PORT (served as $SERVED_NAME, draft-int4=$DRAFT_INT4)"
   ;;
