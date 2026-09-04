@@ -25,7 +25,7 @@
 set -euo pipefail
 
 IMAGE='vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f'
-MODEL_DIR="$HOME/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16"
+MODEL_DIR="${B70_MODEL_DIR:-$HOME/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16}"
 COOKBOOK="$HOME/intel-arc-pro-b70-inference-cookbook"
 # GPU selection via env overrides. Defaults = GPU1 (47:00.0 = lz:1 = renderD131).
 # For GPU0: B70_RENDER_NODE=/dev/dri/renderD130 B70_AFFINITY_MASK=0
@@ -70,11 +70,12 @@ start)
     -e VLLM_TARGET_DEVICE=xpu \
     -e ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE \
     -e ZE_AFFINITY_MASK="$B70_AFFINITY_MASK" \
-    -e B70_MTP_BF16_DRAFT=1 \
+    -e B70_MTP_BF16_DRAFT="${B70_MTP_BF16_DRAFT:-1}" \
     -e VLLM_XPU_ENABLE_XPU_GRAPH=1 \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e SERVED_NAME="$SERVED_NAME" \
     -e DRAFT_INT4="$DRAFT_INT4" \
+    -e B70_SPEC="${B70_SPEC:-1}" \
     --entrypoint bash \
     "$IMAGE" \
     -lc 'set -e
@@ -82,6 +83,8 @@ python /patch_mtp.py
 python /patch_boundary.py
 python /patch_v5.py
 if [ "$DRAFT_INT4" = "1" ]; then python /patch_s.py; python /patch_m1.py; fi
+SPEC_ARG=""
+if [ "$B70_SPEC" != "0" ]; then SPEC_ARG="--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":4}"; fi
 exec vllm serve /model \
   --quantization gptq \
   --dtype float16 \
@@ -94,7 +97,7 @@ exec vllm serve /model \
   --enable-prefix-caching \
   --served-model-name $SERVED_NAME \
   --language-model-only \
-  --speculative-config "{\"method\":\"mtp\",\"num_speculative_tokens\":4}"'
+  $SPEC_ARG'
   echo "launched $CONTAINER on :$HOST_PORT (served as $SERVED_NAME, draft-int4=$DRAFT_INT4)"
   ;;
 logs)
