@@ -19,6 +19,10 @@ import urllib.request
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:11436"
 MODEL = sys.argv[2] if len(sys.argv) > 2 else "qwen38"
+# Sampling temperature for the timed runs. Defaults to 0 (greedy) to match the
+# original like-for-like methodology; set BENCH_TEMP=0.5 etc. for A/B at other temps.
+import os as _os
+TEMP = float(_os.environ.get("BENCH_TEMP", "0"))
 
 seed = (
     "A retrieval augmented generation system retrieves relevant source passages, "
@@ -54,7 +58,7 @@ def run():
         "model": MODEL,
         "prompt": text,
         "max_tokens": 128,
-        "temperature": 0,
+        "temperature": TEMP,
         "ignore_eos": True,
         "stream": True,
         "stream_options": {"include_usage": True},

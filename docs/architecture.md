@@ -3,7 +3,8 @@
 ## What this is
 
 Not a single project or product. A collection of independent workspaces
-for testing inference on the 4x Intel Arc Pro B70 AI server:
+for testing inference across a two-machine GPU fleet: the 4x Intel Arc Pro
+B70 AI server (primary) and an RTX 5090 workstation (peer node):
 
 - **[LIVE] serving** — the only persistent part: a 4-GPU service stack
   (2x ComfyUI + 2x llama.cpp chat endpoints), managed by `serve/`.
@@ -38,7 +39,27 @@ and may be stale. The live stack is documented in `serve/SERVICES.md`
 |-----------|------|
 | GPU | NVIDIA RTX 5090 (32 GB, Blackwell sm_100) |
 | CUDA | 13.1 |
-| Build | MSVC 2022, CMake 4.x |
+| OS | Windows 11 (HP Omen 45L) |
+| Role | Peer inference node + CUDA build/test box |
+
+### Fleet topology
+
+Two machines form one logical inference pool, joined by Tailscale:
+
+- **AI Server (primary).** All heavy lifting. Runs either the 4-GPU
+  Flash-Next stack (all cards, TP4) or the per-GPU swarm (2x ComfyUI +
+  `qwen` + `gemma`). Hosts vLLM (XPU) and llama.cpp (SYCL).
+- **Workstation (peer node).** One RTX 5090 serving a Qwen3.8-27B int4
+  instance (llama.cpp or Ollama), 256K context, reachable over Tailscale.
+  Adds a fifth concurrent stream to the swarm; absorbs overflow when the B70
+  slots are saturated; and is the CUDA escape hatch for training and kernel
+  experiments the XPU stack cannot run.
+
+Division of labor:
+- Daily chat / parallel agents: spread across the B70 swarm + the 5090 node.
+- Hardest single problem / multimodal / deep context: Flash-Next on all 4 B70
+  cards (locks the box; stop the swarm first).
+- Training / CUDA-only kernels: the 5090.
 
 ## Live stack (the only persistent part)
 
@@ -101,6 +122,9 @@ electric-sheep/
 # [DOCS]
 ├── docs/                          # cross-platform documentation
 │   ├── architecture.md            # this file
+│   ├── swarm-architecture.md      # two-machine swarm harness design
+│   ├── inference-pipeline.md      # per-engine pipeline viz + patch inventory
+│   ├── b70-qwen38-replication-guide-breakdown.md  # community guide visual breakdown
 │   ├── guides/                    # deployment + technique guides
 │   │   ├── vllm-deployment.md
 │   │   ├── llama-deployment.md
@@ -170,5 +194,10 @@ Per-backend rules, shared by the live stack and the experiments.
 
 ## Network
 
-- **Tailscale:** Mesh network between AI Server and Workstation
-- See `build/common/tailscale-setup.md` for installation
+- **Tailscale:** Secure mesh joining the AI Server and the RTX 5090
+  Workstation. Both expose OpenAI-compatible endpoints; clients pick a node by
+  base URL (`https://<node>.tailc58a85.ts.net/v1`). Stable `100.x` IPs,
+  encrypted end-to-end, works through NAT.
+- The 5090 node binds its llama.cpp/Ollama server to `0.0.0.0` so it is
+  reachable from the tailnet, not just localhost.
+- See `build/common/tailscale-setup.md` for installation.

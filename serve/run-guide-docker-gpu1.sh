@@ -25,13 +25,13 @@
 #
 # Prereqs (done separately):
 #   - image pulled: vllm/vllm-openai-xpu@sha256:f01e24f6...
-#   - model at ~/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16 (pinned rev)
+#   - model at /mnt/data/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16 (pinned rev)
 #   - cookbook at ~/intel-arc-pro-b70-inference-cookbook (patches verified)
 #   - our vLLM on GPU1 stopped (port 8000 freed)
 set -euo pipefail
 
 IMAGE='vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f'
-MODEL_DIR="${B70_MODEL_DIR:-$HOME/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16}"
+MODEL_DIR="${B70_MODEL_DIR:-/mnt/data/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16}"
 COOKBOOK="$HOME/intel-arc-pro-b70-inference-cookbook"
 # GPU selection via env overrides. Defaults = GPU1 (47:00.0 = lz:1 = renderD131).
 # For GPU0: B70_RENDER_NODE=/dev/dri/renderD130 B70_AFFINITY_MASK=0
@@ -46,6 +46,10 @@ MAX_MODEL_LEN="${GUIDE_MAX_MODEL_LEN:-131072}"
 MAX_NUM_SEQS="${GUIDE_MAX_NUM_SEQS:-64}"
 GPU_MEM_UTIL="${GUIDE_GPU_MEM_UTIL:-0.88}"
 VISION="${B70_VISION:-0}"
+SPEC_TOKENS="${B70_SPEC_TOKENS:-4}"
+# B70_PREFIX_CACHE: 0 = --no-enable-prefix-caching (cookbook default; avoids the
+# GDN/mamba state-copy path that corrupts output on this older image), 1 = on.
+PREFIX_CACHE="${B70_PREFIX_CACHE:-0}"
 GEN_CONFIG="${GUIDE_GEN_CONFIG:-}"
 API_KEY="${GUIDE_API_KEY:-}"
 
@@ -88,10 +92,12 @@ start)
     -e SERVED_NAME="$SERVED_NAME" \
     -e DRAFT_INT4="$DRAFT_INT4" \
     -e B70_SPEC="${B70_SPEC:-1}" \
+    -e SPEC_TOKENS="$SPEC_TOKENS" \
     -e MAX_MODEL_LEN="$MAX_MODEL_LEN" \
     -e MAX_NUM_SEQS="$MAX_NUM_SEQS" \
     -e GPU_MEM_UTIL="$GPU_MEM_UTIL" \
     -e VISION="$VISION" \
+    -e PREFIX_CACHE="$PREFIX_CACHE" \
     -e GEN_CONFIG="$GEN_CONFIG" \
     -e API_KEY="$API_KEY" \
     --entrypoint bash \
@@ -102,8 +108,11 @@ python /patch_boundary.py
 python /patch_v5.py
 if [ "$DRAFT_INT4" = "1" ]; then python /patch_s.py; python /patch_m1.py; fi
 SPEC_ARG=""
-if [ "$B70_SPEC" != "0" ]; then SPEC_ARG="--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":4}"; fi
-if [ "$VISION" = "1" ]; then MM_ARG="--limit-mm-per-prompt image=4"; else MM_ARG="--language-model-only"; fi
+if [ "$B70_SPEC" != "0" ]; then SPEC_ARG="--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":$SPEC_TOKENS}"; fi
+# Pinned vLLM parses --limit-mm-per-prompt via json.loads; bare "image=4" fails
+# argparse. Use compact JSON, same trick as SPEC_ARG.
+if [ "$VISION" = "1" ]; then MM_ARG="--limit-mm-per-prompt {\"image\":4}"; else MM_ARG="--language-model-only"; fi
+if [ "$PREFIX_CACHE" = "1" ]; then PC_ARG="--enable-prefix-caching"; else PC_ARG="--no-enable-prefix-caching"; fi
 if [ -n "$GEN_CONFIG" ]; then GENCFG_ARG="--override-generation-config $GEN_CONFIG"; else GENCFG_ARG=""; fi
 if [ -n "$API_KEY" ]; then APIKEY_ARG="--api-key $API_KEY"; else APIKEY_ARG=""; fi
 exec vllm serve /model \
@@ -115,7 +124,7 @@ exec vllm serve /model \
   --port 8000 \
   --max-num-seqs $MAX_NUM_SEQS \
   --max-num-batched-tokens 8192 \
-  --enable-prefix-caching \
+  $PC_ARG \
   --served-model-name $SERVED_NAME \
   $MM_ARG \
   --reasoning-parser qwen3 \

@@ -19,7 +19,7 @@ fleet, measured 2026-09-04. This is the setup behind the Open WebUI on :3000.
 
 - Image: `vllm/vllm-openai-xpu@sha256:f01e24f6c7ff01f1e0662234255a1372297d1dbd89d003cf13c8fad3eab1ba4f`
   (vLLM 0.27.2rc1.dev77+gac7509e2b.xpu, vllm-xpu-kernels 0.1.12.3). Pinned by digest, stored locally.
-- Model: `~/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16` (GPTQ Int4 sym g128 target + BF16 MTP draft tensors).
+- Model: `/mnt/data/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16` (GPTQ Int4 sym g128 target + BF16 MTP draft tensors).
 - Context window: `--max-model-len 131072` (128K) on both instances. KV cache fp8.
   - A: 141,882 KV tokens (1.08x a full 128K request)
   - B: 154,043 KV tokens (1.18x) — INT4 draft frees ~2 GB, more goes to KV

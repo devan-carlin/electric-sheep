@@ -13,7 +13,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 HERETIC_DIR="$HOME/electric-sheep/models/heretic-org-Qwen3.8-27B-heretic-ara-int4-gptq"
-BASE_DIR="$HOME/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16"
+BASE_DIR="/mnt/data/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16"
 API_KEY_FILE="$HOME/electric-sheep/serve/.api_key"
 
 # --- defaults -------------------------------------------------------------

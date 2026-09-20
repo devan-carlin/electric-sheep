@@ -1,0 +1,14 @@
+{
+  "n_prompts": 2,
+  "n_generated_tokens": 256,
+  "wall_seconds": 35.8,
+  "tok_per_s": 7.16,
+  "max_tokens": 128,
+  "sampling": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "presence_penalty": 1.5
+  },
+  "trace": "/home/dc/electric-sheep/serve/mtp_refit/trace_smoke.bin"
+}

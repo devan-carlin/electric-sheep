@@ -13,7 +13,7 @@ set -uo pipefail
 PORT=8002
 ALIAS=qwen38-tp2-test
 GPUS="2,3"
-MODEL="$HOME/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16"
+MODEL="/mnt/data/models/Qwen3.8-27B-GPTQ-Int4-sym-G128-MTP-BF16"
 CTX=131072
 MAX_SEQS=64
 MEM_UTIL=0.88

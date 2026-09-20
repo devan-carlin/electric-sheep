@@ -1,0 +1,140 @@
+# Source of truth for inference-pipeline.md diagrams.
+# owner: stock | kernel | patch | custom | env
+# Update this file when a stage gains or loses a local modification,
+# then regenerate/adjust the Mermaid diagrams in inference-pipeline.md.
+
+engines:
+  vllm_tp4_flashnext:
+    endpoint: ":8000 (alias qwen-256k)"
+    launcher: serve/start-qwen-256k-vllm.sh
+    stack:
+      - torch 2.13.0+xpu
+      - vLLM fork (c39076fef-era + qwen4exp port)
+      - vllm_xpu_kernels 0.1.14.1
+      - transformers 5.16.1
+      - V1 runner, XPU graph mode
+    model: Qwen3.8-Flash-Next heretic-2 (125B MoE / 6B active, W4A16, 48 layers, 256K ctx)
+    stages:
+      - {id: http,     label: "API server (OpenAI routes)",        owner: stock,  note: "api-key only when serve/.api_key exists"}
+      - {id: template, label: "Chat template (Jinja, in ckpt)",    owner: stock,  provided_by: transformers}
+      - {id: tokenize, label: "Tokenizer -> input_ids",            owner: stock,  provided_by: transformers}
+      - {id: schedule, label: "V1 scheduler (continuous batching)", owner: stock, note: "max_num_seqs 4, prefix cache off in datagen"}
+      - {id: preprocess, label: "_preprocess input prep",          owner: patch,  patch: datagen-stash-v5, note: "env-gated, inert in prod"}
+      - {id: embed,    label: "embed_tokens (BF16, frozen)",       owner: custom, provided_by: qwen4exp port}
+      - {id: layers,   label: "48x decoder layer (HC/attn/MoE)",   owner: custom, kernels: [GDN state ops, WNA16 fused MoE]}
+      - {id: ple,      label: "PLE n-gram gather @ layer idx 1",   owner: custom, note: "102 GB table in host RAM, 16 rows/token gather"}
+      - {id: head,     label: "final HC mixer -> lm_head",         owner: custom, note: "no separate final RMSNorm"}
+      - {id: draft,    label: "MTP draft head (2.6B, own MoE)",    owner: custom, patches: [tuple-return, wide-buffer-reshape]}
+      - {id: verify,   label: "V1 spec decode verify + accept",    owner: patch,  patches: [accepted_sync, backward_copy, eagle_drop]}
+      - {id: sample,   label: "Sampler (per-request params)",      owner: stock}
+      - {id: stream,   label: "Detokenizer -> SSE",                owner: stock}
+    env:
+      - {var: VLLM_XPU_ENABLE_XPU_GRAPH, value: "1", effect: "7.6x over eager; piecewise capture breaks only at PLE"}
+      - {var: CCL_SYCL_*_SIMPLE_THRESHOLD, value: "4294967296", effect: "neutral within noise, shipped"}
+      - {var: B70_WORKER_AFFINITY, value: "1", effect: "+12% (52.00 -> 58.17)"}
+      - {var: power cap, value: "180W", effect: "systemd service"}
+    perf:
+      no_spec_t0: 58.17
+      mtp1_t0: 71.59
+      mtp2_t0: "75.0-76.4"
+      mtp2_t05: 69.82
+      unit: tok/s (p512/g128 matched bench)
+
+  vllm_tp1_qwen27b:
+    endpoint: ":8000 (alias qwen-256k / qwen-128k; shares port with Flash-Next vLLM, one at a time)"
+    launcher: serve/run-guide-docker-gpu1.sh (front door: serve/start-qwen-128k.sh)
+    stack:
+      - vLLM XPU docker guide image (container qw38heretic)
+      - V1 runner, XPU graph mode
+    model: heretic-org-Qwen3.8-27B-heretic-ara-int4-gptq (GPTQ-restamped w4g128, ~18 GB, single B70)
+    stages:
+      - {id: http,     label: "API server (OpenAI routes)",        owner: stock}
+      - {id: template, label: "Chat template (Jinja, embedded)",   owner: stock}
+      - {id: tokenize, label: "Tokenizer -> input_ids",            owner: stock}
+      - {id: schedule, label: "V1 scheduler (prefix caching on)",  owner: stock}
+      - {id: weights,  label: "GPTQ w4g128 weights (restamped)",   owner: custom, patch: heretic-gptq-rewrite, note: "AutoRound stamps garble on XPU inc backend"}
+      - {id: layers,   label: "64x decoder layer (48 GDN + 16 full attn, dense SwiGLU)", owner: kernel}
+      - {id: head,     label: "final RMSNorm -> lm_head",          owner: stock}
+      - {id: draft,    label: "MTP draft head (1 layer, BF16)",    owner: patch, patch: mtp-linears-dequant, note: "B70_MTP_BF16_DRAFT=1, DRAFT_INT4=0"}
+      - {id: verify,   label: "V1 spec decode verify + accept",    owner: stock, note: "stock V1 clean at TP1; mamba fixes live in venv fork only"}
+      - {id: sample,   label: "Sampler (--override-generation-config)", owner: patch, note: "temp 0.5 front door / 0.7 base, top_p 0.8, top_k 20, pp 1.5"}
+      - {id: reason,   label: "qwen3 reasoning parser + qwen3_coder tools", owner: patch, note: "added 2026-09-04"}
+      - {id: stream,   label: "Detokenizer -> SSE",                owner: stock}
+    env:
+      - {var: VLLM_XPU_ENABLE_XPU_GRAPH, value: "1"}
+      - {var: UR_L0_SYNC_MODE, value: BLOCKING}
+      - {var: device isolation, value: "renderD130 cgroup (containers ignore ZE_AFFINITY_MASK)"}
+      - {var: power cap, value: "180W"}
+    perf:
+      rewritten_f16_mtp: 83.04
+      draft_int4: 81.46
+      bf16_draft_prerevrite: 54.15
+      unit: tok/s (p512/g128 @180W)
+    fallback_variant: serve/fallback/start-qwen.sh (venv stack, same model family, 128K fp8 KV, prefix caching)
+
+  llamacc_sycl:
+    endpoint: ":8088 (qwen) / :8089 (gemma) / :8090 (flash-next)"
+    launcher: neon-demon/serve/start-all.sh + serve/start-flashnext-llama.sh
+    stack:
+      - local llama.cpp tree (pr-27742, since merged upstream)
+      - icpx 2026.1, GGML_SYCL=ON
+    slots:
+      - {port: 8088, alias: qwen,       model: "Qwen3.6-35B-A3B Aggressive Q4_K_P", kv: q4_0, decode: "~80 tok/s"}
+      - {port: 8089, alias: gemma,      model: "Gemma4 26B-A4B Balanced Q4_K_P",    kv: q4_0, decode: "~54 tok/s"}
+      - {port: 8090, alias: flash-next, model: "Qwen3.8-Flash-Next UD-Q4_K_XL",     kv: q8_0, decode: "27.28 tok/s"}
+    stages:
+      - {id: http,     label: "llama-server OpenAI API",        owner: stock}
+      - {id: template, label: "Embedded GGUF chat template",    owner: stock, note: "--jinja, never override externally"}
+      - {id: prefill,  label: "Prompt eval (-b 2048)",          owner: stock}
+      - {id: layers,   label: "GDN / full attn / MoE kernels",  owner: kernel, note: "GGML_SYCL, flash attn ON"}
+      - {id: ple,      label: "PLE table host RAM zero-copy",   owner: custom, note: "GPU3->RAM->GPU0 hop per token (no P2P)"}
+      - {id: kv,       label: "Paged KV q4_0 / q8_0",           owner: kernel}
+      - {id: decode,   label: "Decode loop (-np 1)",            owner: stock, note: "bandwidth-bound"}
+      - {id: sample,   label: "Sampling + reasoning budget",    owner: stock, note: "--reasoning on, budget 2048"}
+    env:
+      - {var: ONEAPI_DEVICE_SELECTOR, value: "level_zero:0,1,2,3"}
+      - {var: ZES_ENABLE_SYSMAN, value: "1"}
+      - {var: GGML_SYCL_ENABLE_FLASH_ATTN/OPT/DNN/MKL_FA, value: "1"}
+      - {var: GGML_SYCL_FA_ONEDNN_MAX_KV, value: "65536"}
+      - {var: UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS, value: "1"}
+      - {var: LLAMA_ATTN_ROT_DISABLE, value: "1", effect: "required for q8_0 KV"}
+    local_tree_changes:
+      - tools/CMakeLists.txt actdump hook
+      - tools/actdump/ activation dump tool (parity loop)
+      - MTP self-speculation wired (PR #27742), launcher toggle
+
+  nx_target:
+    home: ninfer-sycl/
+    stack:
+      - from-scratch C++ / SYCL 2020 (icpx, Level Zero)
+      - oneDNN 3.11.4 (only reliable XMX GEMM path)
+    model: Qwen3.8-27B (64 layers: 16 full-attn + 48 GDN), mixed groupwise-int, packed 16.95 GiB
+    stages:
+      - {id: artifact, label: "Artifact reader (mmap O_DIRECT, SHA-verified)", owner: custom, status: done}
+      - {id: layout,   label: "Deterministic memory layout pass",              owner: custom, status: done}
+      - {id: prefill,  label: "oneDNN u8s8 GEMM (XMX) + custom attention",     owner: kernel, status: phase1, target: "~30 tok/s MTP0"}
+      - {id: kv,       label: "Paged KV INT8 group-64 (256k = 24/32 GB)",      owner: custom, status: phase1}
+      - {id: decode,   label: "zext_graph replay + MTP draft/verify",          owner: kernel, status: phase2, target: "~90 tok/s MTP3"}
+      - {id: serve,    label: "OpenAI-compatible HTTP (ported serve/)",        owner: custom, status: phase2}
+      - {id: polish,   label: "Prefix reuse, adaptive graph allowance, bench", owner: custom, status: phase3}
+      - {id: vision,   label: "ViT encoder port + FFMPEG/libcurl + --vision",  owner: custom, status: followup}
+    week0_benchmarks:
+      gemm_u8s8_prefill: "287.7 TOPS (mlp gate_up shape)"
+      graph_capture: pass
+      raw_bandwidth: "~450+ GB/s"
+    definition_of_done: "80-110 tok/s MTP3 C=1, 256k ctx, graphs active, token-exact vs IPEX"
+
+patches:
+  - {name: worker-affinity,      engine: vllm,  where: worker spawn,             kill_switch: B70_WORKER_AFFINITY=0}
+  - {name: mamba-accepted-sync,  engine: vllm,  where: V1 runner,                kill_switch: B70_FIX_ACCEPTED_SYNC=0}
+  - {name: mamba-backward-copy,  engine: vllm,  where: V1 runner (3 sites),      kill_switch: B70_FIX_BACKWARD_COPY=0}
+  - {name: mamba-eagle-drop,     engine: vllm,  where: V1 runner,                kill_switch: B70_FIX_EAGLE_DROP=0}
+  - {name: mtp-tuple-return,     engine: vllm,  where: llm_base_proposer.py,     kill_switch: folded into port}
+  - {name: mtp-wide-reshape,     engine: vllm,  where: qwen4_exp_mtp.py,         kill_switch: folded into port}
+  - {name: mtp-wrapper-hook,     engine: vllm,  where: qwen4_exp.py,             kill_switch: folded into port}
+  - {name: ple-host-offload,     engine: vllm,  where: qwen4exp port,            kill_switch: core to port}
+  - {name: datagen-tracer-v5,    engine: vllm,  where: runner + qwen4_exp.py,    kill_switch: B70_MTP_DATAGEN=0}
+  - {name: actdump-tool,         engine: llama, where: local tree tools/,        kill_switch: build-time}
+  - {name: heretic-gptq-rewrite, engine: vllm-tp1, where: offline rewrite_heretic_to_gptq.py, kill_switch: n/a (checkpoint-level)}
+  - {name: mtp-linears-dequant,  engine: vllm-tp1, where: rewrite script (7 MTP linears INT4->F16), kill_switch: n/a (checkpoint-level)}
+  - {name: reasoning-tool-parsers, engine: vllm-tp1, where: run-guide-docker-gpu1.sh flags, kill_switch: remove flags}

@@ -1,0 +1,300 @@
+{"id": 0, "text": "Write a detailed, well-structured explanation of network protocols. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 1, "text": "Here is a buggy Python snippet for 'merge k sorted linked lists into one sorted list'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 2, "text": "Rewrite this in a formal tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 3, "text": "Write a thorough tutorial introducing network protocols, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 4, "text": "Solve step by step: a warehouse ships 10 boxes per hour for 87 hours, then 35 boxes are returned. How many boxes remain? Show your work."}
+{"id": 5, "text": "Prove or disprove: for all integers k>=1, 2^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 6, "text": "Here is a buggy Rust snippet for 'implement a simple expression evaluator for arithmetic'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 7, "text": "Write a detailed, well-structured explanation of cryptography. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 8, "text": "Implement parse a CSV file with quoted fields and validate each row in Go. Handle edge cases and add unit tests."}
+{"id": 9, "text": "Solve step by step: a warehouse ships 86 boxes per hour for 50 hours, then 11 boxes are returned. How many boxes remain? Show your work."}
+{"id": 10, "text": "Rewrite this in a concise tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 11, "text": "There are 87 red and 41 blue balls in an urn. You draw 30 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 12, "text": "Here is a buggy TypeScript snippet for 'implement a thread-safe LRU cache with a maximum size'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 13, "text": "Prove or disprove: for all integers k>=1, 8^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 14, "text": "Draft a short status update to stakeholders about a delayed feature, in a confident tone."}
+{"id": 15, "text": "Rewrite this in a technical tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 16, "text": "Draft a technical design document outline for a system centered on concurrent programming. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 17, "text": "A pipe fills a tank in 91 minutes and another drains it in 91 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 18, "text": "Compare database indexing and cryptography in a balanced table, then give a recommendation for a small team."}
+{"id": 19, "text": "Prove or disprove: for all integers k>=1, 7^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 20, "text": "Write a Go function that build a key-value store with TTL expiration. Include type hints and docstrings."}
+{"id": 21, "text": "There are 27 red and 14 blue balls in an urn. You draw 26 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 22, "text": "Compare virtualization and version control internals in a balanced table, then give a recommendation for a small team."}
+{"id": 23, "text": "Draft a technical design document outline for a system centered on graph algorithms. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 24, "text": "Here is a buggy Rust snippet for 'implement a topological sort that breaks ties deterministically'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 25, "text": "Solve step by step: a warehouse ships 8 boxes per hour for 81 hours, then 11 boxes are returned. How many boxes remain? Show your work."}
+{"id": 26, "text": "Explain memory management to a smart non-specialist in under 200 words."}
+{"id": 27, "text": "Write a thorough tutorial introducing signal processing, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 28, "text": "Compare signal processing and stream processing in a balanced table, then give a recommendation for a small team."}
+{"id": 29, "text": "There are 53 red and 74 blue balls in an urn. You draw 18 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 30, "text": "List 10 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 31, "text": "Summarize the key lessons from: the history and evolution of relational database query optimizers. Then propose three actionable takeaways for an engineering org."}
+{"id": 32, "text": "Here is a buggy Rust snippet for 'implement a circuit breaker with half-open probing'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 33, "text": "There are 89 red and 63 blue balls in an urn. You draw 12 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 34, "text": "Draft a short status update to stakeholders about a delayed feature, in a persuasive tone."}
+{"id": 35, "text": "Write a thorough tutorial introducing cache coherence, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 36, "text": "Here is a buggy Python snippet for 'detect cycles in a directed graph and return the cycle'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 37, "text": "Summarize the key lessons from: why tail latency is harder to optimize than mean latency. Then propose three actionable takeaways for an engineering org."}
+{"id": 38, "text": "List 10 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 39, "text": "Draft a technical design document outline for a system centered on kubernetes orchestration. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 40, "text": "Refactor the following Go code for clarity and performance. Task: build an in-memory event bus with pub/sub and wildcards."}
+{"id": 41, "text": "A pipe fills a tank in 69 minutes and another drains it in 77 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 42, "text": "Compare concurrent programming and cryptography in a balanced table, then give a recommendation for a small team."}
+{"id": 43, "text": "Write a detailed, well-structured explanation of file systems. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 44, "text": "Rewrite this in a technical tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 45, "text": "A pipe fills a tank in 4 minutes and another drains it in 89 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 46, "text": "Draft a short status update to stakeholders about a delayed feature, in a confident tone."}
+{"id": 47, "text": "Prove or disprove: for all integers k>=1, 8^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 48, "text": "Write a Rust function that implement a topological sort that breaks ties deterministically. Include type hints and docstrings."}
+{"id": 49, "text": "Solve step by step: a warehouse ships 49 boxes per hour for 88 hours, then 27 boxes are returned. How many boxes remain? Show your work."}
+{"id": 50, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 51, "text": "Write a thorough tutorial introducing database indexing, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 52, "text": "Solve step by step: a warehouse ships 64 boxes per hour for 88 hours, then 49 boxes are returned. How many boxes remain? Show your work."}
+{"id": 53, "text": "Draft a short status update to stakeholders about a delayed feature, in a persuasive tone."}
+{"id": 54, "text": "Draft a short status update to stakeholders about a delayed feature, in a concise tone."}
+{"id": 55, "text": "Write a thorough tutorial introducing real-time rendering, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 56, "text": "Write a Go function that implement a sliding-window aggregator over a stream of values. Include type hints and docstrings."}
+{"id": 57, "text": "Draft a short status update to stakeholders about a delayed feature, in a casual tone."}
+{"id": 58, "text": "List 7 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 59, "text": "Write a thorough tutorial introducing machine learning pipelines, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 60, "text": "Refactor the following Go code for clarity and performance. Task: write a retry wrapper with exponential backoff and jitter."}
+{"id": 61, "text": "There are 78 red and 77 blue balls in an urn. You draw 31 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 62, "text": "Rewrite this in a persuasive tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 63, "text": "Draft a technical design document outline for a system centered on cache coherence. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 64, "text": "Compare database indexing and real-time rendering in a balanced table, then give a recommendation for a small team."}
+{"id": 65, "text": "Prove or disprove: for all integers k>=1, 9^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 66, "text": "Write a Rust function that implement a topological sort that breaks ties deterministically. Include type hints and docstrings."}
+{"id": 67, "text": "Summarize the key lessons from: the tension between developer velocity and system reliability. Then propose three actionable takeaways for an engineering org."}
+{"id": 68, "text": "Here is a buggy TypeScript snippet for 'validate and normalize an email address'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 69, "text": "Solve step by step: a warehouse ships 86 boxes per hour for 42 hours, then 39 boxes are returned. How many boxes remain? Show your work."}
+{"id": 70, "text": "Draft a short status update to stakeholders about a delayed feature, in a technical tone."}
+{"id": 71, "text": "Prove or disprove: for all integers k>=1, 6^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 72, "text": "Draft a short status update to stakeholders about a delayed feature, in a empathetic tone."}
+{"id": 73, "text": "Compare kubernetes orchestration and signal processing in a balanced table, then give a recommendation for a small team."}
+{"id": 74, "text": "Compare operating system scheduling and version control internals in a balanced table, then give a recommendation for a small team."}
+{"id": 75, "text": "Write a thorough tutorial introducing cryptography, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 76, "text": "Write a Python function that write a diff algorithm that produces minimal edits. Include type hints and docstrings."}
+{"id": 77, "text": "There are 33 red and 84 blue balls in an urn. You draw 25 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 78, "text": "Explain virtualization to a smart non-specialist in under 200 words."}
+{"id": 79, "text": "Implement implement a simple expression evaluator for arithmetic in Python. Handle edge cases and add unit tests."}
+{"id": 80, "text": "Implement write a diff algorithm that produces minimal edits in Rust. Handle edge cases and add unit tests."}
+{"id": 81, "text": "A pipe fills a tank in 40 minutes and another drains it in 14 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 82, "text": "Explain database indexing to a smart non-specialist in under 200 words."}
+{"id": 83, "text": "Summarize the key lessons from: the tradeoffs between eventual consistency and strong consistency. Then propose three actionable takeaways for an engineering org."}
+{"id": 84, "text": "List 8 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 85, "text": "Prove or disprove: for all integers k>=1, 2^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 86, "text": "There are 72 red and 4 blue balls in an urn. You draw 2 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 87, "text": "Write a thorough tutorial introducing distributed systems, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 88, "text": "Refactor the following TypeScript code for clarity and performance. Task: build an in-memory event bus with pub/sub and wildcards."}
+{"id": 89, "text": "Solve step by step: a warehouse ships 77 boxes per hour for 4 hours, then 2 boxes are returned. How many boxes remain? Show your work."}
+{"id": 90, "text": "Write a thorough tutorial introducing version control internals, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 91, "text": "Write a thorough tutorial introducing memory management, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 92, "text": "Implement implement a priority queue with decrease-key support in TypeScript. Handle edge cases and add unit tests."}
+{"id": 93, "text": "Solve step by step: a warehouse ships 94 boxes per hour for 49 hours, then 11 boxes are returned. How many boxes remain? Show your work."}
+{"id": 94, "text": "Rewrite this in a formal tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 95, "text": "Refactor the following Rust code for clarity and performance. Task: implement a thread-safe LRU cache with a maximum size."}
+{"id": 96, "text": "Implement implement a simple expression evaluator for arithmetic in TypeScript. Handle edge cases and add unit tests."}
+{"id": 97, "text": "Summarize the key lessons from: a postmortem of a production outage caused by a cascading retry storm. Then propose three actionable takeaways for an engineering org."}
+{"id": 98, "text": "Rewrite this in a confident tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 99, "text": "Explain distributed systems to a smart non-specialist in under 200 words."}
+{"id": 100, "text": "Write a Go function that build an in-memory event bus with pub/sub and wildcards. Include type hints and docstrings."}
+{"id": 101, "text": "Here is a buggy Rust snippet for 'build a key-value store with TTL expiration'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 102, "text": "Implement implement a priority queue with decrease-key support in Rust. Handle edge cases and add unit tests."}
+{"id": 103, "text": "Summarize the key lessons from: the role of observability in debugging distributed systems. Then propose three actionable takeaways for an engineering org."}
+{"id": 104, "text": "Write a TypeScript function that write a memoized recursive Fibonacci with an explicit stack. Include type hints and docstrings."}
+{"id": 105, "text": "Solve step by step: a warehouse ships 42 boxes per hour for 91 hours, then 33 boxes are returned. How many boxes remain? Show your work."}
+{"id": 106, "text": "Draft a short status update to stakeholders about a delayed feature, in a persuasive tone."}
+{"id": 107, "text": "Summarize the key lessons from: a postmortem of a production outage caused by a cascading retry storm. Then propose three actionable takeaways for an engineering org."}
+{"id": 108, "text": "Write a TypeScript function that implement a lock-free single-producer single-consumer ring buffer. Include type hints and docstrings."}
+{"id": 109, "text": "Write a detailed, well-structured explanation of stream processing. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 110, "text": "Compare version control internals and signal processing in a balanced table, then give a recommendation for a small team."}
+{"id": 111, "text": "Draft a technical design document outline for a system centered on database indexing. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 112, "text": "Compare database indexing and stream processing in a balanced table, then give a recommendation for a small team."}
+{"id": 113, "text": "There are 82 red and 57 blue balls in an urn. You draw 40 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 114, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 115, "text": "Summarize the key lessons from: why microservices can increase operational complexity. Then propose three actionable takeaways for an engineering org."}
+{"id": 116, "text": "Write a Python function that implement a rate limiter using the token bucket algorithm. Include type hints and docstrings."}
+{"id": 117, "text": "There are 22 red and 6 blue balls in an urn. You draw 40 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 118, "text": "Draft a short status update to stakeholders about a delayed feature, in a apologetic tone."}
+{"id": 119, "text": "Write a thorough tutorial introducing version control internals, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 120, "text": "Implement implement a priority queue with decrease-key support in Rust. Handle edge cases and add unit tests."}
+{"id": 121, "text": "Prove or disprove: for all integers k>=1, 8^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 122, "text": "Compare graph algorithms and real-time rendering in a balanced table, then give a recommendation for a small team."}
+{"id": 123, "text": "Write a thorough tutorial introducing container networking, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 124, "text": "Write a Go function that implement a priority queue with decrease-key support. Include type hints and docstrings."}
+{"id": 125, "text": "Implement write a memoized recursive Fibonacci with an explicit stack in Python. Handle edge cases and add unit tests."}
+{"id": 126, "text": "Explain concurrent programming to a smart non-specialist in under 200 words."}
+{"id": 127, "text": "Write a detailed, well-structured explanation of load balancing. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 128, "text": "Explain graph algorithms to a smart non-specialist in under 200 words."}
+{"id": 129, "text": "A pipe fills a tank in 54 minutes and another drains it in 88 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 130, "text": "Explain version control internals to a smart non-specialist in under 200 words."}
+{"id": 131, "text": "Write a thorough tutorial introducing compiler design, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 132, "text": "Here is a buggy Rust snippet for 'implement a consistent hash ring for sharding keys'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 133, "text": "A pipe fills a tank in 73 minutes and another drains it in 58 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 134, "text": "Rewrite this in a technical tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 135, "text": "Write a detailed, well-structured explanation of load balancing. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 136, "text": "Refactor the following TypeScript code for clarity and performance. Task: implement a simple expression evaluator for arithmetic."}
+{"id": 137, "text": "A pipe fills a tank in 81 minutes and another drains it in 76 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 138, "text": "Rewrite this in a persuasive tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 139, "text": "Draft a technical design document outline for a system centered on concurrent programming. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 140, "text": "Implement detect cycles in a directed graph and return the cycle in Python. Handle edge cases and add unit tests."}
+{"id": 141, "text": "Write a Go function that implement a circuit breaker with half-open probing. Include type hints and docstrings."}
+{"id": 142, "text": "Implement merge k sorted linked lists into one sorted list in TypeScript. Handle edge cases and add unit tests."}
+{"id": 143, "text": "Write a thorough tutorial introducing kubernetes orchestration, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 144, "text": "Refactor the following Go code for clarity and performance. Task: implement a simple expression evaluator for arithmetic."}
+{"id": 145, "text": "There are 42 red and 8 blue balls in an urn. You draw 14 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 146, "text": "Draft a short status update to stakeholders about a delayed feature, in a confident tone."}
+{"id": 147, "text": "Summarize the key lessons from: the role of observability in debugging distributed systems. Then propose three actionable takeaways for an engineering org."}
+{"id": 148, "text": "Refactor the following Python code for clarity and performance. Task: parse a date range string and expand it into days."}
+{"id": 149, "text": "Solve step by step: a warehouse ships 86 boxes per hour for 39 hours, then 41 boxes are returned. How many boxes remain? Show your work."}
+{"id": 150, "text": "Explain distributed systems to a smart non-specialist in under 200 words."}
+{"id": 151, "text": "Solve step by step: a warehouse ships 90 boxes per hour for 84 hours, then 34 boxes are returned. How many boxes remain? Show your work."}
+{"id": 152, "text": "Write a Rust function that implement a consistent hash ring for sharding keys. Include type hints and docstrings."}
+{"id": 153, "text": "Solve step by step: a warehouse ships 2 boxes per hour for 89 hours, then 2 boxes are returned. How many boxes remain? Show your work."}
+{"id": 154, "text": "Compare real-time rendering and real-time rendering in a balanced table, then give a recommendation for a small team."}
+{"id": 155, "text": "Write a thorough tutorial introducing memory management, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 156, "text": "Implement build an in-memory event bus with pub/sub and wildcards in TypeScript. Handle edge cases and add unit tests."}
+{"id": 157, "text": "Solve step by step: a warehouse ships 36 boxes per hour for 3 hours, then 42 boxes are returned. How many boxes remain? Show your work."}
+{"id": 158, "text": "List 8 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 159, "text": "Write a detailed, well-structured explanation of machine learning pipelines. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 160, "text": "Write a Go function that detect cycles in a directed graph and return the cycle. Include type hints and docstrings."}
+{"id": 161, "text": "A pipe fills a tank in 79 minutes and another drains it in 53 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 162, "text": "Explain network protocols to a smart non-specialist in under 200 words."}
+{"id": 163, "text": "Prove or disprove: for all integers k>=1, 5^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 164, "text": "Write a Python function that build an in-memory event bus with pub/sub and wildcards. Include type hints and docstrings."}
+{"id": 165, "text": "Write a thorough tutorial introducing load balancing, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 166, "text": "Compare graph algorithms and signal processing in a balanced table, then give a recommendation for a small team."}
+{"id": 167, "text": "Write a thorough tutorial introducing virtualization, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 168, "text": "Write a Go function that parse a date range string and expand it into days. Include type hints and docstrings."}
+{"id": 169, "text": "There are 15 red and 37 blue balls in an urn. You draw 27 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 170, "text": "Explain memory management to a smart non-specialist in under 200 words."}
+{"id": 171, "text": "Write a detailed, well-structured explanation of load balancing. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 172, "text": "Implement implement a sliding-window aggregator over a stream of values in Python. Handle edge cases and add unit tests."}
+{"id": 173, "text": "Prove or disprove: for all integers k>=1, 7^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 174, "text": "Draft a short status update to stakeholders about a delayed feature, in a empathetic tone."}
+{"id": 175, "text": "Write a thorough tutorial introducing memory management, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 176, "text": "Write a detailed, well-structured explanation of distributed systems. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 177, "text": "A pipe fills a tank in 40 minutes and another drains it in 25 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 178, "text": "Explain network protocols to a smart non-specialist in under 200 words."}
+{"id": 179, "text": "Write a thorough tutorial introducing cache coherence, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 180, "text": "Write a Go function that implement a simple expression evaluator for arithmetic. Include type hints and docstrings."}
+{"id": 181, "text": "A pipe fills a tank in 30 minutes and another drains it in 6 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 182, "text": "Draft a short status update to stakeholders about a delayed feature, in a confident tone."}
+{"id": 183, "text": "Write a detailed, well-structured explanation of network protocols. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 184, "text": "Refactor the following Python code for clarity and performance. Task: parse a nested JSON config and apply defaults."}
+{"id": 185, "text": "A pipe fills a tank in 52 minutes and another drains it in 25 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 186, "text": "List 10 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 187, "text": "Write a thorough tutorial introducing container networking, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 188, "text": "Implement parse a date range string and expand it into days in TypeScript. Handle edge cases and add unit tests."}
+{"id": 189, "text": "Prove or disprove: for all integers k>=1, 4^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 190, "text": "Rewrite this in a confident tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 191, "text": "Summarize the key lessons from: why microservices can increase operational complexity. Then propose three actionable takeaways for an engineering org."}
+{"id": 192, "text": "Write a Rust function that implement a lock-free single-producer single-consumer ring buffer. Include type hints and docstrings."}
+{"id": 193, "text": "A pipe fills a tank in 86 minutes and another drains it in 52 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 194, "text": "Draft a short status update to stakeholders about a delayed feature, in a technical tone."}
+{"id": 195, "text": "Write a thorough tutorial introducing file systems, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 196, "text": "Here is a buggy Go snippet for 'merge k sorted linked lists into one sorted list'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 197, "text": "Solve step by step: a warehouse ships 85 boxes per hour for 8 hours, then 3 boxes are returned. How many boxes remain? Show your work."}
+{"id": 198, "text": "Compare kubernetes orchestration and database indexing in a balanced table, then give a recommendation for a small team."}
+{"id": 199, "text": "Draft a technical design document outline for a system centered on graph algorithms. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 200, "text": "Refactor the following Python code for clarity and performance. Task: build a key-value store with TTL expiration."}
+{"id": 201, "text": "Prove or disprove: for all integers k>=1, 4^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 202, "text": "Compare virtualization and distributed systems in a balanced table, then give a recommendation for a small team."}
+{"id": 203, "text": "Write a detailed, well-structured explanation of distributed systems. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 204, "text": "Prove or disprove: for all integers k>=1, 8^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 205, "text": "There are 37 red and 89 blue balls in an urn. You draw 41 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 206, "text": "Implement implement a thread-safe LRU cache with a maximum size in TypeScript. Handle edge cases and add unit tests."}
+{"id": 207, "text": "Draft a technical design document outline for a system centered on memory management. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 208, "text": "Here is a buggy Go snippet for 'parse a date range string and expand it into days'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 209, "text": "Write a thorough tutorial introducing version control internals, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 210, "text": "Compare stream processing and load balancing in a balanced table, then give a recommendation for a small team."}
+{"id": 211, "text": "Draft a technical design document outline for a system centered on file systems. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 212, "text": "Refactor the following TypeScript code for clarity and performance. Task: write a memoized recursive Fibonacci with an explicit stack."}
+{"id": 213, "text": "Explain kubernetes orchestration to a smart non-specialist in under 200 words."}
+{"id": 214, "text": "Draft a short status update to stakeholders about a delayed feature, in a technical tone."}
+{"id": 215, "text": "Write a detailed, well-structured explanation of operating system scheduling. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 216, "text": "Write a Go function that implement a consistent hash ring for sharding keys. Include type hints and docstrings."}
+{"id": 217, "text": "A pipe fills a tank in 76 minutes and another drains it in 94 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 218, "text": "Rewrite this in a formal tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 219, "text": "Write a thorough tutorial introducing kubernetes orchestration, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 220, "text": "Here is a buggy Go snippet for 'implement a topological sort that breaks ties deterministically'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 221, "text": "A pipe fills a tank in 52 minutes and another drains it in 59 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 222, "text": "Here is a buggy Rust snippet for 'validate and normalize an email address'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 223, "text": "Summarize the key lessons from: the tension between developer velocity and system reliability. Then propose three actionable takeaways for an engineering org."}
+{"id": 224, "text": "Refactor the following Go code for clarity and performance. Task: validate and normalize an email address."}
+{"id": 225, "text": "Solve step by step: a warehouse ships 40 boxes per hour for 77 hours, then 45 boxes are returned. How many boxes remain? Show your work."}
+{"id": 226, "text": "Here is a buggy Go snippet for 'merge k sorted linked lists into one sorted list'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 227, "text": "Write a detailed, well-structured explanation of virtualization. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 228, "text": "Here is a buggy Rust snippet for 'implement a lock-free single-producer single-consumer ring buffer'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 229, "text": "Draft a technical design document outline for a system centered on machine learning pipelines. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 230, "text": "List 10 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 231, "text": "Write a detailed, well-structured explanation of real-time rendering. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 232, "text": "Draft a technical design document outline for a system centered on database indexing. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 233, "text": "Compare concurrent programming and container networking in a balanced table, then give a recommendation for a small team."}
+{"id": 234, "text": "List 6 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 235, "text": "Write a thorough tutorial introducing cryptography, from first principles to an advanced nuance. Use headings and short code or math where helpful."}
+{"id": 236, "text": "Implement parse a date range string and expand it into days in Rust. Handle edge cases and add unit tests."}
+{"id": 237, "text": "Solve step by step: a warehouse ships 11 boxes per hour for 90 hours, then 29 boxes are returned. How many boxes remain? Show your work."}
+{"id": 238, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 239, "text": "Prove or disprove: for all integers k>=1, 6^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 240, "text": "Here is a buggy TypeScript snippet for 'implement a sliding-window aggregator over a stream of values'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 241, "text": "Solve step by step: a warehouse ships 43 boxes per hour for 14 hours, then 18 boxes are returned. How many boxes remain? Show your work."}
+{"id": 242, "text": "Compare compiler design and file systems in a balanced table, then give a recommendation for a small team."}
+{"id": 243, "text": "Draft a technical design document outline for a system centered on compiler design. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 244, "text": "Here is a buggy Go snippet for 'validate and normalize an email address'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 245, "text": "Prove or disprove: for all integers k>=1, 9^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 246, "text": "Solve step by step: a warehouse ships 61 boxes per hour for 67 hours, then 29 boxes are returned. How many boxes remain? Show your work."}
+{"id": 247, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 248, "text": "Write a TypeScript function that write a memoized recursive Fibonacci with an explicit stack. Include type hints and docstrings."}
+{"id": 249, "text": "There are 15 red and 42 blue balls in an urn. You draw 35 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 250, "text": "Explain version control internals to a smart non-specialist in under 200 words."}
+{"id": 251, "text": "Summarize the key lessons from: why microservices can increase operational complexity. Then propose three actionable takeaways for an engineering org."}
+{"id": 252, "text": "Implement write a memoized recursive Fibonacci with an explicit stack in Python. Handle edge cases and add unit tests."}
+{"id": 253, "text": "Solve step by step: a warehouse ships 55 boxes per hour for 44 hours, then 9 boxes are returned. How many boxes remain? Show your work."}
+{"id": 254, "text": "Compare cache coherence and cryptography in a balanced table, then give a recommendation for a small team."}
+{"id": 255, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 256, "text": "Implement implement a priority queue with decrease-key support in TypeScript. Handle edge cases and add unit tests."}
+{"id": 257, "text": "Draft a technical design document outline for a system centered on file systems. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 258, "text": "Compare stream processing and file systems in a balanced table, then give a recommendation for a small team."}
+{"id": 259, "text": "Implement write a memoized recursive Fibonacci with an explicit stack in Python. Handle edge cases and add unit tests."}
+{"id": 260, "text": "Refactor the following Go code for clarity and performance. Task: parse a nested JSON config and apply defaults."}
+{"id": 261, "text": "There are 80 red and 15 blue balls in an urn. You draw 29 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 262, "text": "Draft a short status update to stakeholders about a delayed feature, in a casual tone."}
+{"id": 263, "text": "Draft a technical design document outline for a system centered on signal processing. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 264, "text": "Write a Python function that merge k sorted linked lists into one sorted list. Include type hints and docstrings."}
+{"id": 265, "text": "Prove or disprove: for all integers k>=1, 8^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 266, "text": "Draft a short status update to stakeholders about a delayed feature, in a technical tone."}
+{"id": 267, "text": "Prove or disprove: for all integers k>=1, 3^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 268, "text": "Here is a buggy Rust snippet for 'build an in-memory event bus with pub/sub and wildcards'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 269, "text": "A pipe fills a tank in 8 minutes and another drains it in 45 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 270, "text": "Compare memory management and distributed systems in a balanced table, then give a recommendation for a small team."}
+{"id": 271, "text": "Summarize the key lessons from: the economics of edge computing versus centralized cloud. Then propose three actionable takeaways for an engineering org."}
+{"id": 272, "text": "Refactor the following Python code for clarity and performance. Task: detect cycles in a directed graph and return the cycle."}
+{"id": 273, "text": "Solve step by step: a warehouse ships 57 boxes per hour for 76 hours, then 46 boxes are returned. How many boxes remain? Show your work."}
+{"id": 274, "text": "A pipe fills a tank in 66 minutes and another drains it in 57 minutes. If both are open, how long to fill? Solve carefully."}
+{"id": 275, "text": "Draft a technical design document outline for a system centered on signal processing. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 276, "text": "Write a detailed, well-structured explanation of load balancing. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 277, "text": "Prove or disprove: for all integers k>=1, 3^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 278, "text": "Rewrite this in a technical tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 279, "text": "Prove or disprove: for all integers k>=1, 2^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 280, "text": "Here is a buggy Rust snippet for 'parse a CSV file with quoted fields and validate each row'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 281, "text": "Prove or disprove: for all integers k>=1, 9^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 282, "text": "Draft a short status update to stakeholders about a delayed feature, in a concise tone."}
+{"id": 283, "text": "Draft a technical design document outline for a system centered on kubernetes orchestration. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 284, "text": "Write a Rust function that parse a CSV file with quoted fields and validate each row. Include type hints and docstrings."}
+{"id": 285, "text": "There are 90 red and 11 blue balls in an urn. You draw 32 without replacement. What is the probability of at least one red? Compute exactly."}
+{"id": 286, "text": "Draft a technical design document outline for a system centered on file systems. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 287, "text": "Summarize the key lessons from: the design of a distributed consensus protocol. Then propose three actionable takeaways for an engineering org."}
+{"id": 288, "text": "Here is a buggy TypeScript snippet for 'merge k sorted linked lists into one sorted list'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 289, "text": "Prove or disprove: for all integers k>=1, 6^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 290, "text": "Here is a buggy Go snippet for 'implement a rate limiter using the token bucket algorithm'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 291, "text": "Draft a technical design document outline for a system centered on file systems. Include goals, non-goals, architecture, data flow, failure modes, and rollout plan."}
+{"id": 292, "text": "Here is a buggy TypeScript snippet for 'build a key-value store with TTL expiration'. Find and fix the bug:\ndef solve(x):\n    return x\nExplain the fix."}
+{"id": 293, "text": "Prove or disprove: for all integers k>=1, 4^2 - 1 is divisible by 8. Give a rigorous argument."}
+{"id": 294, "text": "Rewrite this in a empathetic tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 295, "text": "Write a detailed, well-structured explanation of machine learning pipelines. Cover the core ideas, common pitfalls, and at least one concrete example. Aim for depth."}
+{"id": 296, "text": "Rewrite this in a persuasive tone: 'We missed the deadline because of a dependency issue.'"}
+{"id": 297, "text": "List 6 practical ways to reduce technical debt in a fast-moving team, with brief rationale for each."}
+{"id": 298, "text": "Draft a short status update to stakeholders about a delayed feature, in a persuasive tone."}
+{"id": 299, "text": "Implement detect cycles in a directed graph and return the cycle in Rust. Handle edge cases and add unit tests."}

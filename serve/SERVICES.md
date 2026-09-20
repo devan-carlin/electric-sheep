@@ -1,7 +1,8 @@
-# AI Server Service Map
+# Inference Fleet Service Map
 
-4x Intel Arc Pro B70 (32 GB, XPU/Level Zero). One service per GPU.
-Last updated: 2026-08-30.
+Primary node: 4x Intel Arc Pro B70 (32 GB, XPU/Level Zero), one service per
+GPU. Second node: RTX 5090 Workstation (see "Second node" below). Last
+updated: 2026-09-05.
 
 ## Active services
 
@@ -17,6 +18,24 @@ Open WebUI (Docker) points at the active endpoint: default
 `:8000` when the 4-GPU `qwen-256k` vLLM server is up.
 Model IDs in WebUI: `gemma`, `qwen`, `qwen-256k` (version-agnostic on purpose -
 swap the model in the launcher, never the name).
+
+## Second node: RTX 5090 (Windows)
+
+A peer inference node on the tailnet, not part of the B70 per-GPU map above.
+
+- **What:** one RTX 5090 (32 GB) serving a Qwen3.8-27B int4 instance via
+  llama.cpp (or Ollama), 256K context, bound to `0.0.0.0`.
+- **Reach it:** `https://<workstation>.tailc58a85.ts.net/<port>/v1` (OpenAI
+  API). Register it in Open WebUI as an additional connection alongside the
+  B70 endpoints.
+- **Role in the fleet:**
+  - Adds a fifth concurrent stream to the daily swarm (chat / parallel agents).
+  - Overflow: takes load when the four B70 slots are saturated.
+  - CUDA escape hatch: training runs and CUDA-only kernel experiments that the
+    XPU stack cannot host land here.
+- **Not managed by `start-all.sh`:** that orchestrator only controls the B70
+  server. The 5090 node is started/stopped on the Windows box (see
+  `build/windows/04-llama-cpp-deployment-guide.md`).
 
 ## Why these choices
 

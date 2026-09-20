@@ -7,7 +7,9 @@ manage it. Written for an operator (human or LLM) with no prior context.
 
 A 4x Intel Arc Pro B70 (32 GB each, XPU / Level Zero) AI server. One service per
 GPU. Two of the four are LLM chat endpoints that speak the OpenAI API; two are
-image-generation (ComfyUI) instances.
+image-generation (ComfyUI) instances. This handoff covers the B70 server only;
+the RTX 5090 Workstation is a separate peer node on the tailnet (see
+`serve/SERVICES.md` "Second node" and `docs/architecture.md` "Fleet topology").
 
 - Host OS: Ubuntu, Linux.
 - The LLM endpoints are `llama.cpp` `llama-server` processes. They expose a

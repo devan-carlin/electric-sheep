@@ -105,7 +105,14 @@ Environment: `VLLM_XPU_ENABLE_XPU_GRAPH=1`, `UR_L0_SYNC_MODE=BLOCKING`, `VLLM_WO
 
 - **Multimodal.** The vision tower (27-block ViT, byte-identical to Qwen3-VL) is included and served via the Qwen3-VL processor. Send images as `image_url` content parts (base64 or URL); the model describes them. Text-only prompts work unchanged.
 - **Serving tip:** Greedy decoding (temp 0) tends to lock into repetitive loops on this model. Use temperature 0.7 and high reasoning effort to resolve this.
-- **MTP speculative decoding** is wired into the port (`--speculative-config '{"method":"mtp","num_speculative_tokens":1}'`) and produces correct output, but on this hardware it is a net slowdown: the MTP head is a full MoE decoder layer, so the draft step costs ~60% of a target step and the ~40% acceptance rate (1 spec token) does not pay it back. Measured ~44 tok/s with MTP on vs ~51 tok/s off. Keep it disabled until the acceptance rate is higher.
+- **MTP speculative decoding** is wired into the port and is the production
+  default (launcher sets `QWEN256K_SPEC=1`, `QWEN256K_SPEC_TOKENS=2`). The MTP
+  head is a full MoE decoder layer, so each draft step costs a large share of a
+  target step, but at sampling temps the extra position pays for itself.
+  Matched bench p512/g128, alias qwen-256k: temp 0 no-spec 58.17 vs MTP2
+  75.0-76.4 tok/s; temp 0.5 MTP2 69.82 tok/s (pos-1 61.8%, pos-2 27.8%). Set
+  `QWEN256K_SPEC=0` to run plain. A head re-fit to close the W4A16 state
+  mismatch is parked (see `electric-sheep/BACKLOG.md`).
 
 ## License
 
