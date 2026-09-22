@@ -1,6 +1,6 @@
-# vLLM Says CUDA Only. Here It Is on Four Intel Arc Cards, at 53 Tokens a Second
+# vLLM Supports Intel Arc. Getting a 125B MoE Onto Four of Them Still Took Two Patches
 
-*A 125B MoE model, 256K context, decoding faster than most people's single-GPU setups. No NVIDIA anywhere in the stack. Two patches stand between stock vLLM and all of this.*
+*A 125B MoE model, 256K context, 53 tokens a second, no NVIDIA anywhere in the stack. The XPU backend is official. What isn't official is this model, or four discrete Arc cards sharing one PCIe root.*
 
 ---
 
@@ -15,9 +15,11 @@ The result first, because it sounds wrong:
 | GPUs | 4x Intel Arc Pro B70, 32 GB each |
 | Baseline (llama.cpp, same box) | ~27 tok/s |
 
-vLLM's support matrix reads like a CUDA document with footnotes. XPU is the footnote. And yet on this box it beats the llama.cpp SYCL build by 2x, holds 256K context, and has been up for days as a daily driver.
+Let me be precise about what is and isn't supported, because it matters. vLLM's XPU backend is real and official: Intel GPUs are a listed install target, there are official Docker images since v0.26.0, and there's a whole set of XPU attention backends. Nobody is hacking a fork into existence here.
 
-Getting here took exactly two modifications to vLLM. One is large and model-specific. The other is thirty lines and applies to anyone running multiple discrete Arc cards. This article is about both, and about why they exist.
+What is *not* supported is the last mile. The specific model architecture has no upstream implementation, and the multi-GPU path assumes hardware properties that discrete Arc cards on desktop PCIe do not have. On this box the result beats the llama.cpp SYCL build by roughly 2x (53.4 vs ~27 tok/s, single stream, 512 tokens out, greedy, median of 3), holds 256K context, and has run for days as a daily driver.
+
+Closing that last mile took exactly two modifications to vLLM. One is large and model-specific. The other is thirty lines and applies to anyone running multiple discrete Arc cards. This article is about both, and about why they exist.
 
 ## The setup
 
@@ -78,7 +80,7 @@ export CCL_SYCL_ALLTOALL_TMP_BUF=1
 
 Three deserve commentary.
 
-**Graph capture is the whole decode win.** Measured on this rig: 7.0 tok/s with `--enforce-eager`, 43.0 tok/s with `VLLM_XPU_ENABLE_XPU_GRAPH=1`. Same model, same weights, same everything else. If your XPU vLLM feels slow, check this first.
+**Graph capture is the whole decode win.** A short A/B probe on this rig measured 7.0 tok/s with `--enforce-eager` against 43.0 tok/s with `VLLM_XPU_ENABLE_XPU_GRAPH=1`. Same model, same weights, same everything else. (These are short-probe numbers, not the 512-token benchmark in the table above, which lands higher at 53.4.) If your XPU vLLM feels slow, check this first.
 
 **The oneCCL thresholds force the host-staged path for large collectives.** Discrete Arc cards on desktop PCIe cannot exchange peer-memory IPC handles for big messages. Telling oneCCL to stage through host memory above 4 GiB avoids hangs and crashes in allreduce. This is the number-one thing people miss when going from two cards to four.
 
@@ -107,16 +109,30 @@ python -m vllm.entrypoints.openai.api_server \
 
 `--enable-expert-parallel` is MoE-only. Drop it for dense models. Until your fourth card arrives, run `--tensor-parallel-size 2` with `ZE_AFFINITY_MASK=0,1`; nothing else changes.
 
+## Half of "bad quant" is bad sampling
+
+That `--override-generation-config` flag above is doing more work than it looks like.
+
+We chased looping and repetition collapse across several quants before realizing a large share of it was the sampler, not the weights. This model ships `temperature 1.0`, which degrades fast at long context. Pinning `temperature 0.7 / top_p 0.8 / top_k 20` plus `presence_penalty 1.5` made a real difference on an otherwise good quant.
+
+Check your sampler before you blame the weights.
+
 ## Expect the RAM bill
 
 The server sits at roughly 140 GB of the 256 GB. Most of it is one object: this model carries a lookup table for its n-gram layer, about 102 GB, memory-mapped from host RAM and shared across all four ranks through the page cache. It counts once, not four times. Add oneCCL staging buffers and per-rank pinned memory and you land where we do.
 
 Practical consequences: do not run anything else heavy on that machine while it serves, and if you serve a model without such a table, the footprint drops substantially.
 
-## One more thing: half of "bad quant" is bad sampling
-
-We chased looping and repetition collapse across several quants before realizing a large share of it was the sampler. This model ships `temperature 1.0`, which degrades fast. Pinning `temperature 0.7 / top_p 0.8 / top_k 20` plus `presence_penalty 1.5` via `--override-generation-config` made a real difference on an otherwise good quant. Check your sampler before you blame the weights.
-
 ## Takeaway
 
-Stock vLLM will not run a new hybrid MoE architecture on four discrete Arc cards. Neither will stock vLLM plus one of the two fixes. You need both: a model port so the engine knows the architecture, and a thirty-line spawn patch so each rank sees exactly one GPU. Add the environment contract above, keep graph capture on, and the rest is a normal OpenAI-compatible server. The patches and a complete launcher are in the project repository linked below.
+The XPU backend is supported. The last mile is not. Stock vLLM will not run a new hybrid MoE architecture on four discrete Arc cards, and neither will stock vLLM plus only one of the two fixes. You need both: a model port so the engine knows the architecture, and a thirty-line spawn patch so each rank sees exactly one GPU.
+
+Add the environment contract above, keep graph capture on, and the rest is a normal OpenAI-compatible server. Nothing about it is exotic once it is running, which is the whole point: the work is front-loaded into two patches and a handful of environment variables.
+
+## Resources
+
+- `qwen4exp-xpu-port.patch` and `b70-worker-affinity.patch` (the two patches, with apply instructions)
+- The full launcher script, including the env contract and health checks
+- `VLLM-XPU-SOURCE-BUILD.md` in the B70 inference cookbook for the full build, patch stack, and failure-mode table
+
+<!-- TODO: replace the three bullets above with real repo links before publishing. -->
