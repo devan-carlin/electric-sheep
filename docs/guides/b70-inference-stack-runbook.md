@@ -84,7 +84,7 @@ Guide-exact p512/g128, temp 0, concurrency 1, streaming. Reports median/mean/min
   (nothing should auto-start after reboot). Re-enable only if wanted:
   `sudo systemctl enable arc-b70-power-caps.service`.
 - Change the cap: edit `CAP_UW` in `serve/apply-gpu-power-caps.sh`, then
-  `sudo /home/dc/electric-sheep/serve/apply-gpu-power-caps.sh` (passwordless).
+  `sudo ~/electric-sheep/serve/apply-gpu-power-caps.sh` (passwordless).
 - Measured curve (GPU0, p512/g128): 160 W = 53.1, 180 W = 54.2, 200 W = 54.6, 230 W = 55.1 tok/s.
   Gain is front-loaded 160->180 W; beyond that <1% per 30 W (bandwidth-bound). 180 W chosen as the sweet spot.
 - One-time root bootstrap (already done): `sudo bash serve/install-power-caps-service.sh`.
@@ -98,7 +98,7 @@ the stack:
 
 ```bash
 # 1. power caps (reset to 160 W default on reboot)
-sudo /home/dc/electric-sheep/serve/apply-gpu-power-caps.sh
+sudo ~/electric-sheep/serve/apply-gpu-power-caps.sh
 
 # 2. engines (see Launching section above)
 cd ~/electric-sheep/serve

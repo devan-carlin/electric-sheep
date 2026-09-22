@@ -142,4 +142,4 @@ FlexAttention) are the generic ones. So on XPU:
 - KV cache docs: /tmp/sgl-kv-cache-docs.md
 - Attention backend docs: /tmp/sgl-attn-docs.md
 - Server args docs: /tmp/sgl-server-args.md
-- SGLang runner: /home/dc/sglang/bench-128k/run_matrix.py
+- SGLang runner: ~/sglang/bench-128k/run_matrix.py

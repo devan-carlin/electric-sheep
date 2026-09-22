@@ -96,7 +96,7 @@ are independent of the LLM endpoints.
 
 ## Managing the services
 
-The 4-GPU stack launchers (`start-all.sh`, `start-qwen-llama.sh`, `start-gemma-llama.sh`) live in `/home/dc/neon-demon/serve/`. Flash-Next and vLLM fallback launchers live in `/home/dc/electric-sheep/serve/`.
+The 4-GPU stack launchers (`start-all.sh`, `start-qwen-llama.sh`, `start-gemma-llama.sh`) live in `~/neon-demon/serve/`. Flash-Next and vLLM fallback launchers live in `~/electric-sheep/serve/`.
 
 | Script | What it does |
 |--------|--------------|
@@ -107,11 +107,11 @@ The 4-GPU stack launchers (`start-all.sh`, `start-qwen-llama.sh`, `start-gemma-l
 
 Common operations:
 ```
-bash /home/dc/neon-demon/serve/start-all.sh status        # are they up?
-bash /home/dc/neon-demon/serve/start-all.sh restart-qwen  # restart qwen only
-bash /home/dc/neon-demon/serve/start-all.sh restart-gemma # restart gemma only
-bash /home/dc/neon-demon/serve/start-all.sh stop          # stop everything
-bash /home/dc/neon-demon/serve/start-all.sh start         # start all 4
+bash ~/neon-demon/serve/start-all.sh status        # are they up?
+bash ~/neon-demon/serve/start-all.sh restart-qwen  # restart qwen only
+bash ~/neon-demon/serve/start-all.sh restart-gemma # restart gemma only
+bash ~/neon-demon/serve/start-all.sh stop          # stop everything
+bash ~/neon-demon/serve/start-all.sh start         # start all 4
 ```
 
 ### Swapping the model behind `qwen` or `gemma`
@@ -120,7 +120,7 @@ The weights are pinned inside the launcher. To point `qwen` at a different GGUF:
 QWEN_LLAMA_MODEL_DIR=/path/to/model-dir \
 QWEN_LLAMA_MODEL_FILE=/path/to/model.gguf \
 QWEN_LLAMA_MMPROJ=/path/to/mmproj.gguf \
-bash /home/dc/neon-demon/serve/start-qwen-llama.sh start
+bash ~/neon-demon/serve/start-qwen-llama.sh start
 ```
 The name stays `qwen`. Same pattern with `GEMMA_LLAMA_*` for the gemma slot.
 Other overrides: `QWEN_LLAMA_GPU`, `QWEN_LLAMA_PORT`, `QWEN_LLAMA_CTX`,
@@ -132,16 +132,16 @@ for the gemma slot. `start-all.sh` forwards all of these.
 
 ## Logs
 
-- `/home/dc/electric-sheep/serve/logs/llama_8088.log` - qwen
-- `/home/dc/electric-sheep/serve/logs/llama_8089.log` - gemma
-- `/home/dc/electric-sheep/serve/logs/comfyui_8188.log`, `comfyui_8189.log`
+- `~/electric-sheep/serve/logs/llama_8088.log` - qwen
+- `~/electric-sheep/serve/logs/llama_8089.log` - gemma
+- `~/electric-sheep/serve/logs/comfyui_8188.log`, `comfyui_8189.log`
 
 Decode speed and draft stats appear in the llama logs as `print_timing` lines
 (`... tokens per second`).
 
 ## Models on disk
 
-Root: `/home/dc/electric-sheep/models/` (a symlink to `/mnt/data/models`).
+Root: `~/electric-sheep/models/` (a symlink to `/mnt/data/models`).
 - the live `qwen` weights (Q4_K_P + f16 mmproj)
 - the live `gemma` weights (Q4_K_P + f16 mmproj)
 - Other dirs are fallbacks / experiments (vLLM safetensors, other quants).
@@ -149,7 +149,7 @@ Root: `/home/dc/electric-sheep/models/` (a symlink to `/mnt/data/models`).
 ## Gotchas (read before debugging)
 
 - **Per-GPU VRAM probe**: use
-  `env -u ONEAPI_DEVICE_SELECTOR /home/dc/vllm-fresh-venv/bin/python -c "import torch; f,t=torch.xpu.mem_get_info(torch.device('xpu:2')); print((t-f)/1024**3)"`
+  `env -u ONEAPI_DEVICE_SELECTOR ~/vllm-fresh-venv/bin/python -c "import torch; f,t=torch.xpu.mem_get_info(torch.device('xpu:2')); print((t-f)/1024**3)"`
   You MUST `env -u ONEAPI_DEVICE_SELECTOR` or the device indices shift and you
   read the wrong card. System Eye / `zes` reports a unified pool - useless per-GPU.
 - **KV cache types** on this SYCL build: `q4_0` and `q5_0` work. `q8_0` and

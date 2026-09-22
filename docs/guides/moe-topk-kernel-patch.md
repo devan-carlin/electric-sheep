@@ -19,7 +19,7 @@ Extend `vllm-xpu-kernels` to support `num_experts_per_tok` values of TopK=16, 32
 | vLLM | 0.26.1rc1.dev500+gc39076fef.xpu (FlashAttention v2, TP=4) |
 | Compiler | Intel oneAPI 2026.1 (icx/icpx) |
 | Model | Qwen3.5 MoE (256 experts, 40 layers, ~67 GB) |
-| GPU env | `/home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh` (TP_SIZE=4, GPUs 0-3) |
+| GPU env | `~/electric-sheep/vllm/env/set-env-0123-gpu.sh` (TP_SIZE=4, GPUs 0-3) |
 
 ## Background
 
@@ -156,14 +156,14 @@ Added three `CASE_TOPK` invocations before the `default` case:
 
 ```bash
 # 1. Navigate to kernel source
-cd /home/dc/electric-sheep/vllm/vllm-src/vllm-xpu-kernels
+cd ~/electric-sheep/vllm/vllm-src/vllm-xpu-kernels
 
 # 2. Clean stale CMake caches (critical after each patch)
 rm -rf build/temp build/lib* .deps/*-subbuild
 
 # 3. Set GPU environment and activate venv
-source /home/dc/electric-sheep/vllm/env/set-env-0123-gpu.sh
-source /home/dc/vllm-fresh-venv/bin/activate
+source ~/electric-sheep/vllm/env/set-env-0123-gpu.sh
+source ~/vllm-fresh-venv/bin/activate
 
 # 4. Build and install (editable mode)
 pip install -e . --no-build-isolation
@@ -190,7 +190,7 @@ nm -D build/temp/_moe_C.abi3.so | grep "RemapHiddenStates" | grep -E "Li16|Li32|
 After kernel rebuild, clear vLLM's torch compile cache (stale cached graphs may reference old kernel signatures):
 
 ```bash
-rm -rf /home/dc/.cache/vllm/torch_compile_cache/*
+rm -rf ~/.cache/vllm/torch_compile_cache/*
 ```
 
 ## Outcome
@@ -315,12 +315,12 @@ The expectation was that activating more experts per token would provide richer,
 2. **The `moe_gather` kernel handles the final aggregation step** (after expert computation) and has its own independent TopK template dispatch table.
 3. **CMake cache path mismatches** are a common build failure mode. Clean `.deps/*-subbuild` and `build/temp` before rebuilding.
 4. **SYCL builds are slow** (~30 min full rebuild) but highly parallel (96+ compiler processes).
-5. **Always clear torch compile cache** after kernel rebuilds (`rm -rf /home/dc/.cache/vllm/torch_compile_cache/*`) — stale cached graphs may reference old kernel signatures.
+5. **Always clear torch compile cache** after kernel rebuilds (`rm -rf ~/.cache/vllm/torch_compile_cache/*`) — stale cached graphs may reference old kernel signatures.
 6. **Verify symbols in compiled .so** after build (`nm -D _moe_C.abi3.so | grep MoeGather | grep -E "Li16|Li32|Li64"`) before running benchmarks.
 
 ## References
 
 - vllm-xpu-kernels repo: `https://github.com/vllm-project/vllm-xpu-kernels`
 - Related PRs: #273 (TopK=10), #373 (TopK=7), #472 (FP8 per-tensor)
-- Benchmark results: `/home/dc/electric-sheep/bench/results/SUMMARY.md`
+- Benchmark results: `~/electric-sheep/bench/results/SUMMARY.md`
 - Benchmark logs: `/tmp/benchmark-run-v6.log`
