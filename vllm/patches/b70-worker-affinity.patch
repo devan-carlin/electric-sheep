@@ -1,0 +1,56 @@
+# B70 worker-affinity patch for vLLM-XPU
+#
+# WHY:
+#   Stock vLLM spawns each TP worker inheriting the parent ZE_AFFINITY_MASK,
+#   so every rank initializes ALL visible XPU devices. On 4x discrete Arc B70
+#   that duplicates GB-scale host-RAM state per rank and creates cross-device
+#   IPC handles that Arc desktop PCIe rejects. This makes each spawned worker
+#   take its own single-card mask from ZE_AFFINITY_MASK (comma list), so rank N
+#   initializes exactly device N.
+#
+# WHAT:
+#   In MultiprocExecutor._create_worker (multiproc_executor.py), when
+#   B70_WORKER_AFFINITY=1 and the layout is PP2/TP1 or PP1/TP{2,4}, set
+#   os.environ["ZE_AFFINITY_MASK"] to this rank's card before spawning.
+#   Default (env unset/0) = inert, stock behavior.
+#
+# BASE: vllm upstream main @ c39076fef
+# APPLY: cd <vllm-src> && patch -p1 < b70-worker-affinity.patch
+# KILL SWITCH: B70_WORKER_AFFINITY=0
+#
+diff -ruN a/vllm/v1/executor/multiproc_executor.py b/vllm/v1/executor/multiproc_executor.py
+--- a/vllm/v1/executor/multiproc_executor.py	2026-09-22 00:16:10.616744584 +0000
++++ b/vllm/v1/executor/multiproc_executor.py	2026-09-22 00:16:10.618556398 +0000
+@@ -180,6 +180,32 @@
+             cpu_omp_manager = OMPProcessManager(self.vllm_config)
+             for local_rank in range(self.local_world_size):
+                 global_rank = global_start_rank + local_rank
++                if os.environ.get("B70_WORKER_AFFINITY", "0") == "1":
++                    _b70_pc = self.vllm_config.parallel_config
++                    _b70_pp = int(_b70_pc.pipeline_parallel_size)
++                    _b70_tp = int(_b70_pc.tensor_parallel_size)
++                    if (_b70_pp == 2 and _b70_tp == 1) or (
++                        _b70_pp == 1 and _b70_tp in (2, 4)
++                    ):
++                        if not hasattr(self, "_b70_mask_list"):
++                            self._b70_mask_list = os.environ.get(
++                                "ZE_AFFINITY_MASK", "0"
++                            ).split(",")
++                        if global_rank >= len(self._b70_mask_list):
++                            raise RuntimeError(
++                                "B70_WORKER_AFFINITY: rank "
++                                f"{global_rank} exceeds ZE_AFFINITY_MASK "
++                                f"entries {self._b70_mask_list}"
++                            )
++                        os.environ["ZE_AFFINITY_MASK"] = self._b70_mask_list[
++                            global_rank
++                        ]
++                        print(
++                            "[B70_WORKER_AFFINITY_SPAWN] "
++                            f"rank={global_rank} "
++                            f"mask={self._b70_mask_list[global_rank]}",
++                            flush=True,
++                        )
+                 is_driver_worker = self._is_driver_worker(global_rank)
+                 with cpu_omp_manager.configure_omp_envs(
+                     rank=global_rank, local_rank=local_rank
