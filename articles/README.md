@@ -31,6 +31,7 @@ hook) before posting.
 | 4 | `04-256k-context-on-two-gpus.md` | Fitting a 256K context window on two 32 GB GPUs, and the concurrency math that comes with it. |
 | 10 | `10-arc-b70-power-tuning.md` | Capping four Arc B70s at 160W saves ~160W for a 5-10% throughput hit, via plain sysfs files. |
 | 7 | `07-rtx-5090-power-tuning.md` | What a 70% power cap does to an RTX 5090's real throughput. |
+| 11 | `11-running-vllm-on-4x-arc-b70.md` | vLLM says CUDA only; here it is on 4x Arc B70 at 53 tok/s. The two patches (model port + worker affinity) that make it work, and why each exists. Companion to #9: #9 is the results/port story, #11 is the setup/reproducibility story. |
 
 ## Planned (outline + key facts, needs expansion)
 
