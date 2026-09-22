@@ -85,14 +85,32 @@ case "${1:-start}" in
     cd "$HOME/electric-sheep/serve"
     source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1
     source "$VENV/bin/activate"
+    # Device selection: process-wide mask lists all four cards.
+    # NOTE: do NOT set ONEAPI_DEVICE_SELECTOR here. In this torch build any
+    # selector makes torch._C._xpu_init() report 0 devices once workers run with
+    # per-worker ZE_AFFINITY_MASK values (verified 2026-09-05: sel+mask -> "No XPU
+    # devices"; mask alone works). The mask alone filters correctly for sycl+torch.
     export ZE_AFFINITY_MASK="$GPUS"
-    export ONEAPI_DEVICE_SELECTOR="level_zero:$GPUS"
     export UR_L0_SYNC_MODE=BLOCKING
     export VLLM_TARGET_DEVICE=xpu
     export VLLM_CACHE_ROOT="$HOME/.cache/vllm"
     export TRITON_CACHE_DIR="$HOME/.cache/triton"
     export MASTER_ADDR=127.0.0.1
     export MASTER_PORT=29530
+    export VLLM_WORKER_MULTIPROC_METHOD=spawn
+    # oneCCL large-message thresholds (Intel-documented values, cookbook DUAL-B70-TP2).
+    # Keep the simple (host-staged) path for big collectives; avoids peer-memory IPC
+    # handles that Arc desktop PCIe cannot open.
+    export CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD=4294967296
+    export CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD=4294967296
+    export CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD=4294967296
+    export CCL_SYCL_ALLTOALL_TMP_BUF=1
+    # Worker-affinity patch (venv fork): at spawn time each worker gets
+    # ZE_AFFINITY_MASK=<its own card>, so every rank initializes exactly one device
+    # (no ~GB-scale host-RAM duplication, no cross-device IPC handles). Validated
+    # on this host 2026-09-05 (TP2 test + TP4 ladder). Kill switch: set
+    # B70_WORKER_AFFINITY=0 to revert to unpatched behavior.
+    export B70_WORKER_AFFINITY="${B70_WORKER_AFFINITY:-1}"
     # Overridable: set VLLM_XPU_ENABLE_XPU_GRAPH=0 if graph capture fails
     # (e.g. with UVA-offloaded weights).
     export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
