@@ -1,3 +1,20 @@
+# Qwen3.8-Flash-Next (qwen4_exp) XPU model port for vLLM
+#
+# WHY:
+#   Stock vLLM has no qwen4_exp architecture. On the XPU backend the model
+#   cannot load or run: no registry entry, no config class, no W4A16 linear
+#   kernels, no linear-attention forward path. This patch adds all four so the
+#   125B MoE (6B active) runs on Intel Arc.
+#
+# WHAT:
+#   17 files. Registry entry, config class, W4A16 mixed-precision linear kernels
+#   for the XPU backend, the GDN linear-attention path, and the MTP proposer
+#   hooks. Model-specific. Not env-gated; it only activates for qwen4_exp configs.
+#
+# BASE: vllm upstream main @ c39076fef
+# APPLY: cd <vllm-src> && patch -p1 < qwen4exp-xpu-port.patch
+# ORDER: Apply this before b70-worker-affinity.patch. Both target the same checkout.
+#
 diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
 index 288dbda..960e5e7 100644
 --- a/vllm/_xpu_ops.py
