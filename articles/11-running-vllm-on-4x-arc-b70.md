@@ -131,8 +131,6 @@ Add the environment contract above, keep graph capture on, and the rest is a nor
 
 ## Resources
 
-- `qwen4exp-xpu-port.patch` and `b70-worker-affinity.patch` (the two patches, with apply instructions)
-- The full launcher script, including the env contract and health checks
-- `VLLM-XPU-SOURCE-BUILD.md` in the B70 inference cookbook for the full build, patch stack, and failure-mode table
-
-<!-- TODO: replace the three bullets above with real repo links before publishing. -->
+- [`qwen4exp-xpu-port.patch`](https://github.com/devan-carlin/electric-sheep/blob/main/vllm/patches/qwen4exp-xpu-port.patch) and [`b70-worker-affinity.patch`](https://github.com/devan-carlin/electric-sheep/blob/main/vllm/patches/b70-worker-affinity.patch), the two patches, with apply instructions
+- [`start-qwen-256k-intel-autoround-vllm.sh`](https://github.com/devan-carlin/electric-sheep/blob/main/serve/start-qwen-256k-intel-autoround-vllm.sh), the launcher, including the env contract and health checks
+- [`VLLM-XPU-SOURCE-BUILD.md`](https://github.com/devan-carlin/intel-arc-pro-b70-inference-cookbook/blob/master/docs/VLLM-XPU-SOURCE-BUILD.md) in the B70 inference cookbook, for the full build, patch stack, and failure-mode table
