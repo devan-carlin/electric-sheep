@@ -79,3 +79,7 @@ BACKLOG.md
 # Local vLLM API key (live + disabled); never commit secrets
 serve/.api_key
 serve/.api_key.disabled
+
+# Plaintext secrets handoff for the wipe/reinstall runbook. NEVER commit.
+docs/SECRETS.local.md
+*.local.md
