@@ -96,6 +96,7 @@ fallbacks below stay in `serve/`.
 | Script | What it does |
 |--------|--------------|
 | `start-all.sh` | Start/stop/status all 4 services. Subcommands: `start`, `stop`, `status`, `restart-gemma`, `restart-qwen` |
+| `switch-config.sh` | **One command to move the whole rig between the two GPU configs.** `a` = all-4 125B; `b` = ComfyUI on GPU 0,1 + 27B on GPU 2,3; `stop`; `status`. Both configs serve the same `qwen-256k` on `:8000`. See "Two-config switch" below |
 | `start-qwen-256k.sh` | **Front door for Qwen3.8-Flash-Next.** Delegates to the vLLM + llama launchers; adds unified `status`/`smoke`/`logs`/`restart`. `start [vllm\|llama]`, `stop [vllm\|llama\|all]`, `status`, `smoke`, `logs` |
 | `start-qwen-256k-vllm.sh` | Flash-Next via vLLM, :8000, alias `qwen-256k` (W4A16, 4x GPU, 256K, fp8 KV, XPU graph mode). The engine with the HC + PLE `1 + w` gamma fixes |
 | `start-flashnext-llama.sh` | Flash-Next via llama.cpp, :8090, alias `flash-next` (Q4_K_XL, 4x GPU, q8_0 KV, PLE table in RAM) |
@@ -106,6 +107,32 @@ fallbacks below stay in `serve/`.
 Env overrides: `QWEN_LLAMA_GPU/PORT/CTX/ALIAS/MODEL_DIR/MODEL_FILE/MMPROJ/REASONING/REASONING_FORMAT/REASONING_BUDGET`,
 `GEMMA_LLAMA_GPU/PORT/CTX/ALIAS/REASONING/REASONING_FORMAT/REASONING_BUDGET`, `QWEN_PORT/GPU`, `GEMMA_PORT/GPU`,
 `COMFY_PORT_A/B`, `COMFY_GPU_A/B`.
+
+## Two-config switch (`switch-config.sh`)
+
+The rig runs one of two configs at a time. Both serve the SAME handle: alias
+`qwen-256k` on `:8000`. Suze and Open WebUI point at `qwen-256k:8000` and do not
+care which config is up. The configs are mutually exclusive on the GPUs, so a
+switch is: stop everything, start one. `switch-config.sh` does exactly that.
+
+| Config | GPU 0 | GPU 1 | GPU 2 | GPU 3 | LLM handle |
+|--------|-------|-------|-------|-------|------------|
+| **A** all-4 | 125B | 125B | 125B | 125B | `qwen-256k` `:8000` |
+| **B** split | ComfyUI A `:8188` | ComfyUI B `:8189` | 27B | 27B | `qwen-256k` `:8000` |
+
+- **A (all-4):** the 125B Flash-Next W4A16 on all four GPUs (TP4), 256K context.
+  Max context + throughput. No ComfyUI. `switch-config.sh a`.
+- **B (split):** ComfyUI on GPU 0 + GPU 1, the 27B on GPU 2 + GPU 3 (TP2). Image
+  gen AND an LLM at once. `switch-config.sh b`.
+- **The 27B in config B** is the official `Qwen/Qwen3.8-27B-FP8` (higher-quality
+  quant), served with no requant (`QWEN12_QUANT=''`). If the FP8 checkpoint is
+  absent it falls back LOUDLY to the proven int4 AutoRound (`QWEN12_QUANT=auto-round`),
+  so config B is always up and the fallback is never silent. Force int4 with
+  `FORCE_INT4=1`.
+- The 27B launcher (`start-qwen3.8-27b-int4-gpu12.sh`) gained `QWEN12_MODEL_DIR`
+  and `QWEN12_QUANT` env overrides so it can serve either checkpoint. Its default
+  is unchanged (int4 AutoRound on GPUs 1,2).
+- `switch-config.sh stop` frees all four GPUs; `status` shows what is up.
 
 ## Logs
 

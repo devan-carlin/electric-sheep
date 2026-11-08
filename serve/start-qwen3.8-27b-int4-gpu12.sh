@@ -23,15 +23,25 @@
 set -uo pipefail
 
 VENV="${QWEN12_VENV:-$HOME/vllm-fresh-venv}"
-MODEL_DIR="$HOME/electric-sheep/models/devan-carlin-Qwen3.8-27B-int4-AutoRound/Qwen3.8-27B-w4g128"
+MODEL_DIR="${QWEN12_MODEL_DIR:-$HOME/electric-sheep/models/devan-carlin-Qwen3.8-27B-int4-AutoRound/Qwen3.8-27B-w4g128}"
+# Quantization method passed to vLLM. 'auto-round' for the int4 AutoRound checkpoint (the
+# default). Empty for a checkpoint that ships PRE-QUANTIZED and needs no requant (e.g. the
+# official Qwen3.8-27B-FP8, whose weights are already fp8). Set QWEN12_QUANT='' to drop the flag.
+QUANT="${QWEN12_QUANT-auto-round}"
 GPU_SET="${QWEN12_GPU:-1,2}"
 PORT="${QWEN12_PORT:-8000}"
 MAX_LEN="${QWEN12_CTX:-131072}"
 GPU_UTIL="${QWEN12_UTIL:-0.90}"
 KV_DTYPE="${QWEN12_KV:-fp8}"
 SERVED="${QWEN12_SERVED:-qwen-256k}"
-# QWEN12_MTP: 0 = off (default); N = enable MTP speculative decoding with N
-# draft tokens (model ships mtp.layers.* weights; use 4 per the B70 cookbook).
+# QWEN12_MTP: N = enable MTP speculative decoding with N draft tokens. DEFAULT 0 (off).
+# WARNING (2026-09-24): MTP4 measured 2.4x faster (14.2 -> 33.8 tok/s) BUT it CRASHES the
+# engine under concurrent load. The XPU GDN linear-attention kernel (vllm_xpu_kernels
+# _xpu_C.gdn_attention) hits a hard assert:
+#   "Expected spec_token == num_spec_decodes * (num_speculative_tokens + 1)"
+# Single-request benches pass; a second concurrent stream trips it -> EngineDeadError ->
+# the whole :8000 process dies. Until the GDN+spec-decode kernel path is fixed, keep MTP off.
+# Opt in with QWEN12_MTP=4 only if you accept that risk (and set QWEN12_UTIL=0.88).
 MTP_N="${QWEN12_MTP:-0}"
 LOG="$HOME/electric-sheep/serve/logs/vllm_${PORT}.log"
 PIDFILE="$HOME/electric-sheep/serve/logs/vllm_${PORT}.pid"
@@ -63,10 +73,14 @@ build_cmd() {
     --enable-auto-tool-choice
     --tool-call-parser qwen3_coder
     --generation-config vllm
-    --quantization auto-round
-    --language-model-only
+    --limit-mm-per-prompt '{"image": 4, "video": 0}'
     --override-generation-config "$GEN_CONFIG"
   )
+  # Only pass --quantization when a method is set. A pre-quantized checkpoint (FP8) loads its
+  # weights as-is and must NOT be re-quantized, so the switcher passes QWEN12_QUANT='' for it.
+  if [ -n "$QUANT" ]; then
+    CMD+=(--quantization "$QUANT")
+  fi
   if [ "${MTP_N}" != "0" ]; then
     CMD+=(--speculative-config "{\"method\":\"mtp\",\"num_speculative_tokens\":${MTP_N}}")
   fi
